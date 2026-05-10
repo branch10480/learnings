@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Pages のデプロイ — 何が起きるとサイトが更新されるのか</title>
+
+<!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
+<meta name="learning:title" content="GitHub Pages のデプロイ">
+<meta name="learning:date" content="2026-05-11">
+<meta name="learning:tags" content="github, devops, ci-cd, static-site, web, deployment">
+<meta name="learning:summary" content="GitHub Pages のデプロイは「Branch ソース」と「GitHub Actions ソース」の 2 種類。トリガー条件、actions/deploy-pages の内部動作、URL の決まり方、enablement の罠など、サイトが実際に更新されるまでの全工程を解説。">
+<meta name="learning:reading-time" content="16">
+<!-- =============================================================== -->
+
+<style>
+  :root {
+    --ivory:   #FAF9F5;
+    --paper:   #FFFFFF;
+    --slate:   #141413;
+    --clay:    #D97757;
+    --clay-d:  #B85C3E;
+    --oat:     #E3DACC;
+    --olive:   #788C5D;
+    --olive-d: #5C6E45;
+    --mustard: #C78E3F;
+    --ruby:    #B04A3F;
+    --g100:    #F0EEE6;
+    --g200:    #E6E3DA;
+    --g300:    #D1CFC5;
+    --g500:    #87867F;
+    --g700:    #3D3D3A;
+
+    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
+             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
+    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
+             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    --r-pill:  999px;
+    --r-card:  14px;
+    --r-panel: 12px;
+    --r-row:   8px;
+    --r-chip:  6px;
+
+    --b-hair: 1px solid var(--g200);
+    --b-rule: 1.5px solid var(--g300);
+    --b-strong: 1.5px solid var(--slate);
+
+    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
+    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+
+  header.masthead {
+    padding: 80px 0 56px;
+    border-bottom: var(--b-rule);
+    margin-bottom: 12px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 24px; height: 1.5px;
+    background: var(--clay);
+  }
+  h1.display {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 5.4vw, 62px);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+    margin: 0 0 8px;
+    max-width: 18ch;
+  }
+  h1.display em { font-style: italic; color: var(--clay); }
+  .lead {
+    font-size: 16.5px;
+    color: var(--g700);
+    margin: 22px 0 0;
+    max-width: 680px;
+  }
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--g500);
+  }
+  .meta span strong { color: var(--g700); font-weight: 500; }
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 26px 0 0;
+  }
+  nav.toc a {
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border: var(--b-rule);
+    border-radius: var(--r-pill);
+    text-decoration: none;
+    color: var(--g700);
+    background: var(--paper);
+    transition: border-color 120ms, color 120ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
+  nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+  nav.toc a:hover .n { color: var(--clay); }
+
+  section { margin-top: 72px; scroll-margin-top: 28px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--clay);
+    font-weight: 600;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.012em;
+  }
+  .sec-head .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--g500);
+    background: var(--g100);
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+  }
+  .sec-intro {
+    font-size: 14.5px;
+    color: var(--g700);
+    max-width: 760px;
+    margin: 0 0 24px 50px;
+  }
+  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
+  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
+  .demo-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+    margin: 0 0 8px;
+  }
+
+  pre.code {
+    margin: 0;
+    background: var(--g100);
+    border: var(--b-hair);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--g700);
+    overflow-x: auto;
+  }
+  pre.code .k { color: var(--olive-d); }
+  pre.code .s { color: var(--clay-d); }
+  pre.code .c { color: var(--g500); font-style: italic; }
+  pre.code .v { color: var(--slate); }
+  pre.code .t { color: var(--clay-d); }
+  pre.code .n { color: var(--clay); }
+  code.inline {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: var(--g100);
+    padding: 1px 6px;
+    border-radius: var(--r-chip);
+    color: var(--g700);
+  }
+
+  .callout {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-left: 4px solid var(--clay);
+    border-radius: var(--r-panel);
+  }
+  .callout .ico {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--clay);
+  }
+  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
+  .callout-note    { border-left-color: var(--clay); }
+  .callout-success { border-left-color: var(--olive); }
+  .callout-success .ico { color: var(--olive-d); }
+  .callout-warn    { border-left-color: var(--mustard); background: #FFF8EB; }
+  .callout-warn .ico { color: #8C6A1F; }
+  .callout-error   { border-left-color: var(--ruby); background: #FBF0EE; }
+  .callout-error .ico { color: var(--ruby); }
+
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  table.t th, table.t td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: var(--b-hair);
+  }
+  table.t thead th {
+    font: 500 12px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    background: var(--g100);
+  }
+  table.t tbody tr:last-child td { border-bottom: none; }
+  table.t tbody tr:hover { background: var(--g100); }
+  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+
+  ol.serif-list {
+    list-style: none;
+    counter-reset: serif;
+    padding: 0;
+    margin: 0;
+  }
+  ol.serif-list li {
+    counter-increment: serif;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: var(--b-hair);
+  }
+  ol.serif-list li:last-child { border-bottom: none; }
+  ol.serif-list li::before {
+    content: counter(serif, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--clay);
+    padding-top: 3px;
+  }
+  ul.dot-list { list-style: none; padding: 0; margin: 0; }
+  ul.dot-list li {
+    padding: 8px 0 8px 22px;
+    position: relative;
+    font-size: 14px;
+  }
+  ul.dot-list li::before {
+    content: "";
+    position: absolute; left: 4px; top: 16px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--clay);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--r-pill);
+    font: 500 12px var(--sans);
+    border: var(--b-rule);
+    background: var(--paper);
+    color: var(--g700);
+  }
+  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
+  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
+  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
+  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+
+  .svg-frame {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 24px;
+  }
+  .svg-frame svg { width: 100%; height: auto; display: block; }
+  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
+  .fl { fill: var(--g300); }
+  .cl { fill: var(--clay); }
+  .ol { fill: var(--olive); }
+  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
+  .sl { fill: var(--slate); }
+  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
+  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .da { stroke-dasharray: 4 4; }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+  .compare > div {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+  }
+  .compare h4 {
+    margin: 0 0 10px;
+    font: 500 13px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .kpi {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kpi .lbl {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--g500);
+  }
+  .kpi .val {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--slate);
+    letter-spacing: -0.01em;
+  }
+  .kpi .delta { font-family: var(--mono); font-size: 12px; color: var(--g700); }
+
+  footer {
+    margin-top: 120px;
+    border-top: var(--b-rule);
+    padding-top: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--g500);
+  }
+  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
+  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Static hosting · 2026</div>
+    <h1 class="display">Pages は <em>静的サイトの自販機</em>である。</h1>
+    <p class="lead">
+      GitHub Pages はリポジトリの中身を HTTPS 配信する静的ホスティングサービス。
+      デプロイの仕組みは「<strong>Branch ソース</strong>」と「<strong>GitHub Actions ソース</strong>」の 2 種類。
+      何が起きるとサイトが更新されるのか、何が起きると失敗するのか、
+      内部で動く `actions/deploy-pages` の正体まで解説します。
+    </p>
+    <div class="meta">
+      <span><strong>無料</strong> Public リポジトリ</span>
+      <span><strong>Pro 以上</strong> Private リポジトリ</span>
+      <span><strong>容量上限</strong> 1 GB</span>
+      <span><strong>帯域</strong> 100 GB/月（ソフト制限）</span>
+    </div>
+    <nav class="toc">
+      <a href="#what">Pages とは <span class="n">01</span></a>
+      <a href="#sources">2 つのデプロイソース <span class="n">02</span></a>
+      <a href="#branch">Branch ソース <span class="n">03</span></a>
+      <a href="#actions">Actions ソース <span class="n">04</span></a>
+      <a href="#triggers">何でデプロイされるか <span class="n">05</span></a>
+      <a href="#anatomy">workflow の解剖 <span class="n">06</span></a>
+      <a href="#url">URL とドメイン <span class="n">07</span></a>
+      <a href="#limits">制限事項 <span class="n">08</span></a>
+      <a href="#pitfalls">落とし穴 <span class="n">09</span></a>
+      <a href="#realworld">この learnings リポでの実例 <span class="n">10</span></a>
+    </nav>
+  </header>
+
+  <!-- ============================== 01 ============================== -->
+  <section id="what">
+    <div class="sec-head"><span class="idx">01</span><h2>GitHub Pages とは何か</h2><span class="count">overview</span></div>
+    <p class="sec-intro">
+      GitHub Pages はリポジトリの中身を <strong>静的サイトとして HTTPS で配信</strong>する無料サービス。
+      Public リポジトリならアカウントを問わず使え、Pro 以上なら Private リポジトリの内容も
+      アクセス制限付きで配信できます。Jekyll などのビルドエンジンを通すこともできるし、
+      生の HTML/CSS/JS をそのまま置くこともできます。
+    </p>
+    <div class="demos">
+      <div class="kpi-grid">
+        <div class="kpi"><span class="lbl">提供</span><span class="val">2008</span><span class="delta">無料サービスとして開始</span></div>
+        <div class="kpi"><span class="lbl">配信</span><span class="val">Fastly</span><span class="delta">CDN 経由</span></div>
+        <div class="kpi"><span class="lbl">SSL</span><span class="val">自動</span><span class="delta">Let's Encrypt</span></div>
+        <div class="kpi"><span class="lbl">サーバ処理</span><span class="val">無し</span><span class="delta">SSG / SPA 専用</span></div>
+      </div>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>動的処理は一切ない</h4>
+          <p>
+            Pages は完全に静的な配信のみ。PHP/Node などのサーバサイド実行はできず、
+            データベース接続も無理。<strong>ブラウザ JavaScript と外部 API へのリクエスト</strong>のみで
+            完結する SPA / 静的サイト専用です。動的なものが要るなら Cloudflare Workers や Vercel へ。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 02 ============================== -->
+  <section id="sources">
+    <div class="sec-head"><span class="idx">02</span><h2>2 つのデプロイソース</h2><span class="count">Branch · Actions</span></div>
+    <p class="sec-intro">
+      GitHub Pages には<strong>「コンテンツの取得元」が 2 種類</strong>あります。これがデプロイの仕組みを
+      理解する上で最も重要な分岐点。リポジトリ設定 <code class="inline">Settings → Pages → Build and deployment → Source</code> で
+      切り替えます。
+    </p>
+    <div class="demos">
+      <div class="compare">
+        <div>
+          <h4>① Deploy from a branch</h4>
+          <p style="margin: 0; font-size: 13.5px; color: var(--g700);">
+            指定したブランチ（<code class="inline">main</code> や <code class="inline">gh-pages</code>）の
+            ルートまたは <code class="inline">/docs</code> フォルダを GitHub が<strong>自動的に拾って</strong>配信する。
+            push するだけでデプロイ。Jekyll 自動ビルドが走る。
+          </p>
+        </div>
+        <div>
+          <h4>② GitHub Actions <span class="pill pill-olive">推奨</span></h4>
+          <p style="margin: 0; font-size: 13.5px; color: var(--g700);">
+            自分で書いた workflow が <code class="inline">actions/deploy-pages</code> 経由で
+            artifact をアップロードして配信。<strong>ビルドプロセスを完全制御</strong>でき、
+            Vite / Next.js / Astro など任意のフレームワークが使える。
+          </p>
+        </div>
+      </div>
+
+      <table class="t">
+        <thead>
+          <tr><th>観点</th><th>Branch ソース</th><th>Actions ソース</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>セットアップ</td><td>最も簡単（クリック数回）</td><td>workflow ファイル作成が必要</td></tr>
+          <tr><td>ビルドエンジン</td><td>Jekyll 固定 (or 無し)</td><td>任意（Hugo, Vite, etc.）</td></tr>
+          <tr><td>カスタマイズ</td><td>限定的</td><td>完全自由</td></tr>
+          <tr><td>トリガー</td><td>ブランチへの push のみ</td><td>push / schedule / dispatch / etc.</td></tr>
+          <tr><td>ビルド時間</td><td>制限あり（10 分）</td><td>Actions の枠（無料 2000 分/月）</td></tr>
+          <tr><td>デプロイ前のテスト</td><td>困難</td><td>同 workflow に組み込める</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>新規プロジェクトは Actions ソース一択</h4>
+          <p>
+            柔軟性・将来性ともに圧倒的。Branch ソースは「README.md だけ Jekyll で公開したい」
+            のような最小構成のときだけ価値があります。<strong>本ドキュメントの残りの大半は
+            Actions ソース前提</strong>で書きます。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 03 ============================== -->
+  <section id="branch">
+    <div class="sec-head"><span class="idx">03</span><h2>Branch ソースの内部</h2><span class="count">最小構成</span></div>
+    <p class="sec-intro">
+      Branch ソースを選ぶと、内部では <strong>"pages-build-deployment" という GitHub 製の隠れワークフロー</strong>が
+      勝手に走ります。Actions タブには表示されますが、ファイルとしては存在しません。
+    </p>
+    <div class="demos">
+      <p class="demo-label">Branch ソース選択時の挙動</p>
+      <ol class="serif-list">
+        <li><div>指定ブランチに push が起きると、<code class="inline">pages-build-deployment</code> ワークフローが起動。</div></li>
+        <li><div>リポジトリのルート（または <code class="inline">/docs</code>）に <code class="inline">_config.yml</code> があれば <strong>Jekyll</strong> でビルド。なければ生の HTML をそのまま配信。</div></li>
+        <li><div>ビルド成果物が GitHub Pages のサーバに配置され、Fastly CDN を経由して配信開始。</div></li>
+      </ol>
+
+<pre class="code"><span class="c"># Settings → Pages の設定例</span>
+<span class="k">Source</span>:        Deploy from a branch
+<span class="k">Branch</span>:        main
+<span class="k">Folder</span>:        / (root)   <span class="c"># または /docs</span></pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>Jekyll が勝手に動くと厄介な場合がある</h4>
+          <p>
+            ファイル名が <code class="inline">_</code> で始まるディレクトリ（例: <code class="inline">_data/</code>）が
+            <strong>Jekyll の規約で公開されない</strong>などの罠がある。これを止めたい場合は
+            リポジトリのルートに空の <code class="inline">.nojekyll</code> ファイルを置くと
+            Jekyll 処理がスキップされ、ファイルがそのまま配信されます。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 04 ============================== -->
+  <section id="actions">
+    <div class="sec-head"><span class="idx">04</span><h2>GitHub Actions ソースの内部</h2><span class="count">標準パターン</span></div>
+    <p class="sec-intro">
+      Actions ソースは <strong>3 つの公式 action</strong>で成り立っています。これらが順序通りに動くと
+      Pages にデプロイされる、という固定の儀式があります。
+    </p>
+    <div class="demos">
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 220" aria-label="Pages デプロイの 3 段階">
+          <!-- 1. configure -->
+          <rect class="wh" x="20" y="60" width="180" height="100" rx="10" stroke="#D97757"/>
+          <text x="110" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">configure-pages</text>
+          <text x="110" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v5</text>
+          <text x="110" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">Pages が有効か確認</text>
+
+          <line class="lc" x1="200" y1="110" x2="265" y2="110"/>
+          <polygon class="cl" points="260,105 270,110 260,115"/>
+
+          <!-- 2. upload -->
+          <rect class="oa" x="270" y="60" width="180" height="100" rx="10"/>
+          <text x="360" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">upload-pages-artifact</text>
+          <text x="360" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v3</text>
+          <text x="360" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#3D3D3A">配信物を tar で梱包</text>
+
+          <line class="lc" x1="450" y1="110" x2="515" y2="110"/>
+          <polygon class="cl" points="510,105 520,110 510,115"/>
+
+          <!-- 3. deploy -->
+          <rect class="wh" x="520" y="60" width="180" height="100" rx="10" stroke="#788C5D"/>
+          <text x="610" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">deploy-pages</text>
+          <text x="610" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v4</text>
+          <text x="610" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#5C6E45">Pages サーバへ反映</text>
+
+          <text x="360" y="200" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="13" fill="#87867F">この 3 ステップが順に成功するとサイトが更新される</text>
+        </svg>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">最小構成の workflow</p>
+<pre class="code"><span class="c"># .github/workflows/pages.yml</span>
+<span class="k">name</span>: Deploy to GitHub Pages
+
+<span class="k">on</span>:
+  <span class="k">push</span>:
+    <span class="k">branches</span>: [main]
+  <span class="k">workflow_dispatch</span>:        <span class="c"># 手動実行も可能に</span>
+
+<span class="k">permissions</span>:                  <span class="c"># Pages デプロイには明示的な権限が必要</span>
+  <span class="k">contents</span>: read
+  <span class="k">pages</span>: write
+  <span class="k">id-token</span>: write
+
+<span class="k">concurrency</span>:                  <span class="c"># 同時に複数走らせない</span>
+  <span class="k">group</span>: <span class="s">"pages"</span>
+  <span class="k">cancel-in-progress</span>: <span class="v">false</span>
+
+<span class="k">jobs</span>:
+  <span class="k">deploy</span>:
+    <span class="k">environment</span>:
+      <span class="k">name</span>: github-pages
+      <span class="k">url</span>: <span class="s">${{ steps.deployment.outputs.page_url }}</span>
+    <span class="k">runs-on</span>: ubuntu-latest
+    <span class="k">steps</span>:
+      - <span class="k">uses</span>: actions/checkout@v4
+
+      - <span class="k">name</span>: Setup Pages
+        <span class="k">uses</span>: actions/configure-pages@v5
+        <span class="k">with</span>:
+          <span class="k">enablement</span>: <span class="v">true</span>     <span class="c"># Pages 未有効でも自動で有効化</span>
+
+      - <span class="k">name</span>: Upload artifact
+        <span class="k">uses</span>: actions/upload-pages-artifact@v3
+        <span class="k">with</span>:
+          <span class="k">path</span>: <span class="s">'.'</span>            <span class="c"># リポジトリ全体を配信</span>
+
+      - <span class="k">name</span>: Deploy to GitHub Pages
+        <span class="k">id</span>: deployment
+        <span class="k">uses</span>: actions/deploy-pages@v4</pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>action</th><th>役割</th><th>キーポイント</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">configure-pages</td><td>Pages 設定の取得・有効化</td><td><code class="inline">enablement: true</code> で自動有効化</td></tr>
+          <tr><td class="mono">upload-pages-artifact</td><td>配信物を tar.gz にして artifact 化</td><td><code class="inline">path</code> で配信ルートを指定</td></tr>
+          <tr><td class="mono">deploy-pages</td><td>artifact を Pages サーバへ展開</td><td>戻り値の <code class="inline">page_url</code> が公開 URL</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================== 05 ============================== -->
+  <section id="triggers">
+    <div class="sec-head"><span class="idx">05</span><h2>何をするとデプロイされるか</h2><span class="count">トリガー条件</span></div>
+    <p class="sec-intro">
+      Actions ソースの場合、デプロイのトリガーは <strong>workflow ファイルの <code class="inline">on:</code> セクション</strong>で
+      完全に決まります。GitHub Pages 自体には「自動的に push を見張る」機能はなく、
+      あなたが書いた workflow が起動条件を持つ仕組みです。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>トリガー</th><th>記述例</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>push</strong></td>
+            <td class="mono">on: push: branches: [main]</td>
+            <td>main への push 直後に毎回デプロイ（最も一般的）</td>
+          </tr>
+          <tr>
+            <td><strong>workflow_dispatch</strong></td>
+            <td class="mono">on: workflow_dispatch:</td>
+            <td>Actions タブから手動でボタン実行</td>
+          </tr>
+          <tr>
+            <td><strong>schedule</strong></td>
+            <td class="mono">on: schedule: - cron: '0 0 * * *'</td>
+            <td>毎日特定時刻に再ビルド（外部データ取り込みなど）</td>
+          </tr>
+          <tr>
+            <td><strong>release</strong></td>
+            <td class="mono">on: release: types: [published]</td>
+            <td>GitHub Release 公開時のみデプロイ</td>
+          </tr>
+          <tr>
+            <td><strong>repository_dispatch</strong></td>
+            <td class="mono">on: repository_dispatch:</td>
+            <td>外部 API 経由で起動（Webhook 連携）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">手動再実行のコマンド</p>
+<pre class="code"><span class="c"># Actions タブから手動起動するのと同じ</span>
+gh workflow run <span class="s">"Deploy to GitHub Pages"</span> --ref main
+
+<span class="c"># 直近の run を確認</span>
+gh run list --limit 5
+
+<span class="c"># 特定 run のログを見る</span>
+gh run view &lt;run-id&gt; --log
+
+<span class="c"># 失敗ログだけ抽出</span>
+gh run view &lt;run-id&gt; --log-failed</pre>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>"何を変更すると" デプロイされるか</h4>
+          <p>
+            push トリガーは <strong>ブランチに push があれば内容に関わらず</strong>起動します。
+            「README.md を直しただけ」でもデプロイが走ります。HTML ファイル変更時のみに絞りたければ
+            <code class="inline">on.push.paths: ['**/*.html', '**/*.css']</code> のように指定可能です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 06 ============================== -->
+  <section id="anatomy">
+    <div class="sec-head"><span class="idx">06</span><h2>workflow の重要パーツ</h2><span class="count">permissions · concurrency</span></div>
+    <p class="sec-intro">
+      Pages デプロイ workflow には<strong>「これがないと動かない」セクション</strong>がいくつかあります。
+      コピペで動かしている人も多いですが、各部の意味を押さえておくとトラブル時に困りません。
+    </p>
+    <div class="demos">
+      <p class="demo-label">permissions ブロック</p>
+<pre class="code"><span class="k">permissions</span>:
+  <span class="k">contents</span>: read       <span class="c"># コードの読み取り (checkout 用)</span>
+  <span class="k">pages</span>: write        <span class="c"># Pages へのデプロイ権限</span>
+  <span class="k">id-token</span>: write     <span class="c"># OIDC トークン発行 (Pages の認証に使用)</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <strong>これを書き忘れると "Resource not accessible by integration" エラー</strong>でデプロイが失敗します。
+        一般的なワークフローでは <code class="inline">contents: read</code> がデフォルトですが、
+        <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> は
+        明示的に許可しないと得られません。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">concurrency ブロック</p>
+<pre class="code"><span class="k">concurrency</span>:
+  <span class="k">group</span>: <span class="s">"pages"</span>
+  <span class="k">cancel-in-progress</span>: <span class="v">false</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <strong>同名 group の workflow が同時に走らないようにキューイング</strong>する設定。
+        Pages サーバへのデプロイは 1 つずつ処理されるべきなので、これがないと
+        速い連続 push で奇妙なレースコンディションが起きます。
+        <code class="inline">cancel-in-progress: false</code> にしておくと、走行中のデプロイを
+        後発が中断しなくなり安全。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">environment ブロック</p>
+<pre class="code"><span class="k">environment</span>:
+  <span class="k">name</span>: github-pages
+  <span class="k">url</span>: <span class="s">${{ steps.deployment.outputs.page_url }}</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <strong>"github-pages" は予約名</strong>で、Pages デプロイには必須。
+        <code class="inline">url</code> を設定すると Actions の UI に「サイトを開く」ボタンが出るのと、
+        Releases や PR にデプロイ URL が紐付くので便利。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== 07 ============================== -->
+  <section id="url">
+    <div class="sec-head"><span class="idx">07</span><h2>URL の決まり方とカスタムドメイン</h2><span class="count">routing</span></div>
+    <p class="sec-intro">
+      Pages の URL はリポジトリ名から機械的に決まります。User/Organization サイトと
+      Project サイトでパターンが異なるのが少しややこしい。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>種類</th><th>リポジトリ名</th><th>URL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>User サイト</strong></td>
+            <td class="mono">&lt;username&gt;.github.io</td>
+            <td class="mono">https://&lt;username&gt;.github.io/</td>
+          </tr>
+          <tr>
+            <td><strong>Project サイト</strong></td>
+            <td class="mono">任意の名前 (例: learnings)</td>
+            <td class="mono">https://&lt;username&gt;.github.io/&lt;repo&gt;/</td>
+          </tr>
+          <tr>
+            <td><strong>Organization サイト</strong></td>
+            <td class="mono">&lt;org&gt;.github.io</td>
+            <td class="mono">https://&lt;org&gt;.github.io/</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">Project サイトの "サブパス問題"</p>
+<pre class="code"><span class="c">&lt;!-- ❌ 絶対パスはサブパスで壊れる --&gt;</span>
+<span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"/style.css"</span><span class="t">&gt;</span>
+<span class="c">// → https://user.github.io/style.css を見に行く（404）</span>
+
+<span class="c">&lt;!-- ✅ 相対パス --&gt;</span>
+<span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"style.css"</span><span class="t">&gt;</span>
+
+<span class="c">&lt;!-- ✅ サブパス込み (固定なら) --&gt;</span>
+<span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"/learnings/style.css"</span><span class="t">&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        Vite / Next.js などのフレームワークでは <code class="inline">base</code> 設定で対応します。
+        <code class="inline">vite.config.js</code> なら <code class="inline">base: '/learnings/'</code>。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">カスタムドメインの設定</p>
+<pre class="code"><span class="c"># 1. リポジトリ直下に CNAME ファイルを置く</span>
+echo <span class="s">"learnings.example.com"</span> &gt; CNAME
+
+<span class="c"># 2. DNS で CNAME / ALIAS レコードを設定</span>
+<span class="c">#    learnings.example.com → branch10480.github.io</span>
+
+<span class="c"># 3. Settings → Pages で "Enforce HTTPS" をオン</span>
+<span class="c">#    (Let's Encrypt 証明書が自動発行)</span></pre>
+    </div>
+  </section>
+
+  <!-- ============================== 08 ============================== -->
+  <section id="limits">
+    <div class="sec-head"><span class="idx">08</span><h2>制限事項</h2><span class="count">クォータ</span></div>
+    <p class="sec-intro">
+      Pages は無料で使えますが、いくつかの<strong>ソフト/ハード制限</strong>があります。
+      個人利用の範囲ではほぼ気にならないものの、知っておくと安心。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>項目</th><th>制限</th><th>備考</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>リポジトリサイズ</td><td>1 GB（推奨）</td><td>超えると警告</td></tr>
+          <tr><td>公開後のサイトサイズ</td><td>1 GB（ハード）</td><td>超えるとデプロイ失敗</td></tr>
+          <tr><td>帯域</td><td>100 GB/月（ソフト）</td><td>超過時は CDN 制限がかかる場合あり</td></tr>
+          <tr><td>ビルド時間</td><td>10 分（Branch ソース）</td><td>Actions ソースは Actions の枠</td></tr>
+          <tr><td>デプロイ頻度</td><td>10 回/時（推奨）</td><td>超えるとレート制限</td></tr>
+          <tr><td>Public リポジトリ</td><td>無料</td><td>誰でも閲覧可</td></tr>
+          <tr><td>Private リポジトリ</td><td>Pro 以上のみ</td><td>Free プランでは不可</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>商用・大規模配信には不向き</h4>
+          <p>
+            GitHub Pages は<strong>明示的に「商用 e コマースサイトを目的としたものではない」</strong>と TOS に書かれています。
+            ある程度のトラフィックを見込むサイトや、商用目的のサイトは Cloudflare Pages / Vercel / Netlify など
+            CDN ホスティング専業サービスの方が安全。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 09 ============================== -->
+  <section id="pitfalls">
+    <div class="sec-head"><span class="idx">09</span><h2>よくある落とし穴</h2><span class="count">checklist</span></div>
+    <p class="sec-intro">
+      自分や他人がハマりがちな典型パターン。トラブル時はこのリストを上から見ていくと早い。
+    </p>
+    <div class="demos">
+      <ol class="serif-list">
+        <li><div><strong>Pages が有効化されていない</strong>: Settings → Pages で source が "None" のまま。<code class="inline">configure-pages</code> action の <code class="inline">enablement: true</code> で自動化可能。</div></li>
+        <li><div><strong>permissions が足りない</strong>: <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> がないと "Resource not accessible" エラー。</div></li>
+        <li><div><strong>upload-pages-artifact の path 間違い</strong>: <code class="inline">path: 'dist'</code> と書いたのに <code class="inline">build/</code> にビルドしている、など。</div></li>
+        <li><div><strong>サブパスでの絶対 URL</strong>: <code class="inline">/style.css</code> がサブドメインで 404。相対パスかフレームワークの <code class="inline">base</code> 設定で対応。</div></li>
+        <li><div><strong>Jekyll の自動処理</strong>: <code class="inline">_data/</code> 等のフォルダが配信されない。<code class="inline">.nojekyll</code> ファイルでスキップ。</div></li>
+        <li><div><strong>ブラウザのキャッシュ</strong>: 「デプロイしたのに古いまま」は CDN ではなく Service Worker や HTTP cache。シークレットウィンドウで確認。</div></li>
+        <li><div><strong>HTTPS 証明書が出ない</strong>: カスタムドメインの DNS 浸透待ち（最大 24 時間）。CNAME が正しいか dig で確認。</div></li>
+        <li><div><strong>Workflow が 2 回走る</strong>: <code class="inline">push</code> と <code class="inline">pull_request</code> の両方をトリガーにすると、PR 時に同じ commit で 2 回起動。</div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================== 10 ============================== -->
+  <section id="realworld">
+    <div class="sec-head"><span class="idx">10</span><h2>この learnings リポでの実例</h2><span class="count">live story</span></div>
+    <p class="sec-intro">
+      この learnings サイト自体が GitHub Pages 上で動いており、構築時に実際にハマったパターンが
+      ありました。生きた教訓として記録しておきます。
+    </p>
+    <div class="demos">
+      <p class="demo-label">起きた事象</p>
+      <ol class="serif-list">
+        <li><div><code class="inline">gh repo create branch10480/learnings --public --push</code> でリポジトリを作成し、最初の workflow が起動。</div></li>
+        <li><div>ところが Pages 設定がまだ "None" のままだったため、<code class="inline">configure-pages@v5</code> が <strong>"Get Pages site failed. Not Found"</strong> でエラー終了。</div></li>
+        <li><div>後から <code class="inline">gh api -X POST repos/.../pages -f build_type=workflow</code> で Pages を有効化。</div></li>
+        <li><div>すでに失敗した workflow はそのまま残り、サイトは未公開のまま。<code class="inline">gh workflow run</code> で手動再実行してようやくデプロイ成功。</div></li>
+      </ol>
+
+      <p class="demo-label" style="margin-top: 24px;">学んだ教訓</p>
+<pre class="code"><span class="c"># ❌ うちらが最初書いた pages.yml</span>
+- <span class="k">name</span>: Setup Pages
+  <span class="k">uses</span>: actions/configure-pages@v5
+
+<span class="c"># ✅ enablement: true を足すと、Pages 未設定でも自動で有効化される</span>
+- <span class="k">name</span>: Setup Pages
+  <span class="k">uses</span>: actions/configure-pages@v5
+  <span class="k">with</span>:
+    <span class="k">enablement</span>: <span class="v">true</span></pre>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>新規リポジトリでは enablement: true を必ず付ける</h4>
+          <p>
+            <code class="inline">enablement: true</code> を最初から書いておけば、Pages 設定なしの状態でも
+            <strong>action 自身が GitHub API で Pages を有効化</strong>してから作業を続けます。
+            初回 push でいきなり成功する状態に持っていけるので、新規プロジェクトのテンプレートに
+            必ず含めておくのが正解。
+          </p>
+        </div>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">デプロイ確認の最短ルート</p>
+<pre class="code"><span class="c"># 直近の workflow 実行を見る</span>
+gh run list --limit 3
+
+<span class="c"># 進行中のものを終わるまで watch</span>
+gh run watch &lt;run-id&gt; --exit-status
+
+<span class="c"># サイトが本当に応答するか</span>
+curl -sI https://branch10480.github.io/learnings/ | head -3
+<span class="c"># → HTTP/2 200 が返ってくれば成功</span></pre>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>デプロイ成功 ≠ サイト反映</h4>
+          <p>
+            <code class="inline">deploy-pages</code> action 完了後、CDN への反映には
+            <strong>数十秒〜数分のラグ</strong>があります。「workflow は緑なのにサイトに変更が反映されない」と感じても、
+            まず 1〜2 分待ち、シークレットウィンドウや <code class="inline">curl</code> で実物を確認しましょう。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="k">"Quiet but exact."</span>
+    <span>GitHub Pages docs · <a href="https://docs.github.com/pages">docs.github.com/pages</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
