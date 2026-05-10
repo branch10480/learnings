@@ -86,7 +86,9 @@
     background: var(--paper);
     transition: color 120ms, border-color 120ms;
   }
-  a.back-link:hover { color: var(--slate); border-color: var(--slate); }
+  @media (hover: hover) {
+    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
+  }
   .eyebrow {
     font-family: var(--mono);
     font-size: 12px;
@@ -150,8 +152,10 @@
     gap: 7px;
   }
   nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
-  nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
-  nav.toc a:hover .n { color: var(--clay); }
+  @media (hover: hover) {
+    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+    nav.toc a:hover .n { color: var(--clay); }
+  }
 
   section { margin-top: 72px; scroll-margin-top: 28px; }
   .sec-head {
@@ -276,7 +280,9 @@
     background: var(--g100);
   }
   table.t tbody tr:last-child td { border-bottom: none; }
-  table.t tbody tr:hover { background: var(--g100); }
+  @media (hover: hover) {
+    table.t tbody tr:hover { background: var(--g100); }
+  }
   table.t td.mono { font-family: var(--mono); color: var(--g700); }
 
   ol.serif-list {
