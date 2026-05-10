@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JWT と StoreKit 2 — 署名済みトランザクションの正体</title>
+
+<!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
+<meta name="learning:title" content="JWT と StoreKit 2 の関係">
+<meta name="learning:date" content="2026-05-11">
+<meta name="learning:tags" content="jwt, auth, security, storekit, ios, cryptography, apple">
+<meta name="learning:summary" content="JWT は「ヘッダ.ペイロード.署名」を Base64URL で並べた自己署名つきトークン。StoreKit 2 はレシート文字列を捨て、JWS（JWT 署名済み形式）でトランザクションを返すようになった。x5c による Apple Root CA への連鎖検証、ES256 鍵での双方向 JWT 認証、App Store Server Notifications V2 までを通読する。">
+<meta name="learning:reading-time" content="24">
+<!-- =============================================================== -->
+
+<style>
+  :root {
+    --ivory:   #FAF9F5;
+    --paper:   #FFFFFF;
+    --slate:   #141413;
+    --clay:    #D97757;
+    --clay-d:  #B85C3E;
+    --oat:     #E3DACC;
+    --olive:   #788C5D;
+    --olive-d: #5C6E45;
+    --mustard: #C78E3F;
+    --ruby:    #B04A3F;
+    --g100:    #F0EEE6;
+    --g200:    #E6E3DA;
+    --g300:    #D1CFC5;
+    --g500:    #87867F;
+    --g700:    #3D3D3A;
+
+    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
+             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
+    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
+             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    --r-pill:  999px;
+    --r-card:  14px;
+    --r-panel: 12px;
+    --r-row:   8px;
+    --r-chip:  6px;
+
+    --b-hair: 1px solid var(--g200);
+    --b-rule: 1.5px solid var(--g300);
+    --b-strong: 1.5px solid var(--slate);
+
+    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
+    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+
+  header.masthead {
+    padding: 80px 0 56px;
+    border-bottom: var(--b-rule);
+    margin-bottom: 12px;
+  }
+  a.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    text-decoration: none;
+    margin-bottom: 28px;
+    padding: 6px 12px;
+    border-radius: var(--r-pill);
+    border: var(--b-rule);
+    background: var(--paper);
+    transition: color 120ms, border-color 120ms;
+  }
+  @media (hover: hover) {
+    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 24px; height: 1.5px;
+    background: var(--clay);
+  }
+  h1.display {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 5.4vw, 62px);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+    margin: 0 0 8px;
+    max-width: 18ch;
+  }
+  h1.display em { font-style: italic; color: var(--clay); }
+  .lead {
+    font-size: 16.5px;
+    color: var(--g700);
+    margin: 22px 0 0;
+    max-width: 680px;
+  }
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--g500);
+  }
+  .meta span strong { color: var(--g700); font-weight: 500; }
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 26px 0 0;
+  }
+  nav.toc a {
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border: var(--b-rule);
+    border-radius: var(--r-pill);
+    text-decoration: none;
+    color: var(--g700);
+    background: var(--paper);
+    transition: border-color 120ms, color 120ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
+  @media (hover: hover) {
+    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+    nav.toc a:hover .n { color: var(--clay); }
+  }
+
+  section { margin-top: 72px; scroll-margin-top: 28px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--clay);
+    font-weight: 600;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.012em;
+  }
+  .sec-head .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--g500);
+    background: var(--g100);
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+  }
+  .sec-intro {
+    font-size: 14.5px;
+    color: var(--g700);
+    max-width: 760px;
+    margin: 0 0 24px 50px;
+  }
+  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
+  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
+  .demo-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+    margin: 0 0 8px;
+  }
+
+  pre.code {
+    margin: 0;
+    background: var(--g100);
+    border: var(--b-hair);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--g700);
+    overflow-x: auto;
+  }
+  pre.code .k { color: var(--olive-d); }
+  pre.code .s { color: var(--clay-d); }
+  pre.code .c { color: var(--g500); font-style: italic; }
+  pre.code .v { color: var(--slate); }
+  pre.code .t { color: var(--clay-d); }
+  pre.code .n { color: var(--clay); }
+  code.inline {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: var(--g100);
+    padding: 1px 6px;
+    border-radius: var(--r-chip);
+    color: var(--g700);
+  }
+
+  .callout {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-left: 4px solid var(--clay);
+    border-radius: var(--r-panel);
+  }
+  .callout .ico {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--clay);
+  }
+  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
+  .callout-note    { border-left-color: var(--clay); }
+  .callout-success { border-left-color: var(--olive); }
+  .callout-success .ico { color: var(--olive-d); }
+  .callout-warn    { border-left-color: var(--mustard); background: #FFF8EB; }
+  .callout-warn .ico { color: #8C6A1F; }
+  .callout-error   { border-left-color: var(--ruby); background: #FBF0EE; }
+  .callout-error .ico { color: var(--ruby); }
+
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  table.t th, table.t td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: var(--b-hair);
+  }
+  table.t thead th {
+    font: 500 12px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    background: var(--g100);
+  }
+  table.t tbody tr:last-child td { border-bottom: none; }
+  @media (hover: hover) {
+    table.t tbody tr:hover { background: var(--g100); }
+  }
+  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+
+  ol.serif-list {
+    list-style: none;
+    counter-reset: serif;
+    padding: 0;
+    margin: 0;
+  }
+  ol.serif-list li {
+    counter-increment: serif;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: var(--b-hair);
+  }
+  ol.serif-list li:last-child { border-bottom: none; }
+  ol.serif-list li::before {
+    content: counter(serif, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--clay);
+    padding-top: 3px;
+  }
+  ul.dot-list { list-style: none; padding: 0; margin: 0; }
+  ul.dot-list li {
+    padding: 8px 0 8px 22px;
+    position: relative;
+    font-size: 14px;
+  }
+  ul.dot-list li::before {
+    content: "";
+    position: absolute; left: 4px; top: 16px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--clay);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--r-pill);
+    font: 500 12px var(--sans);
+    border: var(--b-rule);
+    background: var(--paper);
+    color: var(--g700);
+  }
+  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
+  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
+  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
+  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+
+  .svg-frame {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 24px;
+  }
+  .svg-frame svg { width: 100%; height: auto; display: block; }
+  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
+  .fl { fill: var(--g300); }
+  .cl { fill: var(--clay); }
+  .ol { fill: var(--olive); }
+  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
+  .sl { fill: var(--slate); }
+  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
+  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .da { stroke-dasharray: 4 4; }
+
+  /* JWT 三分割の特殊スタイル */
+  .jwt-split {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    word-break: break-all;
+  }
+  .jwt-split .h { color: var(--clay-d); }
+  .jwt-split .p { color: var(--olive-d); }
+  .jwt-split .s { color: #6B5BD9; }
+  .jwt-split .dot { color: var(--g500); }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+  .compare > div {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+  }
+  .compare h4 {
+    margin: 0 0 10px;
+    font: 500 13px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+  }
+  .compare h4.bad  { color: var(--ruby); }
+  .compare h4.good { color: var(--olive-d); }
+  .compare h4.old  { color: var(--g500); }
+  .compare h4.new  { color: var(--clay-d); }
+
+  footer {
+    margin-top: 120px;
+    border-top: var(--b-rule);
+    padding-top: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--g500);
+  }
+  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
+  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
+    <div class="eyebrow">Auth deep-dive · iOS · 2026</div>
+    <h1 class="display">JWT は <em>3 つの Base64</em> をドットで繋いだ署名つきトークン。</h1>
+    <p class="lead">
+      JWT (JSON Web Token, RFC 7519) は <code class="inline">header.payload.signature</code> という
+      たった 3 ピースの自己完結トークン。StoreKit 2 はこの仕組みを丸ごと採用し、
+      旧来の「不透明なレシート文字列」を JWS 署名済みトランザクションへ置き換えた。
+      ここでは JWT 自体の構造から、StoreKit 2 が JWT に依存している 2 つの方向（受信/送信）まで通読する。
+    </p>
+    <div class="meta">
+      <span><strong>RFC</strong> 7519 (JWT) · 7515 (JWS) · 7518 (JWA)</span>
+      <span><strong>StoreKit</strong> 2 (iOS 15+, 2021)</span>
+      <span><strong>関連</strong> OAuth 2 · OIDC · ES256</span>
+      <span><strong>Apple API</strong> App Store Server API / V2 Notifications</span>
+    </div>
+    <nav class="toc">
+      <a href="#what">JWT とは <span class="n">01</span></a>
+      <a href="#anatomy">構造の解剖 <span class="n">02</span></a>
+      <a href="#alg">署名アルゴリズム <span class="n">03</span></a>
+      <a href="#jwsjwe">JWS / JWE / JWT <span class="n">04</span></a>
+      <a href="#claims">Claims <span class="n">05</span></a>
+      <a href="#pitfalls">落とし穴 <span class="n">06</span></a>
+      <a href="#why-storekit">なぜ StoreKit 2 が JWT を <span class="n">07</span></a>
+      <a href="#signed-tx">JWS Signed Transaction <span class="n">08</span></a>
+      <a href="#x5c">x5c と Apple Root CA <span class="n">09</span></a>
+      <a href="#server-api">App Store Server API <span class="n">10</span></a>
+      <a href="#notifications">Notifications V2 <span class="n">11</span></a>
+      <a href="#verify">Swift で検証する <span class="n">12</span></a>
+      <a href="#summary">まとめ <span class="n">13</span></a>
+    </nav>
+  </header>
+
+  <!-- ============================== 01 ============================== -->
+  <section id="what">
+    <div class="sec-head"><span class="idx">01</span><h2>JWT とは何か</h2><span class="count">overview</span></div>
+    <p class="sec-intro">
+      JWT は <strong>「JSON で書かれた主張（claims）に、暗号署名をつけて Base64URL で 3 つ並べたもの」</strong>。
+      暗号化ではなく「改竄検知」が主目的で、ペイロードは誰でも復号せずに読める。これを混同すると
+      パスワードを payload に入れるなどの致命的な誤用に繋がる。
+    </p>
+    <div class="demos">
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>核心の一文</h4>
+          <p>
+            <strong>「JWT は秘密ではなく、改竄されていない事実」</strong>を運ぶ封筒。
+            内容は誰でも読める（payload は Base64URL のまま）が、
+            <em>署名を持っている発行者の意志でのみ作れる</em>ことが暗号的に保証される。
+          </p>
+        </div>
+      </div>
+
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 200" aria-label="JWT の概念図">
+          <!-- 発行者 -->
+          <rect class="wh" x="20" y="70" width="120" height="60" rx="8"/>
+          <text x="80" y="95" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">発行者</text>
+          <text x="80" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">private key</text>
+
+          <!-- JWT -->
+          <line class="lc" x1="140" y1="100" x2="220" y2="100"/>
+          <polygon class="cl" points="215,95 225,100 215,105"/>
+          <rect class="oa" x="230" y="60" width="260" height="80" rx="8"/>
+          <text x="360" y="88" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">JWT</text>
+          <text x="360" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">header.payload.signature</text>
+          <text x="360" y="125" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">公開可・改竄不能</text>
+
+          <!-- 検証者 -->
+          <line class="lc" x1="490" y1="100" x2="570" y2="100"/>
+          <polygon class="cl" points="565,95 575,100 565,105"/>
+          <rect class="wh" x="580" y="70" width="120" height="60" rx="8"/>
+          <text x="640" y="95" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">検証者</text>
+          <text x="640" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">public key</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 02 ============================== -->
+  <section id="anatomy">
+    <div class="sec-head"><span class="idx">02</span><h2>構造の解剖</h2><span class="count">3 segments</span></div>
+    <p class="sec-intro">
+      JWT は ASCII 文字列 1 本だが、ドットで 3 つに分かれる。それぞれ Base64URL（パディング無し）で
+      エンコードされた JSON（あるいはバイト列）。実物を切り分けて、何が入っているか具体的に見る。
+    </p>
+    <div class="demos">
+      <p class="demo-label">実例（短く加工）</p>
+      <div class="jwt-split">
+        <span class="h">eyJhbGciOiJFUzI1NiIsImtpZCI6IjBYNzZBQiJ9</span><span class="dot">.</span><span class="p">eyJpc3MiOiJBcHBsZSIsInN1YiI6ImNvbS5leGFtcGxlLmFwcCIsImV4cCI6MTcxOTAwMDAwMH0</span><span class="dot">.</span><span class="s">MEUCIQDxr2...JzG9w</span>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">分解して JSON にすると</p>
+<pre class="code"><span class="c">// 1. header — 署名アルゴリズム + 鍵 ID</span>
+{
+  <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
+  <span class="s">"kid"</span>: <span class="s">"0X76AB"</span>
+}
+
+<span class="c">// 2. payload — claims（主張）の集合</span>
+{
+  <span class="s">"iss"</span>: <span class="s">"Apple"</span>,            <span class="c">// issuer</span>
+  <span class="s">"sub"</span>: <span class="s">"com.example.app"</span>,  <span class="c">// subject</span>
+  <span class="s">"exp"</span>: 1719000000           <span class="c">// expiration (epoch)</span>
+}
+
+<span class="c">// 3. signature — header と payload の Base64URL を "." で結合した</span>
+<span class="c">//    バイト列に対する暗号署名（バイナリ → Base64URL）</span>
+sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payload))</pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>セグメント</th><th>内容</th><th>暗号化？</th><th>改竄検知？</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>header</td><td>alg, kid, typ など</td><td>No</td><td>Yes（署名対象）</td></tr>
+          <tr><td>payload</td><td>claims（任意の JSON）</td><td>No</td><td>Yes（署名対象）</td></tr>
+          <tr><td>signature</td><td>HMAC または公開鍵署名</td><td>—</td><td>Yes（自身が証拠）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>誤解しやすい点</h4>
+          <p>
+            JWT 単体では <strong>暗号化されていない</strong>。Base64URL は変換であって暗号化ではない。
+            payload を秘匿したければ JWE（後述）を使うか、JWT を HTTPS 上でしか流さない設計にする。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 03 ============================== -->
+  <section id="alg">
+    <div class="sec-head"><span class="idx">03</span><h2>署名アルゴリズム</h2><span class="count">RFC 7518 (JWA)</span></div>
+    <p class="sec-intro">
+      署名は対称鍵（HMAC 系）と非対称鍵（RSA, ECDSA, EdDSA）に大別される。Apple の世界では
+      ECDSA の <code class="inline">ES256</code>（P-256 + SHA-256）がほぼ統一的に使われる。
+      理由は鍵が短く、署名も短く、CPU コストが低いため。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>alg</th><th>正式名</th><th>鍵の種類</th><th>典型用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">HS256</td><td>HMAC-SHA-256</td><td>対称（共有秘密）</td><td>サーバー内部の短命トークン</td></tr>
+          <tr><td class="mono">RS256</td><td>RSASSA-PKCS1-v1_5 + SHA-256</td><td>非対称 RSA 2048+</td><td>OIDC ID トークン（多くの IdP）</td></tr>
+          <tr><td class="mono">PS256</td><td>RSASSA-PSS + SHA-256</td><td>非対称 RSA</td><td>新しい OIDC 実装</td></tr>
+          <tr><td class="mono">ES256</td><td>ECDSA P-256 + SHA-256</td><td>非対称 EC</td><td><strong>Apple StoreKit 2 / Sign in with Apple</strong></td></tr>
+          <tr><td class="mono">ES384</td><td>ECDSA P-384 + SHA-384</td><td>非対称 EC</td><td>より強い保証が必要なとき</td></tr>
+          <tr><td class="mono">EdDSA</td><td>Ed25519 / Ed448</td><td>非対称 EC</td><td>新しい設計（Apple は未採用）</td></tr>
+          <tr><td class="mono">none</td><td>署名なし</td><td>—</td><td><strong>絶対に受け入れない</strong>（後述）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>なぜ Apple は ES256 なのか</h4>
+          <p>
+            P-256 公開鍵は 64 byte、署名は 64 byte（DER 形式だと約 70 byte）。
+            RSA 2048 は鍵 256 byte / 署名 256 byte。スマホ間でやり取りするトランザクションの
+            JWT には、サイズと CPU コストの両面で EC が圧倒的に有利。
+            Sign in with Apple, APNs Auth Token, App Store Connect API も同じ ES256。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 04 ============================== -->
+  <section id="jwsjwe">
+    <div class="sec-head"><span class="idx">04</span><h2>JWS / JWE と JWT の関係</h2><span class="count">用語整理</span></div>
+    <p class="sec-intro">
+      ここがよく混乱する箇所。JWT は「中身（claims セット）の規格」、JWS は「署名形式の規格」、
+      JWE は「暗号化形式の規格」。<strong>普段「JWT」と呼んでいるのはほぼ常に「JWS で署名された JWT」</strong>。
+      StoreKit 2 のドキュメントが「JWS Compact Serialization」と書いているのも、結局は同じもの。
+    </p>
+    <div class="demos">
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 230" aria-label="JOSE スタック">
+          <!-- 全体 JOSE -->
+          <rect class="oa" x="20" y="20" width="680" height="190" rx="10"/>
+          <text x="40" y="48" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JOSE (JSON Object Signing and Encryption)</text>
+
+          <!-- JWS -->
+          <rect class="wh" x="40" y="65" width="200" height="130" rx="8"/>
+          <text x="140" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWS</text>
+          <text x="140" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7515</text>
+          <text x="140" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">署名形式</text>
+          <text x="140" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">h.p.sig</text>
+          <text x="140" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#D97757">StoreKit 2 はここ</text>
+
+          <!-- JWE -->
+          <rect class="wh" x="260" y="65" width="200" height="130" rx="8"/>
+          <text x="360" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWE</text>
+          <text x="360" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7516</text>
+          <text x="360" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">暗号化形式</text>
+          <text x="360" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">h.k.iv.ct.tag</text>
+          <text x="360" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">Apple は使わない</text>
+
+          <!-- JWT -->
+          <rect class="wh" x="480" y="65" width="200" height="130" rx="8"/>
+          <text x="580" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWT</text>
+          <text x="580" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7519</text>
+          <text x="580" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">claims の集合</text>
+          <text x="580" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">{ iss, sub, exp ... }</text>
+          <text x="580" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">JWS or JWE に乗る</text>
+        </svg>
+      </div>
+
+      <ul class="dot-list">
+        <li><strong>JWT</strong> は中身（claims）。普通は JWS でラップして送る。</li>
+        <li><strong>JWS</strong> は署名形式。<code class="inline">header.payload.signature</code> の Compact Serialization が一般的。</li>
+        <li><strong>JWE</strong> は暗号化形式。<code class="inline">header.encrypted_key.iv.ciphertext.tag</code> の 5 ピース。</li>
+        <li><strong>JOSE</strong> はこれらをまとめた IETF Working Group。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================== 05 ============================== -->
+  <section id="claims">
+    <div class="sec-head"><span class="idx">05</span><h2>標準 Claims と独自 Claims</h2><span class="count">RFC 7519 §4</span></div>
+    <p class="sec-intro">
+      payload に入れるキーは何でも好きにできるが、相互運用のために <strong>登録済み（Registered）Claims</strong>
+      が決まっている。短い 3 文字キーが使われるのは「ヘッダの上で送られる前提でサイズを切り詰めたい」から。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>Claim</th><th>意味</th><th>Apple での例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">iss</td><td>Issuer（発行者）</td><td>App Store Server API では Issuer ID（UUID）</td></tr>
+          <tr><td class="mono">sub</td><td>Subject（対象）</td><td>StoreKit 2 では Bundle ID（<code class="inline">com.example.app</code>）</td></tr>
+          <tr><td class="mono">aud</td><td>Audience</td><td>Server API では <code class="inline">"appstoreconnect-v1"</code></td></tr>
+          <tr><td class="mono">exp</td><td>Expiration（epoch 秒）</td><td>必須。検証側はこれを過ぎたら拒否</td></tr>
+          <tr><td class="mono">iat</td><td>Issued At</td><td>発行時刻</td></tr>
+          <tr><td class="mono">nbf</td><td>Not Before</td><td>これ以前は無効</td></tr>
+          <tr><td class="mono">jti</td><td>JWT ID</td><td>再利用検知用のユニーク ID</td></tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">独自 claim も自由に追加できる</p>
+<pre class="code"><span class="c">// StoreKit 2 の SignedTransaction の payload より抜粋（簡略）</span>
+{
+  <span class="s">"transactionId"</span>: <span class="s">"2000000123456789"</span>,
+  <span class="s">"originalTransactionId"</span>: <span class="s">"2000000123456789"</span>,
+  <span class="s">"bundleId"</span>: <span class="s">"com.example.app"</span>,
+  <span class="s">"productId"</span>: <span class="s">"com.example.app.pro"</span>,
+  <span class="s">"purchaseDate"</span>: 1719000000000,
+  <span class="s">"expiresDate"</span>: 1721592000000,
+  <span class="s">"type"</span>: <span class="s">"Auto-Renewable Subscription"</span>,
+  <span class="s">"environment"</span>: <span class="s">"Production"</span>
+}</pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>命名衝突に注意</h4>
+          <p>
+            Public Claim を新たに登録するか、URI 形式（<code class="inline">"https://example.com/role"</code>）で
+            Private Claim を使う。短い英単語をそのまま claim キーにするのは、将来の標準と衝突する地雷。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 06 ============================== -->
+  <section id="pitfalls">
+    <div class="sec-head"><span class="idx">06</span><h2>JWT の有名な落とし穴</h2><span class="count">security</span></div>
+    <p class="sec-intro">
+      JWT のセキュリティ問題はほとんど「実装の手抜き」由来。標準仕様に沿って検証していれば普通は安全だが、
+      以下は <strong>実際に CVE になった事例</strong>のあるパターン。検証ライブラリを書く・選ぶときに見るべき。
+    </p>
+    <div class="demos">
+      <ol class="serif-list">
+        <li><div>
+          <strong>alg: none を受け入れる</strong>。RFC 上は許されているが、攻撃者が任意の payload を作れる。
+          検証側は <em>受け入れる alg を allowlist で固定</em>する（例：ES256 のみ）。
+        </div></li>
+        <li><div>
+          <strong>HS256 ↔ RS256 confusion</strong>。サーバーが alg を信用して
+          「RSA 公開鍵」を HMAC の鍵として使うと、攻撃者は公開鍵を入手して署名を捏造できる。
+          alg はライブラリに渡さず、検証側で固定する。
+        </div></li>
+        <li><div>
+          <strong>kid のディレクトリトラバーサル</strong>。kid を SQL クエリやファイルパスにそのまま使うと、
+          <code class="inline">../</code> や SQL injection を許す。kid は <em>許可された値のみ参照</em>。
+        </div></li>
+        <li><div>
+          <strong>jku / x5u を信用する</strong>。攻撃者が任意の URL を入れて自分のサーバーから公開鍵を返せる。
+          <em>これらヘッダを尊重しない</em>か、ホスト名を allowlist する。
+        </div></li>
+        <li><div>
+          <strong>exp を検証しない</strong>。「読めて claims が取れたから OK」とする実装は永久トークンを生む。
+        </div></li>
+        <li><div>
+          <strong>署名前にデコードした payload を信用する</strong>。<code class="inline">decode → 検証</code> と
+          <code class="inline">verify → デコード</code>は別物。後者を必ず使う。
+        </div></li>
+        <li><div>
+          <strong>大きすぎる JWT を Cookie に入れる</strong>。HTTP ヘッダ上限（8KB 程度）を超え、
+          リクエストが落ちる。session cookie + サーバー側の状態のほうが楽な局面は多い。
+        </div></li>
+      </ol>
+
+      <div class="callout callout-error">
+        <div class="ico">×</div>
+        <div>
+          <h4>Apple の検証で具体的に守るもの</h4>
+          <p>
+            StoreKit 2 の <code class="inline">VerificationResult</code> は OS が以下を全部チェック済みで返す：
+            (1) ヘッダ alg = ES256、(2) <code class="inline">x5c</code> の証明書チェーンが Apple Root CA に至る、
+            (3) 署名検証、(4) bundleId が自アプリと一致、(5) <code class="inline">exp</code> 検証。
+            ただし <em>environment と originalTransactionId のリプレイ検知</em>はアプリ側責任。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 07 ============================== -->
+  <section id="why-storekit">
+    <div class="sec-head"><span class="idx">07</span><h2>なぜ StoreKit 2 が JWT に乗り換えたか</h2><span class="count">2021 → now</span></div>
+    <p class="sec-intro">
+      この移行は単なる「フォーマット変更」ではなく、<strong>「検証アーキテクチャ自体の作り直し」</strong>。
+      旧方式が抱えていた往復コスト（latency / 可用性 / 実装複雑度）を一行ずつ潰していくと、
+      なぜ JWS が選ばれたかが自然に見えてくる。ここでは旧フローと新フローを並べて具体的に比較する。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">▍旧フロー: PKCS#7 レシート + verifyReceipt 往復</p>
+      <div class="svg-frame">
+        <svg viewBox="0 0 760 320" aria-label="旧 StoreKit のレシート検証フロー">
+          <!-- 列ヘッダ -->
+          <text x="80"  y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">App</text>
+          <text x="320" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">自社サーバー</text>
+          <text x="600" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Apple verifyReceipt</text>
+
+          <!-- 縦線 -->
+          <line x1="80"  y1="34" x2="80"  y2="300" class="ln da"/>
+          <line x1="320" y1="34" x2="320" y2="300" class="ln da"/>
+          <line x1="600" y1="34" x2="600" y2="300" class="ln da"/>
+
+          <!-- step 1 -->
+          <line class="lc" x1="80"  y1="60"  x2="320" y2="60"/>
+          <polygon class="cl" points="315,55 325,60 315,65"/>
+          <text x="200" y="54" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">① receipt 文字列 (4–60 KB) を POST</text>
+
+          <!-- step 2 -->
+          <line class="lc" x1="320" y1="100" x2="600" y2="100"/>
+          <polygon class="cl" points="595,95 605,100 595,105"/>
+          <text x="460" y="94" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">② receipt + shared-secret を POST</text>
+
+          <!-- step 3 -->
+          <line class="ln" x1="600" y1="140" x2="320" y2="140"/>
+          <polygon class="fl" points="325,135 315,140 325,145"/>
+          <text x="460" y="134" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">③ status: 21007 → Sandbox に振り直し</text>
+
+          <!-- step 4 -->
+          <line class="lc" x1="320" y1="180" x2="600" y2="180"/>
+          <polygon class="cl" points="595,175 605,180 595,185"/>
+          <text x="460" y="174" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">④ Sandbox エンドポイントへ再 POST</text>
+
+          <!-- step 5 -->
+          <line class="ln" x1="600" y1="220" x2="320" y2="220"/>
+          <polygon class="fl" points="325,215 315,220 325,225"/>
+          <text x="460" y="214" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">⑤ JSON: latest_receipt_info[] (全購入)</text>
+
+          <!-- step 6 -->
+          <line class="ln" x1="320" y1="260" x2="80"  y2="260"/>
+          <polygon class="fl" points="85,255 75,260 85,265"/>
+          <text x="200" y="254" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">⑥ entitlement OK / NG をクライアントへ</text>
+
+          <text x="380" y="298" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#B04A3F">合計 4 ホップ・最悪 6 ホップ（21007 リトライ含む）</text>
+        </svg>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">▍新フロー: JWS をローカル検証（往復ゼロ）</p>
+      <div class="svg-frame">
+        <svg viewBox="0 0 760 220" aria-label="StoreKit 2 の JWS 検証フロー">
+          <text x="80"  y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">App (StoreKit 2)</text>
+          <text x="380" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">自社サーバー</text>
+          <text x="680" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#87867F">Apple (任意)</text>
+
+          <line x1="80"  y1="34" x2="80"  y2="200" class="ln da"/>
+          <line x1="380" y1="34" x2="380" y2="200" class="ln da"/>
+          <line x1="680" y1="34" x2="680" y2="200" class="ln da" stroke-opacity="0.3"/>
+
+          <!-- 自己検証 -->
+          <rect class="oa" x="40" y="58" width="80" height="44" rx="6"/>
+          <text x="80" y="84" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">verify JWS</text>
+          <text x="80" y="98" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#87867F">x5c → Root</text>
+
+          <line class="lc" x1="80"  y1="135" x2="380" y2="135"/>
+          <polygon class="cl" points="375,130 385,135 375,140"/>
+          <text x="230" y="129" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">jwsRepresentation 文字列を転送 (~2 KB)</text>
+
+          <rect class="oa" x="340" y="155" width="80" height="36" rx="6"/>
+          <text x="380" y="178" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">verify JWS</text>
+
+          <text x="380" y="50" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#5C6E45">Apple サーバーへの問い合わせは不要</text>
+        </svg>
+      </div>
+
+      <div class="compare">
+        <div>
+          <h4 class="old">▍旧 StoreKit (legacy receipt)</h4>
+          <ul class="dot-list">
+            <li>レシートは PKCS#7 署名された不透明バイナリ → Base64（4–60 KB）</li>
+            <li>中身を確認するには Apple の <code class="inline">/verifyReceipt</code> を毎回叩く必要</li>
+            <li>レシートには <strong>累積で全購入</strong>が入る → サブスク履歴が長いほど巨大化</li>
+            <li>Sandbox / Production の取り違えを <code class="inline">21007</code> / <code class="inline">21008</code> で再試行</li>
+            <li>shared secret（App-Specific Shared Secret）を Bundle ID ごとに保管・流出リスク</li>
+            <li>クライアントだけでは検証完結しない（PKCS#7 を自前パースは現実的でない）</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="new">▍StoreKit 2 (JWS Signed Transaction)</h4>
+          <ul class="dot-list">
+            <li>各トランザクションが <strong>独立した JWS</strong>（典型 1.5–3 KB）で返る</li>
+            <li><code class="inline">x5c</code> ヘッダに証明書チェーンが内蔵 → 単独で検証完結</li>
+            <li>Apple Root CA G3 はあらかじめ持っているだけで足りる（再ダウンロード不要）</li>
+            <li>環境は payload の <code class="inline">environment</code> 文字列で自明（21007 ループ消滅）</li>
+            <li>共有秘密の概念がない（公開鍵検証のみ）</li>
+            <li>クライアントもサーバーもまったく同じ検証ロジックでよい（対称性）</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">▍往復コストの定量比較</p>
+      <table class="t">
+        <thead>
+          <tr><th>観点</th><th>旧（verifyReceipt）</th><th>新（JWS ローカル）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>クライアント → 自社</td><td>1 RTT</td><td>1 RTT（変わらず）</td></tr>
+          <tr><td>自社 → Apple</td><td><strong>1〜2 RTT</strong>（21007 リトライで 2）</td><td><strong>0 RTT</strong></td></tr>
+          <tr><td>Apple 側のレイテンシ依存</td><td>あり（数百 ms 〜稀に数秒、障害時は数十秒）</td><td>なし</td></tr>
+          <tr><td>検証可否がネットワークに依存</td><td>あり</td><td>なし（オフラインでも検証可）</td></tr>
+          <tr><td>Apple サーバー障害時</td><td>ユーザーが課金できない / 機能が解放されない</td><td>影響なし（既受領 JWS は手元で検証可）</td></tr>
+          <tr><td>転送ペイロード（更新時）</td><td>累積レシート全体（最大 60 KB+）</td><td>新規 1 件分の JWS（約 2 KB）</td></tr>
+          <tr><td>サーバー側の依存</td><td>Apple の verifyReceipt API + shared secret 管理</td><td>Apple Root CA 1 枚のみ（PEM 数 KB）</td></tr>
+          <tr><td>環境判定</td><td>21007 を見て Sandbox URL に張り直す</td><td><code class="inline">payload.environment</code> で即判定</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>旧方式が痛かった現場の典型</h4>
+          <p>
+            <strong>(1) Apple の verifyReceipt が混雑していて 30 秒返ってこない</strong> →
+            ユーザーから見ると「課金は通ったのに有料機能が解放されない」となる。
+            <strong>(2) 検証直後に Sandbox/Production の判定を間違えて 21007 ループ</strong> →
+            審査時とリリース時で挙動が違うバグの温床。
+            <strong>(3) shared secret の取り扱い</strong> → これが漏れると他人が
+            勝手に verifyReceipt を叩けてしまう。鍵管理コストが純増する。
+            JWS はこれら全部を「公開鍵検証 + ローカル」で消した。
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>結局のところの設計利益</h4>
+          <p>
+            <strong>「Apple のオンラインエンドポイントに依存しない」</strong>ことが核心。
+            JWS は「Apple が秘密鍵で署名した事実」をバイト列に閉じ込めているので、
+            一度受け取ってしまえばインターネットが切れていても検証できる。
+            iOS デバイス・自社サーバー・社内バッチの 3 者が同じ検証ロジックを共有でき、
+            障害ドメインが「自社 + Apple Root CA を信用する」だけに縮む。
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>補足: App Store Server API は今も生きている</h4>
+          <p>
+            <em>「往復が消えた」</em>と言ったが、それは <strong>検証の往復</strong>の話。
+            購入履歴の検索・返金検知・サブスク状態の確認などは今でも
+            <code class="inline">api.storekit.itunes.apple.com</code> を叩く。
+            ただしレスポンスは JWS なので、受信したら <em>その場でローカル検証</em>でき、
+            返ってきたデータの真正性を Apple との追加往復なしで確認できる。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 08 ============================== -->
+  <section id="signed-tx">
+    <div class="sec-head"><span class="idx">08</span><h2>JWS Signed Transaction の中身</h2><span class="count">Apple → app</span></div>
+    <p class="sec-intro">
+      <code class="inline">Transaction.currentEntitlements</code> や <code class="inline">Product.purchase()</code> から
+      返ってくる <code class="inline">VerificationResult&lt;Transaction&gt;</code> は、内部に
+      <code class="inline">jwsRepresentation: String</code> を持つ。これがまさに JWS 形式の JWT。
+    </p>
+    <div class="demos">
+      <p class="demo-label">jwsRepresentation を分解した header</p>
+<pre class="code">{
+  <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
+  <span class="s">"x5c"</span>: [
+    <span class="s">"MIIE...leaf cert..."</span>,           <span class="c">// (1) 末端: WWDR が署名</span>
+    <span class="s">"MIIE...intermediate G6..."</span>,    <span class="c">// (2) 中間: WWDR G6</span>
+    <span class="s">"MIIC...Apple Root CA - G3"</span>     <span class="c">// (3) 根: 既知の Apple Root</span>
+  ]
+}</pre>
+
+      <p class="demo-label" style="margin-top: 24px;">payload（Transaction の主要フィールド）</p>
+<pre class="code">{
+  <span class="s">"transactionId"</span>:         <span class="s">"2000000400000001"</span>,
+  <span class="s">"originalTransactionId"</span>: <span class="s">"2000000300000099"</span>,
+  <span class="s">"webOrderLineItemId"</span>:   <span class="s">"2000000099999999"</span>,
+  <span class="s">"bundleId"</span>:              <span class="s">"com.example.app"</span>,
+  <span class="s">"productId"</span>:             <span class="s">"com.example.app.pro.month"</span>,
+  <span class="s">"subscriptionGroupIdentifier"</span>: <span class="s">"21000000"</span>,
+  <span class="s">"purchaseDate"</span>:          1736900000000,
+  <span class="s">"expiresDate"</span>:           1739492000000,
+  <span class="s">"quantity"</span>:              1,
+  <span class="s">"type"</span>:                  <span class="s">"Auto-Renewable Subscription"</span>,
+  <span class="s">"inAppOwnershipType"</span>:    <span class="s">"PURCHASED"</span>,
+  <span class="s">"environment"</span>:           <span class="s">"Production"</span>
+}</pre>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>signedDate と nonce</h4>
+          <p>
+            payload には <code class="inline">signedDate</code> も入る。Apple が JWS に署名した時刻で、
+            <em>古いトランザクションがリプレイされていないか</em>を判定するヒントになる。
+            高セキュリティ用途では、payload の <code class="inline">appAccountToken</code> や
+            <code class="inline">deviceVerification</code> を使ったアンチリプレイも組む。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 09 ============================== -->
+  <section id="x5c">
+    <div class="sec-head"><span class="idx">09</span><h2>x5c と Apple Root CA</h2><span class="count">verification chain</span></div>
+    <p class="sec-intro">
+      JWS のヘッダにある <code class="inline">x5c</code>（X.509 Certificate Chain）は、
+      <strong>「この署名を作った公開鍵が、信頼できる根まで辿れること」を証明する証明書チェーン</strong>。
+      RFC 7515 §4.1.6 で定義された JOSE 標準ヘッダ。Apple は配列の末尾を Apple Root CA - G3 にしてくる。
+    </p>
+    <div class="demos">
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 220" aria-label="証明書チェーン">
+          <!-- Root -->
+          <rect class="oa" x="20" y="80" width="180" height="60" rx="8"/>
+          <text x="110" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Apple Root CA - G3</text>
+          <text x="110" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">OS / app に焼き込み</text>
+
+          <!-- 矢印 -->
+          <line class="lc" x1="200" y1="110" x2="260" y2="110"/>
+          <polygon class="cl" points="255,105 265,110 255,115"/>
+
+          <!-- Intermediate -->
+          <rect class="wh" x="270" y="80" width="180" height="60" rx="8"/>
+          <text x="360" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">WWDR G6 (中間)</text>
+          <text x="360" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">x5c[1]</text>
+
+          <line class="lc" x1="450" y1="110" x2="510" y2="110"/>
+          <polygon class="cl" points="505,105 515,110 505,115"/>
+
+          <!-- Leaf -->
+          <rect class="wh" x="520" y="80" width="180" height="60" rx="8"/>
+          <text x="610" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Leaf (末端)</text>
+          <text x="610" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">x5c[0] · 署名鍵</text>
+
+          <!-- 説明 -->
+          <text x="360" y="180" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">JWS の署名は leaf の秘密鍵で作られる</text>
+          <text x="360" y="200" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">→ 検証は逆向きに辿って Apple Root に着けば OK</text>
+        </svg>
+      </div>
+
+      <ol class="serif-list">
+        <li><div><strong>x5c[0] の公開鍵で JWS の署名を検証</strong>（ペイロードが改竄されていないことを確認）。</div></li>
+        <li><div><strong>x5c[0] が x5c[1] によって署名されているか確認</strong>（leaf → intermediate）。</div></li>
+        <li><div><strong>x5c[1] が x5c[2] によって署名されているか確認</strong>（intermediate → root）。</div></li>
+        <li><div><strong>x5c[2] が事前に持っている Apple Root CA - G3 と一致するか</strong>（最重要）。
+          ここを「ヘッダにある最後の証明書を信用する」と書くと崩壊する。<em>事前に焼き込んだ root と完全一致</em>を確認する。</div></li>
+        <li><div><strong>各証明書の有効期限・失効を確認</strong>。OS 任せでも良いが、
+          サーバー側ライブラリを書くなら明示的にやる必要がある。</div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================== 10 ============================== -->
+  <section id="server-api">
+    <div class="sec-head"><span class="idx">10</span><h2>App Store Server API への JWT</h2><span class="count">app → Apple</span></div>
+    <p class="sec-intro">
+      ここまでの JWT は「Apple が発行 → アプリが受け取って検証」の流れ。
+      逆に <strong>App Store Server API</strong> をサーバーから叩くときは、
+      自分が ES256 の秘密鍵を使って JWT を作り、<code class="inline">Authorization: Bearer</code> として送る。
+      JWT は両方向で使われる。
+    </p>
+    <div class="demos">
+      <p class="demo-label">App Store Server API への認証 JWT</p>
+<pre class="code"><span class="c">// header</span>
+{
+  <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
+  <span class="s">"kid"</span>: <span class="s">"ABC123DEFG"</span>,        <span class="c">// 鍵 ID（App Store Connect で発行）</span>
+  <span class="s">"typ"</span>: <span class="s">"JWT"</span>
+}
+
+<span class="c">// payload</span>
+{
+  <span class="s">"iss"</span>: <span class="s">"57246542-96fe-1a63-e053-0824d011072a"</span>,  <span class="c">// Issuer ID</span>
+  <span class="s">"iat"</span>: 1736900000,
+  <span class="s">"exp"</span>: 1736903600,                       <span class="c">// 最大 1 時間（API ガイドラインより）</span>
+  <span class="s">"aud"</span>: <span class="s">"appstoreconnect-v1"</span>,            <span class="c">// 必須 (App Store Server API)</span>
+  <span class="s">"bid"</span>: <span class="s">"com.example.app"</span>                  <span class="c">// Bundle ID</span>
+}
+
+<span class="c">// 署名は App Store Connect でダウンロードした .p8（ES256 秘密鍵）で行う</span></pre>
+
+      <p class="demo-label" style="margin-top: 24px;">curl で叩く例</p>
+<pre class="code">$ curl -H <span class="s">"Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Ik..."</span> \
+       https://api.storekit.itunes.apple.com/inApps/v1/transactions/<span class="v">2000000400000001</span></pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>方向</th><th>誰が署名する</th><th>検証する側</th><th>JWT の用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Apple → App</td><td>Apple（leaf 鍵 + WWDR + Root）</td><td>iOS / 自社サーバー</td><td>購入トランザクションの真正性</td></tr>
+          <tr><td>App → Apple</td><td>自分（App Store Connect 発行の .p8）</td><td>Apple Server API</td><td>API 呼び出し認証</td></tr>
+          <tr><td>Apple → 自社サーバー</td><td>Apple（同上）</td><td>自社サーバー</td><td>App Store Server Notifications V2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================== 11 ============================== -->
+  <section id="notifications">
+    <div class="sec-head"><span class="idx">11</span><h2>App Store Server Notifications V2</h2><span class="count">push from Apple</span></div>
+    <p class="sec-intro">
+      課金状態が変化した（更新成功・解約・返金など）ときに、Apple は登録された URL に
+      POST してくる。V1 は不透明な JSON だったが、V2 は <strong>signedPayload という単一の JWS 文字列</strong>のみ。
+      サーバー側で StoreKit 2 と同じやり方で検証する。
+    </p>
+    <div class="demos">
+<pre class="code"><span class="c">// Apple から飛んでくる POST body（V2）</span>
+{
+  <span class="s">"signedPayload"</span>: <span class="s">"eyJhbGciOiJFUzI1NiIsIng1YyI6Wy..."</span>
+}
+
+<span class="c">// signedPayload を JWS としてデコードした payload</span>
+{
+  <span class="s">"notificationType"</span>:  <span class="s">"DID_RENEW"</span>,
+  <span class="s">"subtype"</span>:           <span class="s">"BILLING_RECOVERY"</span>,
+  <span class="s">"notificationUUID"</span>:  <span class="s">"ce7b1a2b-..."</span>,    <span class="c">// 重複検知に使う</span>
+  <span class="s">"version"</span>:           <span class="s">"2.0"</span>,
+  <span class="s">"signedDate"</span>:        1736901234567,
+  <span class="s">"data"</span>: {
+    <span class="s">"appAppleId"</span>:               1234567890,
+    <span class="s">"bundleId"</span>:                 <span class="s">"com.example.app"</span>,
+    <span class="s">"environment"</span>:              <span class="s">"Production"</span>,
+    <span class="s">"signedTransactionInfo"</span>:    <span class="s">"eyJhbGc..."</span>,    <span class="c">// ★ 入れ子 JWS</span>
+    <span class="s">"signedRenewalInfo"</span>:        <span class="s">"eyJhbGc..."</span>     <span class="c">// ★ 入れ子 JWS</span>
+  }
+}</pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>JWS が入れ子になっていることに注意</h4>
+          <p>
+            外側の <code class="inline">signedPayload</code> をまず検証して payload を取り出す。
+            すると中に <code class="inline">signedTransactionInfo</code> という別の JWS 文字列が入っており、
+            それも個別に検証する必要がある。<em>1 つの通知の検証は最低 2 回の JWS 検証</em>になる。
+          </p>
+        </div>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">notificationType の主なバリエーション</p>
+      <ul class="dot-list">
+        <li><code class="inline">SUBSCRIBED</code> / <code class="inline">DID_RENEW</code> — 有効な状態が継続</li>
+        <li><code class="inline">DID_FAIL_TO_RENEW</code> — 課金失敗（<code class="inline">subtype=GRACE_PERIOD</code> なら猶予期間）</li>
+        <li><code class="inline">DID_CHANGE_RENEWAL_STATUS</code> — ユーザーが自動更新オフ/オン</li>
+        <li><code class="inline">DID_CHANGE_RENEWAL_PREF</code> — プラン変更（即時/期末）</li>
+        <li><code class="inline">EXPIRED</code> — 期限切れ</li>
+        <li><code class="inline">REVOKE</code> / <code class="inline">REFUND</code> — 取り消し（即座に entitlement を切る）</li>
+        <li><code class="inline">CONSUMPTION_REQUEST</code> — 返金時に「使用量データ」を Apple に返す機会</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================== 12 ============================== -->
+  <section id="verify">
+    <div class="sec-head"><span class="idx">12</span><h2>Swift で検証する</h2><span class="count">クライアント / サーバー</span></div>
+    <p class="sec-intro">
+      iOS / macOS 上では <code class="inline">VerificationResult</code> が OS 任せで楽。
+      サーバー側 Swift では Apple が公開している <code class="inline">app-store-server-library-swift</code> か、
+      汎用 JOSE ライブラリ（JWTKit 等）を使う。両方の最小例。
+    </p>
+    <div class="demos">
+      <p class="demo-label">クライアント (StoreKit 2)</p>
+<pre class="code"><span class="k">for await</span> result <span class="k">in</span> Transaction.currentEntitlements {
+  <span class="k">switch</span> result {
+  <span class="k">case</span> .verified(<span class="k">let</span> transaction):
+    <span class="c">// OS が JWS の署名・x5c・bundleId・exp を検証済み</span>
+    <span class="c">// あとはアプリ側で originalTransactionId のリプレイ等を担保</span>
+    grantEntitlement(productId: transaction.productID)
+    <span class="k">await</span> transaction.finish()
+
+  <span class="k">case</span> .unverified(<span class="k">let</span> transaction, <span class="k">let</span> error):
+    <span class="c">// 署名検証に失敗 — 絶対に entitlement を与えない</span>
+    log(<span class="s">"Untrusted: \(error)"</span>)
+  }
+}</pre>
+
+      <p class="demo-label" style="margin-top: 24px;">サーバー (Vapor + JWTKit, ES256)</p>
+<pre class="code"><span class="k">import</span> JWTKit
+
+<span class="c">// 1. signedPayload（外側）を検証</span>
+<span class="k">struct</span> <span class="v">NotificationPayload</span>: <span class="v">JWTPayload</span> {
+  <span class="k">var</span> notificationType: <span class="t">String</span>
+  <span class="k">var</span> signedDate: <span class="t">Int</span>
+  <span class="k">var</span> data: <span class="v">DataField</span>
+  <span class="k">struct</span> <span class="v">DataField</span>: <span class="v">Codable</span> {
+    <span class="k">var</span> bundleId: <span class="t">String</span>
+    <span class="k">var</span> environment: <span class="t">String</span>
+    <span class="k">var</span> signedTransactionInfo: <span class="t">String</span>?
+  }
+  <span class="k">func</span> <span class="v">verify</span>(using signer: <span class="v">JWTSigner</span>) <span class="k">throws</span> { <span class="c">/* 業務固有チェック */</span> }
+}
+
+<span class="k">let</span> jws = req.body.signedPayload
+<span class="k">let</span> headerJSON = try decodeHeader(jws)
+<span class="k">let</span> chain = headerJSON.x5c.map { Certificate(base64: $0) }
+
+<span class="c">// 2. x5c を Apple Root CA まで検証</span>
+<span class="k">try</span> AppleCAValidator.shared.validate(chain: chain)
+
+<span class="c">// 3. leaf の公開鍵で JWS を検証</span>
+<span class="k">let</span> signer = <span class="v">JWTSigner</span>.es256(key: <span class="k">try</span> .public(pem: chain[0].publicKeyPEM))
+<span class="k">let</span> outer = <span class="k">try</span> signer.verify(jws, as: <span class="v">NotificationPayload</span>.<span class="k">self</span>)
+
+<span class="c">// 4. 入れ子の signedTransactionInfo も同じ手順で検証</span>
+<span class="k">if let</span> inner = outer.data.signedTransactionInfo {
+  <span class="k">let</span> tx = <span class="k">try</span> verifyTransactionJWS(inner)
+  applyEntitlement(tx)
+}</pre>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>本番では公式ライブラリ</h4>
+          <p>
+            Apple の <code class="inline">app-store-server-library</code>（Swift / Java / Python / Node / Go）が
+            上記の x5c 検証 + 失効チェック + 環境判定を全部やってくれる。自前で書くのは学習目的でだけ。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 13 ============================== -->
+  <section id="summary">
+    <div class="sec-head"><span class="idx">13</span><h2>まとめ</h2><span class="count">3 行</span></div>
+    <div class="demos">
+      <ul class="dot-list">
+        <li>
+          <strong>JWT</strong> = <code class="inline">Base64URL(header).Base64URL(payload).署名</code>。
+          中身は読める、改竄はできない。Apple は ES256 一択。
+        </li>
+        <li>
+          <strong>StoreKit 2</strong> はレシート文字列を捨てて、購入トランザクションを JWS（=JWT）で返すようになった。
+          x5c で Apple Root CA まで連鎖検証できるので、サーバーに往復しなくても信用できる。
+        </li>
+        <li>
+          <strong>App Store Server API / Notifications V2</strong> は逆方向の JWT。
+          自分で ES256 の .p8 で JWT を作って Bearer 認証する側でもあり、
+          受信側でも JWS を検証する側でもある — <em>JWT が言語の共通プロトコル</em>になっている。
+        </li>
+      </ul>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>覚えておく一番大事なこと</h4>
+          <p>
+            <strong>「JWS Compact Serialization」「JWT」「signedPayload」「jwsRepresentation」「ID トークン」</strong>
+            これらは Apple / OAuth / OIDC ドキュメントに散らばる別名だが、
+            <em>骨格はすべて同じ</em>「<code class="inline">header.payload.signature</code>」。
+            ライブラリと検証アルゴリズムは共有できる。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="k">"署名された JSON は、丁寧に検証してこそ意味を持つ。"</span>
+    <span>RFC 7519 · 7515 · WWDC22 "Meet StoreKit 2" · App Store Server API Reference</span>
+  </footer>
+</div>
+</body>
+</html>
