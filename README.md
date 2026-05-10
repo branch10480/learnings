@@ -55,13 +55,13 @@ Claude Code で次のように言うだけ:
 ## ローカルで確認する
 
 ```bash
-open ~/Desktop/learnings/index.html
+open ~/ghq/github.com/branch10480/learnings/index.html
 ```
 
 または簡易サーバを立てて:
 
 ```bash
-cd ~/Desktop/learnings && python3 -m http.server 8080
+cd ~/ghq/github.com/branch10480/learnings && python3 -m http.server 8080
 # → http://localhost:8080/
 ```
 
