@@ -1,0 +1,1608 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EPUB とは何か — 仕様と内部構造の解説</title>
+
+<!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
+<meta name="learning:title" content="EPUB の仕様と内部構造">
+<meta name="learning:date" content="2026-05-11">
+<meta name="learning:tags" content="format, ebook, xml, web, css, drm">
+<meta name="learning:summary" content="EPUB は ZIP に詰め込まれた XHTML である。OCF / OPF / Content の 3 層構造、固定レイアウト、日本語縦書き、DRM、Media Overlays、Apple Books 拡張、リーダー実装差異までを網羅。">
+<meta name="learning:reading-time" content="20">
+<!-- =============================================================== -->
+
+<style>
+  :root {
+    --ivory:   #FAF9F5;
+    --paper:   #FFFFFF;
+    --slate:   #141413;
+    --clay:    #D97757;
+    --clay-d:  #B85C3E;
+    --oat:     #E3DACC;
+    --olive:   #788C5D;
+    --olive-d: #5C6E45;
+    --mustard: #C78E3F;
+    --ruby:    #B04A3F;
+    --g100:    #F0EEE6;
+    --g200:    #E6E3DA;
+    --g300:    #D1CFC5;
+    --g500:    #87867F;
+    --g700:    #3D3D3A;
+
+    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
+             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
+    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
+             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    --r-pill:  999px;
+    --r-card:  14px;
+    --r-panel: 12px;
+    --r-row:   8px;
+    --r-chip:  6px;
+
+    --b-hair: 1px solid var(--g200);
+    --b-rule: 1.5px solid var(--g300);
+    --b-strong: 1.5px solid var(--slate);
+
+    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
+    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+
+  header.masthead {
+    padding: 80px 0 56px;
+    border-bottom: var(--b-rule);
+    margin-bottom: 12px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 24px; height: 1.5px;
+    background: var(--clay);
+  }
+  h1.display {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 5.4vw, 62px);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+    margin: 0 0 8px;
+    max-width: 20ch;
+  }
+  h1.display em {
+    font-style: italic;
+    color: var(--clay);
+  }
+  .lead {
+    font-size: 16.5px;
+    color: var(--g700);
+    margin: 22px 0 0;
+    max-width: 680px;
+  }
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--g500);
+  }
+  .meta span strong { color: var(--g700); font-weight: 500; }
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 26px 0 0;
+  }
+  nav.toc a {
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border: var(--b-rule);
+    border-radius: var(--r-pill);
+    text-decoration: none;
+    color: var(--g700);
+    background: var(--paper);
+    transition: border-color 120ms, color 120ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
+  nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+  nav.toc a:hover .n { color: var(--clay); }
+
+  section { margin-top: 72px; scroll-margin-top: 28px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--clay);
+    font-weight: 600;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.012em;
+  }
+  .sec-head .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--g500);
+    background: var(--g100);
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+  }
+  .sec-intro {
+    font-size: 14.5px;
+    color: var(--g700);
+    max-width: 760px;
+    margin: 0 0 24px 50px;
+  }
+  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
+  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
+  .demo-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+    margin: 0 0 8px;
+  }
+
+  pre.code {
+    margin: 0;
+    background: var(--g100);
+    border: var(--b-hair);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--g700);
+    overflow-x: auto;
+  }
+  pre.code .k { color: var(--olive-d); }
+  pre.code .s { color: var(--clay-d); }
+  pre.code .c { color: var(--g500); font-style: italic; }
+  pre.code .v { color: var(--slate); }
+  pre.code .t { color: var(--clay-d); }
+  code.inline {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: var(--g100);
+    padding: 1px 6px;
+    border-radius: var(--r-chip);
+    color: var(--g700);
+  }
+
+  .callout {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-left: 4px solid var(--clay);
+    border-radius: var(--r-panel);
+  }
+  .callout .ico {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--clay);
+  }
+  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
+  .callout-note    { border-left-color: var(--clay); }
+  .callout-success { border-left-color: var(--olive); }
+  .callout-success .ico { color: var(--olive-d); }
+  .callout-warn    { border-left-color: var(--mustard); background: #FFF8EB; }
+  .callout-warn .ico { color: #8C6A1F; }
+
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  table.t th, table.t td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: var(--b-hair);
+  }
+  table.t thead th {
+    font: 500 12px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    background: var(--g100);
+  }
+  table.t tbody tr:last-child td { border-bottom: none; }
+  table.t tbody tr:hover { background: var(--g100); }
+  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+
+  ol.serif-list {
+    list-style: none;
+    counter-reset: serif;
+    padding: 0;
+    margin: 0;
+  }
+  ol.serif-list li {
+    counter-increment: serif;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: var(--b-hair);
+  }
+  ol.serif-list li:last-child { border-bottom: none; }
+  ol.serif-list li::before {
+    content: counter(serif, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--clay);
+    padding-top: 3px;
+  }
+  ul.dot-list { list-style: none; padding: 0; margin: 0; }
+  ul.dot-list li {
+    padding: 8px 0 8px 22px;
+    position: relative;
+    font-size: 14px;
+  }
+  ul.dot-list li::before {
+    content: "";
+    position: absolute; left: 4px; top: 16px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--clay);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .kpi {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kpi .lbl {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--g500);
+  }
+  .kpi .val {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--slate);
+    letter-spacing: -0.01em;
+  }
+  .kpi .delta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--g700);
+  }
+
+  .svg-frame {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 24px;
+  }
+  .svg-frame svg { width: 100%; height: auto; display: block; }
+  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
+  .fl { fill: var(--g300); }
+  .cl { fill: var(--clay); }
+  .ol { fill: var(--olive); }
+  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
+  .sl { fill: var(--slate); }
+  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
+  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .da { stroke-dasharray: 4 4; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--r-pill);
+    font: 500 12px var(--sans);
+    border: var(--b-rule);
+    background: var(--paper);
+    color: var(--g700);
+  }
+  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
+  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
+  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
+
+  /* ファイルツリー表現 */
+  .tree {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--g700);
+  }
+  .tree .dir { color: var(--slate); font-weight: 500; }
+  .tree .req { color: var(--clay-d); }
+  .tree .opt { color: var(--g500); }
+  .tree .note {
+    font-family: var(--sans);
+    font-size: 11.5px;
+    color: var(--g500);
+    padding-left: 8px;
+  }
+
+  /* レイヤー図 */
+  .layers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .layer {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 50px 1fr 200px;
+    gap: 16px;
+    align-items: center;
+  }
+  .layer .num {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--clay);
+    font-weight: 500;
+  }
+  .layer .name {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--slate);
+    letter-spacing: -0.008em;
+  }
+  .layer .name em {
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 12px;
+    color: var(--g500);
+    margin-left: 8px;
+  }
+  .layer .role {
+    font-size: 13px;
+    color: var(--g700);
+    margin-top: 2px;
+  }
+  .layer .stack {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--g500);
+    text-align: right;
+  }
+  @media (max-width: 640px) {
+    .layer { grid-template-columns: 40px 1fr; }
+    .layer .stack { display: none; }
+  }
+
+  footer {
+    margin-top: 120px;
+    border-top: var(--b-rule);
+    padding-top: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--g500);
+  }
+  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
+  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Format explainer · 2026</div>
+    <h1 class="display">EPUB は <em>圧縮された Web サイト</em>である。</h1>
+    <p class="lead">
+      EPUB（Electronic Publication）は W3C が管理する電子書籍のオープン標準。中身を一言で言えば
+      「ZIP に詰め込まれた XHTML + CSS + 画像」——つまり静的な Web サイトを出版業界の作法で梱包したものです。
+      本ドキュメントは仕様の全体像と、`.epub` ファイルを解凍したときに何が入っているかを解説します。
+    </p>
+    <div class="meta">
+      <span><strong>規格</strong> EPUB 3.3 (W3C Recommendation, 2023)</span>
+      <span><strong>管理</strong> W3C（旧 IDPF）</span>
+      <span><strong>拡張子</strong> .epub</span>
+      <span><strong>MIME</strong> application/epub+zip</span>
+    </div>
+    <nav class="toc">
+      <a href="#what">EPUB とは <span class="n">01</span></a>
+      <a href="#layers">3 層構造 <span class="n">02</span></a>
+      <a href="#tree">ファイル構成 <span class="n">03</span></a>
+      <a href="#mimetype">mimetype <span class="n">04</span></a>
+      <a href="#container">container.xml <span class="n">05</span></a>
+      <a href="#opf">OPF パッケージ <span class="n">06</span></a>
+      <a href="#nav">ナビゲーション <span class="n">07</span></a>
+      <a href="#content">本文 XHTML <span class="n">08</span></a>
+      <a href="#layout">レイアウト方式 <span class="n">09</span></a>
+      <a href="#fxl">固定レイアウト <span class="n">10</span></a>
+      <a href="#vertical">日本語縦書き <span class="n">11</span></a>
+      <a href="#versions">EPUB 2 vs 3 <span class="n">12</span></a>
+      <a href="#drm">DRM <span class="n">13</span></a>
+      <a href="#media-overlays">Media Overlays <span class="n">14</span></a>
+      <a href="#apple">Apple Books 拡張 <span class="n">15</span></a>
+      <a href="#readers">リーダー実装差異 <span class="n">16</span></a>
+      <a href="#tools">ツール <span class="n">17</span></a>
+    </nav>
+  </header>
+
+  <!-- ============================== 01 ============================== -->
+  <section id="what">
+    <div class="sec-head"><span class="idx">01</span><h2>EPUB とは何か</h2><span class="count">overview</span></div>
+    <p class="sec-intro">
+      EPUB は <strong>「リフロー可能な電子書籍」のためのオープン標準</strong>。Kindle 専用の AZW/MOBI/KFX とは異なり、
+      Apple Books / Google Play Books / 楽天 Kobo / 各種読書アプリが共通して扱える。中身は基本的に Web 技術
+      （XHTML 5、CSS、SVG、JavaScript）で構成されており、「本」を「Web ページの集合体」として扱う設計思想です。
+    </p>
+    <div class="demos">
+      <div class="kpi-grid">
+        <div class="kpi"><span class="lbl">初版リリース</span><span class="val">2007</span><span class="delta">EPUB 2.0</span></div>
+        <div class="kpi"><span class="lbl">最新版</span><span class="val">3.3</span><span class="delta">2023-05 W3C Rec.</span></div>
+        <div class="kpi"><span class="lbl">中核フォーマット</span><span class="val">XHTML</span><span class="delta">+ CSS / SVG</span></div>
+        <div class="kpi"><span class="lbl">梱包形式</span><span class="val">ZIP</span><span class="delta">OCF コンテナ</span></div>
+      </div>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>核心はとてもシンプル</h4>
+          <p>
+            <code class="inline">.epub</code> ファイルの拡張子を <code class="inline">.zip</code> にリネームして
+            ダブルクリックすれば、普通に解凍できます。中から出てくるのは XHTML ファイル、CSS、画像、それと
+            「目次」と「読む順序」を記述した XML——たったそれだけ。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 02 ============================== -->
+  <section id="layers">
+    <div class="sec-head"><span class="idx">02</span><h2>仕様の 3 層構造</h2><span class="count">OCF · OPF · Content</span></div>
+    <p class="sec-intro">
+      EPUB の規格は責務ごとに 3 層に分離されています。「入れ物（コンテナ）」「目録（パッケージ）」「中身（コンテンツ）」
+      の分離は、Web の URL/HTTP/HTML の分離と相似です。
+    </p>
+    <div class="demos">
+      <div class="layers">
+        <div class="layer">
+          <div class="num">03</div>
+          <div>
+            <div class="name">Content Documents <em>EPUB Content Documents 3.3</em></div>
+            <div class="role">本文そのもの。XHTML 5・CSS・SVG・JavaScript・MathML。要するに Web ページ。</div>
+          </div>
+          <div class="stack">XHTML / CSS / SVG</div>
+        </div>
+        <div class="layer">
+          <div class="num">02</div>
+          <div>
+            <div class="name">Package Document <em>OPF (Open Packaging Format)</em></div>
+            <div class="role">メタデータ・ファイル一覧（manifest）・読む順序（spine）・ナビゲーションを記述。</div>
+          </div>
+          <div class="stack">content.opf · nav.xhtml</div>
+        </div>
+        <div class="layer">
+          <div class="num">01</div>
+          <div>
+            <div class="name">Container <em>OCF (Open Container Format)</em></div>
+            <div class="role">ZIP ベースの梱包仕様。<code class="inline">mimetype</code> と <code class="inline">META-INF/container.xml</code> を必須とする。</div>
+          </div>
+          <div class="stack">ZIP archive</div>
+        </div>
+      </div>
+
+      <div class="svg-frame">
+        <svg viewBox="0 0 760 240" aria-label="EPUB 3 層構造の関係図">
+          <!-- ZIP コンテナ -->
+          <rect class="oa" x="20" y="30" width="720" height="180" rx="14"/>
+          <text x="40" y="56" font-family="ui-serif, Georgia, serif" font-size="14" fill="#3D3D3A" font-style="italic">OCF コンテナ ( ZIP )</text>
+
+          <!-- META-INF -->
+          <rect class="wh" x="50" y="80" width="160" height="100" rx="8"/>
+          <text x="130" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#141413">META-INF/</text>
+          <text x="130" y="128" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">container.xml</text>
+          <text x="130" y="148" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">→ rootfile を指す</text>
+
+          <!-- OPF パッケージ -->
+          <rect class="wh" x="240" y="80" width="200" height="100" rx="8" stroke="#D97757"/>
+          <text x="340" y="108" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">OPF Package</text>
+          <text x="340" y="128" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">content.opf</text>
+          <text x="340" y="148" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">metadata · manifest · spine</text>
+
+          <!-- Content -->
+          <rect class="wh" x="470" y="80" width="240" height="100" rx="8"/>
+          <text x="590" y="108" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">Content Documents</text>
+          <text x="590" y="128" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">chap01.xhtml · style.css ...</text>
+          <text x="590" y="148" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">XHTML / CSS / 画像 / SVG</text>
+
+          <!-- 矢印 -->
+          <line class="lc" x1="210" y1="130" x2="240" y2="130"/>
+          <polygon class="cl" points="235,125 245,130 235,135"/>
+          <line class="lc" x1="440" y1="130" x2="470" y2="130"/>
+          <polygon class="cl" points="465,125 475,130 465,135"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 03 ============================== -->
+  <section id="tree">
+    <div class="sec-head"><span class="idx">03</span><h2>典型的なファイル構成</h2><span class="count">unzip 直後の中身</span></div>
+    <p class="sec-intro">
+      `.epub` を解凍すると、おおむね下のようなツリーが現れます。<span class="pill pill-clay">必須</span> は規格上絶対に必要なもの、
+      <span class="pill pill-oat">慣習</span> は実装上ほぼ存在するもの。
+    </p>
+    <div class="demos">
+      <div class="tree">
+<span class="dir">my-book.epub/</span>
+├── <span class="req">mimetype</span>                          <span class="note">必須・無圧縮 STORE 方式・先頭に配置</span>
+├── <span class="dir">META-INF/</span>
+│   └── <span class="req">container.xml</span>                 <span class="note">必須・OPF への入り口</span>
+├── <span class="dir">OEBPS/</span>                          <span class="note">慣習的なルートディレクトリ名（任意）</span>
+│   ├── <span class="req">content.opf</span>                   <span class="note">必須・パッケージ本体</span>
+│   ├── <span class="req">nav.xhtml</span>                     <span class="note">EPUB 3 必須・目次（XHTML）</span>
+│   ├── <span class="opt">toc.ncx</span>                       <span class="note">EPUB 2 互換目次（後方互換）</span>
+│   ├── <span class="dir">text/</span>
+│   │   ├── cover.xhtml
+│   │   ├── chap01.xhtml                  <span class="note">本文 ── 章ごとに分割</span>
+│   │   └── chap02.xhtml
+│   ├── <span class="dir">styles/</span>
+│   │   └── style.css
+│   ├── <span class="dir">images/</span>
+│   │   ├── cover.jpg
+│   │   └── fig01.png
+│   └── <span class="dir">fonts/</span>
+│       └── NotoSerifJP-Regular.otf       <span class="note">埋め込みフォント（任意）</span>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>mimetype は特別扱い</h4>
+          <p>
+            <code class="inline">mimetype</code> ファイルは <strong>ZIP の最初のエントリ</strong>かつ<strong>無圧縮（STORE 方式）</strong>
+            で格納する必要があります。これは ZIP の先頭バイトを覗くだけで「これは EPUB だ」と判別できるようにするためで、
+            EPUB 特有の作法です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 04 ============================== -->
+  <section id="mimetype">
+    <div class="sec-head"><span class="idx">04</span><h2>mimetype</h2><span class="count">20 bytes</span></div>
+    <p class="sec-intro">
+      ファイル全体は実質これ 1 行のテキスト。中身は固定文字列。
+    </p>
+    <div class="demos">
+<pre class="code">application/epub+zip</pre>
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        改行なし・BOM なし・余計なホワイトスペースなし。先頭 30 バイトを読むだけでファイル判定できる仕組みです。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== 05 ============================== -->
+  <section id="container">
+    <div class="sec-head"><span class="idx">05</span><h2>META-INF/container.xml</h2><span class="count">EPUB の入り口</span></div>
+    <p class="sec-intro">
+      リーダーアプリは ZIP を開いたら最初にこのファイルを読み、`rootfile` 属性が指す場所（OPF）を探しに行きます。
+      つまり、本体 OPF の置き場所を宣言するだけの「玄関」です。
+    </p>
+    <div class="demos">
+<pre class="code"><span class="c">&lt;?xml version="1.0"?&gt;</span>
+<span class="t">&lt;container</span> <span class="k">version</span>=<span class="s">"1.0"</span>
+           <span class="k">xmlns</span>=<span class="s">"urn:oasis:names:tc:opendocument:xmlns:container"</span><span class="t">&gt;</span>
+  <span class="t">&lt;rootfiles&gt;</span>
+    <span class="t">&lt;rootfile</span> <span class="k">full-path</span>=<span class="s">"OEBPS/content.opf"</span>
+              <span class="k">media-type</span>=<span class="s">"application/oebps-package+xml"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;/rootfiles&gt;</span>
+<span class="t">&lt;/container&gt;</span></pre>
+    </div>
+  </section>
+
+  <!-- ============================== 06 ============================== -->
+  <section id="opf">
+    <div class="sec-head"><span class="idx">06</span><h2>OPF パッケージ</h2><span class="count">本の目録</span></div>
+    <p class="sec-intro">
+      OPF（Open Packaging Format）は EPUB の「中枢」。<strong>3 つのセクション</strong>から成ります。
+      これを理解すれば EPUB の構造はほぼ理解したと言えます。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>セクション</th><th>役割</th><th>例</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">&lt;metadata&gt;</td>
+            <td>タイトル・著者・言語・ISBN・出版日など書誌情報。Dublin Core スキーマを使用。</td>
+            <td class="mono">dc:title, dc:creator</td>
+          </tr>
+          <tr>
+            <td class="mono">&lt;manifest&gt;</td>
+            <td>本に含まれる<strong>すべてのファイル</strong>の一覧。各ファイルに id と MIME タイプを付与。</td>
+            <td class="mono">item id="..." href="..."</td>
+          </tr>
+          <tr>
+            <td class="mono">&lt;spine&gt;</td>
+            <td>manifest 内のファイルのうち、<strong>本文として何をどの順序で読むか</strong>を定義。</td>
+            <td class="mono">itemref idref="chap01"</td>
+          </tr>
+        </tbody>
+      </table>
+
+<pre class="code"><span class="c">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="t">&lt;package</span> <span class="k">xmlns</span>=<span class="s">"http://www.idpf.org/2007/opf"</span> <span class="k">version</span>=<span class="s">"3.0"</span> <span class="k">unique-identifier</span>=<span class="s">"BookId"</span><span class="t">&gt;</span>
+
+  <span class="c">&lt;!-- ① 書誌情報 --&gt;</span>
+  <span class="t">&lt;metadata</span> <span class="k">xmlns:dc</span>=<span class="s">"http://purl.org/dc/elements/1.1/"</span><span class="t">&gt;</span>
+    <span class="t">&lt;dc:identifier</span> <span class="k">id</span>=<span class="s">"BookId"</span><span class="t">&gt;</span>urn:isbn:978-4-12-345678-9<span class="t">&lt;/dc:identifier&gt;</span>
+    <span class="t">&lt;dc:title&gt;</span>EPUB の内部構造<span class="t">&lt;/dc:title&gt;</span>
+    <span class="t">&lt;dc:creator&gt;</span>今枝 俊治<span class="t">&lt;/dc:creator&gt;</span>
+    <span class="t">&lt;dc:language&gt;</span>ja<span class="t">&lt;/dc:language&gt;</span>
+    <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"dcterms:modified"</span><span class="t">&gt;</span>2026-05-11T00:00:00Z<span class="t">&lt;/meta&gt;</span>
+  <span class="t">&lt;/metadata&gt;</span>
+
+  <span class="c">&lt;!-- ② ファイル一覧 --&gt;</span>
+  <span class="t">&lt;manifest&gt;</span>
+    <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"nav"</span>    <span class="k">href</span>=<span class="s">"nav.xhtml"</span>        <span class="k">media-type</span>=<span class="s">"application/xhtml+xml"</span> <span class="k">properties</span>=<span class="s">"nav"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"cover"</span>  <span class="k">href</span>=<span class="s">"text/cover.xhtml"</span>  <span class="k">media-type</span>=<span class="s">"application/xhtml+xml"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"chap01"</span> <span class="k">href</span>=<span class="s">"text/chap01.xhtml"</span> <span class="k">media-type</span>=<span class="s">"application/xhtml+xml"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"css"</span>    <span class="k">href</span>=<span class="s">"styles/style.css"</span>   <span class="k">media-type</span>=<span class="s">"text/css"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"img1"</span>   <span class="k">href</span>=<span class="s">"images/cover.jpg"</span>   <span class="k">media-type</span>=<span class="s">"image/jpeg"</span> <span class="k">properties</span>=<span class="s">"cover-image"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;/manifest&gt;</span>
+
+  <span class="c">&lt;!-- ③ 読む順序 --&gt;</span>
+  <span class="t">&lt;spine&gt;</span>
+    <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"cover"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"chap01"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;/spine&gt;</span>
+
+<span class="t">&lt;/package&gt;</span></pre>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>spine の重要性</h4>
+          <p>
+            manifest にあっても spine に含まれない XHTML はリーダー上で<strong>本文として表示されません</strong>
+            （リンク先として参照される補助的なページなどに使われます）。「本のリニアな読み進め順」を決めているのは spine です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 07 ============================== -->
+  <section id="nav">
+    <div class="sec-head"><span class="idx">07</span><h2>ナビゲーション（目次）</h2><span class="count">nav.xhtml / toc.ncx</span></div>
+    <p class="sec-intro">
+      EPUB 3 の目次は<strong>普通の XHTML</strong>。<code class="inline">&lt;nav epub:type="toc"&gt;</code> 属性が付いた要素を
+      リーダーが「目次」として認識するだけ。EPUB 2 は別言語の <code class="inline">toc.ncx</code> を使っていましたが、
+      EPUB 3 で本文と同じ言語に統合されました。
+    </p>
+    <div class="demos">
+<pre class="code"><span class="c">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="k">xmlns</span>=<span class="s">"http://www.w3.org/1999/xhtml"</span> <span class="k">xmlns:epub</span>=<span class="s">"http://www.idpf.org/2007/ops"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;&lt;title&gt;</span>目次<span class="t">&lt;/title&gt;&lt;/head&gt;</span>
+<span class="t">&lt;body&gt;</span>
+  <span class="t">&lt;nav</span> <span class="k">epub:type</span>=<span class="s">"toc"</span> <span class="k">id</span>=<span class="s">"toc"</span><span class="t">&gt;</span>
+    <span class="t">&lt;h1&gt;</span>目次<span class="t">&lt;/h1&gt;</span>
+    <span class="t">&lt;ol&gt;</span>
+      <span class="t">&lt;li&gt;&lt;a</span> <span class="k">href</span>=<span class="s">"text/cover.xhtml"</span><span class="t">&gt;</span>表紙<span class="t">&lt;/a&gt;&lt;/li&gt;</span>
+      <span class="t">&lt;li&gt;&lt;a</span> <span class="k">href</span>=<span class="s">"text/chap01.xhtml"</span><span class="t">&gt;</span>第 1 章 EPUB とは<span class="t">&lt;/a&gt;&lt;/li&gt;</span>
+      <span class="t">&lt;li&gt;&lt;a</span> <span class="k">href</span>=<span class="s">"text/chap02.xhtml"</span><span class="t">&gt;</span>第 2 章 内部構造<span class="t">&lt;/a&gt;&lt;/li&gt;</span>
+    <span class="t">&lt;/ol&gt;</span>
+  <span class="t">&lt;/nav&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+    </div>
+  </section>
+
+  <!-- ============================== 08 ============================== -->
+  <section id="content">
+    <div class="sec-head"><span class="idx">08</span><h2>本文 XHTML</h2><span class="count">中身は Web ページ</span></div>
+    <p class="sec-intro">
+      本文は <strong>XHTML 5</strong>（XML として整形式である必要がある HTML5）。CSS / SVG / 画像 / フォントが普通に使え、
+      JavaScript も EPUB 3 から正式サポート（リーダーによる）。要するに「リーダー＝ブラウザ」。
+    </p>
+    <div class="demos">
+<pre class="code"><span class="c">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="t">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="k">xmlns</span>=<span class="s">"http://www.w3.org/1999/xhtml"</span> <span class="k">xml:lang</span>=<span class="s">"ja"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">charset</span>=<span class="s">"utf-8"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;title&gt;</span>第 1 章<span class="t">&lt;/title&gt;</span>
+  <span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"../styles/style.css"</span><span class="t">/&gt;</span>
+<span class="t">&lt;/head&gt;</span>
+<span class="t">&lt;body&gt;</span>
+  <span class="t">&lt;h1&gt;</span>第 1 章 EPUB とは<span class="t">&lt;/h1&gt;</span>
+  <span class="t">&lt;p&gt;</span>EPUB は ZIP に詰め込まれた XHTML である。<span class="t">&lt;/p&gt;</span>
+  <span class="t">&lt;figure&gt;</span>
+    <span class="t">&lt;img</span> <span class="k">src</span>=<span class="s">"../images/fig01.png"</span> <span class="k">alt</span>=<span class="s">"構造図"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;figcaption&gt;</span>図 1: 3 層構造<span class="t">&lt;/figcaption&gt;</span>
+  <span class="t">&lt;/figure&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>HTML5 ではなく XHTML 5</h4>
+          <p>
+            通常の HTML5 と違い、すべてのタグを閉じる必要があります（<code class="inline">&lt;br/&gt;</code>、
+            <code class="inline">&lt;img .../&gt;</code>）。これは XML パーサで処理されるためで、不正な構文だと
+            <strong>本が開けない</strong>ことがあります。検証には EPUBCheck を使うのが定番です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 09 ============================== -->
+  <section id="layout">
+    <div class="sec-head"><span class="idx">09</span><h2>レイアウト方式</h2><span class="count">reflowable / fixed</span></div>
+    <p class="sec-intro">
+      EPUB の最大の特徴は <strong>リフロー（reflowable）</strong>——画面サイズや文字サイズに応じてテキストが自動的に
+      折り返されること。一方で、漫画や絵本のようにレイアウト固定が必要な場合は <strong>Fixed Layout EPUB（FXL）</strong>
+      モードを選びます。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>方式</th><th>用途</th><th>OPF での宣言</th><th>挙動</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Reflowable</strong></td>
+            <td>小説・新書・実用書（テキスト主体）</td>
+            <td class="mono">未指定（既定）</td>
+            <td>文字サイズ・画面サイズで折り返し</td>
+          </tr>
+          <tr>
+            <td><strong>Fixed Layout</strong></td>
+            <td>漫画・絵本・写真集・雑誌</td>
+            <td class="mono">rendition:layout = pre-paginated</td>
+            <td>ページが固定。viewport 必須</td>
+          </tr>
+        </tbody>
+      </table>
+
+<pre class="code"><span class="c">&lt;!-- 固定レイアウト宣言（OPF metadata 内） --&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:layout"</span><span class="t">&gt;</span>pre-paginated<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:orientation"</span><span class="t">&gt;</span>portrait<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:spread"</span><span class="t">&gt;</span>landscape<span class="t">&lt;/meta&gt;</span>
+
+<span class="c">&lt;!-- 各 XHTML 側 --&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">name</span>=<span class="s">"viewport"</span> <span class="k">content</span>=<span class="s">"width=1200, height=1800"</span><span class="t">/&gt;</span></pre>
+    </div>
+  </section>
+
+  <!-- ============================== 10 ============================== -->
+  <section id="fxl">
+    <div class="sec-head"><span class="idx">10</span><h2>固定レイアウト EPUB の作り方</h2><span class="count">FXL · 漫画 / 絵本</span></div>
+    <p class="sec-intro">
+      漫画・絵本・写真集・雑誌のように<strong>「ページ」という単位そのものが意味を持つ本</strong>では、リフローでは
+      崩れてしまいます。Fixed Layout EPUB（FXL）は、<strong>1 ページ = 1 XHTML ファイル</strong>として、ピクセル単位で
+      レイアウトを固定する方式。Web で言えば「印刷物の PDF を XHTML で再現する」イメージです。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">手順 1 — OPF のメタデータで FXL モードを宣言</p>
+<pre class="code"><span class="t">&lt;metadata&gt;</span>
+  <span class="c">&lt;!-- 固定レイアウト宣言 --&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:layout"</span><span class="t">&gt;</span>pre-paginated<span class="t">&lt;/meta&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:orientation"</span><span class="t">&gt;</span>auto<span class="t">&lt;/meta&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:spread"</span><span class="t">&gt;</span>landscape<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;/metadata&gt;</span></pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>プロパティ</th><th>値</th><th>意味</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">rendition:layout</td><td class="mono">reflowable / pre-paginated</td><td>レイアウト方式の宣言。FXL は <strong>pre-paginated</strong></td></tr>
+          <tr><td class="mono">rendition:orientation</td><td class="mono">auto / landscape / portrait</td><td>強制する画面の向き（auto は端末任せ）</td></tr>
+          <tr><td class="mono">rendition:spread</td><td class="mono">none / landscape / both</td><td>見開き表示の有無。漫画は通常 <strong>landscape</strong></td></tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">手順 2 — spine で右綴じ / 左綴じを指定</p>
+<pre class="code"><span class="c">&lt;!-- 漫画など右綴じの本 --&gt;</span>
+<span class="t">&lt;spine</span> <span class="k">page-progression-direction</span>=<span class="s">"rtl"</span><span class="t">&gt;</span>
+  <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"p001"</span> <span class="k">properties</span>=<span class="s">"page-spread-right"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"p002"</span> <span class="k">properties</span>=<span class="s">"page-spread-left"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"p003"</span> <span class="k">properties</span>=<span class="s">"page-spread-right"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"p004"</span> <span class="k">properties</span>=<span class="s">"page-spread-left"</span><span class="t">/&gt;</span>
+<span class="t">&lt;/spine&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <code class="inline">page-progression-direction</code> はページが進む方向（<code class="inline">rtl</code> = 右綴じ・右から左へ、
+        <code class="inline">ltr</code> = 左綴じ・左から右へ）。<code class="inline">page-spread-left/right</code> は見開き表示時に
+        そのページが左右どちらに来るかの宣言で、表紙の次のページから交互に指定します。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">手順 3 — 各 XHTML に viewport を指定</p>
+<pre class="code"><span class="c">&lt;!-- text/p001.xhtml — 1 ページ 1 ファイル --&gt;</span>
+<span class="t">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="k">xmlns</span>=<span class="s">"http://www.w3.org/1999/xhtml"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">charset</span>=<span class="s">"utf-8"</span><span class="t">/&gt;</span>
+  <span class="c">&lt;!-- ★ FXL の心臓部：ページサイズを宣言 --&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">name</span>=<span class="s">"viewport"</span> <span class="k">content</span>=<span class="s">"width=1200, height=1800"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;title&gt;</span>p001<span class="t">&lt;/title&gt;</span>
+<span class="t">&lt;/head&gt;</span>
+<span class="t">&lt;body</span> <span class="k">style</span>=<span class="s">"margin:0;"</span><span class="t">&gt;</span>
+  <span class="c">&lt;!-- 画像 1 枚を全面に貼る漫画方式 --&gt;</span>
+  <span class="t">&lt;img</span> <span class="k">src</span>=<span class="s">"../images/p001.jpg"</span> <span class="k">alt</span>=<span class="s">""</span> <span class="k">width</span>=<span class="s">"1200"</span> <span class="k">height</span>=<span class="s">"1800"</span><span class="t">/&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>viewport の width/height は揃える</h4>
+          <p>
+            すべての XHTML で <strong>同じ viewport サイズ</strong>を指定するのが鉄則です。ページごとにサイズが違うと、
+            リーダーが拡大率を毎ページ変えてしまい、読書体験が破綻します。漫画は B6 比率の
+            <code class="inline">1200×1800</code> が定番、A5 サイズなら <code class="inline">1500×2100</code> 程度が
+            よく使われます。
+          </p>
+        </div>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">見開き図解</p>
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 280" aria-label="漫画 EPUB の見開きページ進行">
+          <!-- タイトル -->
+          <text x="360" y="22" text-anchor="middle" font-family="ui-mono, monospace" font-size="11" fill="#87867F" letter-spacing="2">PAGE-PROGRESSION-DIRECTION = RTL</text>
+
+          <!-- 見開き 1 -->
+          <rect class="wh" x="60" y="50" width="120" height="170" rx="4"/>
+          <rect class="wh" x="180" y="50" width="120" height="170" rx="4"/>
+          <text x="120" y="145" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">p002</text>
+          <text x="120" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#87867F">spread-left</text>
+          <text x="240" y="145" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">p001</text>
+          <text x="240" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#D97757">spread-right</text>
+          <text x="180" y="245" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">最初の見開き</text>
+
+          <!-- 矢印（右から左へ進む） -->
+          <line class="lc" x1="320" y1="135" x2="400" y2="135"/>
+          <polygon class="cl" points="395,130 405,135 395,140"/>
+          <text x="360" y="125" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#B85C3E">めくり</text>
+
+          <!-- 見開き 2 -->
+          <rect class="wh" x="420" y="50" width="120" height="170" rx="4"/>
+          <rect class="wh" x="540" y="50" width="120" height="170" rx="4"/>
+          <text x="480" y="145" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">p004</text>
+          <text x="480" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#87867F">spread-left</text>
+          <text x="600" y="145" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">p003</text>
+          <text x="600" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#D97757">spread-right</text>
+          <text x="540" y="245" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">次の見開き</text>
+        </svg>
+      </div>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>画像方式 vs テキスト方式</h4>
+          <p>
+            漫画は <strong>1 ページ = 画像 1 枚</strong>が一般的（テキスト検索や文字拡大は犠牲になるが、レイアウトが完全に保てる）。
+            一方、絵本や雑誌で文字検索を残したい場合は、画像と XHTML テキストを CSS の
+            <code class="inline">position: absolute</code> で重ねる「<strong>ハイブリッド方式</strong>」も使われます。
+            このときは Apple Books の独自拡張 <code class="inline">com.apple.ibooks.display-options</code> を併用すると挙動が安定します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 11 ============================== -->
+  <section id="vertical">
+    <div class="sec-head"><span class="idx">11</span><h2>日本語縦書き CSS</h2><span class="count">writing-mode · ruby · 縦中横</span></div>
+    <p class="sec-intro">
+      EPUB 3 の日本語縦書きは <strong>CSS Writing Modes Level 3</strong> がベース。<code class="inline">writing-mode</code> 一行で
+      文字組みが回転し、ルビ・圏点・縦中横といった日本語特有の組版を CSS と HTML で表現できます。
+      Web 標準の機能なので、Safari / Chrome でもそのまま動きます。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">基本 — writing-mode と spine の方向</p>
+<pre class="code"><span class="c">/* CSS — body 全体を縦書きに */</span>
+<span class="v">html</span> {
+  <span class="k">writing-mode</span>: vertical-rl;   <span class="c">/* 縦書き・右から左 */</span>
+  <span class="k">-epub-writing-mode</span>: vertical-rl; <span class="c">/* 古いリーダー互換 */</span>
+  <span class="k">font-family</span>: <span class="s">"Hiragino Mincho ProN"</span>, <span class="s">"YuMincho"</span>, serif;
+  <span class="k">line-height</span>: 1.8;
+}</pre>
+
+<pre class="code"><span class="c">&lt;!-- OPF — 縦書きの本は spine も右綴じに --&gt;</span>
+<span class="t">&lt;spine</span> <span class="k">page-progression-direction</span>=<span class="s">"rtl"</span><span class="t">&gt;</span>
+  <span class="t">&lt;itemref</span> <span class="k">idref</span>=<span class="s">"chap01"</span><span class="t">/&gt;</span>
+<span class="t">&lt;/spine&gt;</span></pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>writing-mode 値</th><th>意味</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">horizontal-tb</td><td>横書き・上から下（既定）</td><td>欧文・横組み和文</td></tr>
+          <tr><td class="mono">vertical-rl</td><td>縦書き・右から左へ進行</td><td>日本語の小説（最も一般的）</td></tr>
+          <tr><td class="mono">vertical-lr</td><td>縦書き・左から右へ進行</td><td>モンゴル語など特殊用途</td></tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">ルビ — HTML5 標準タグ</p>
+<pre class="code"><span class="c">&lt;!-- 漢字にふりがなを振る --&gt;</span>
+<span class="t">&lt;p&gt;</span>
+  <span class="t">&lt;ruby&gt;</span>電子書籍<span class="t">&lt;rt&gt;</span>でんししょせき<span class="t">&lt;/rt&gt;&lt;/ruby&gt;</span>の標準フォーマット
+<span class="t">&lt;/p&gt;</span>
+
+<span class="c">&lt;!-- モノルビ（一字ずつ振る） --&gt;</span>
+<span class="t">&lt;p&gt;</span>
+  <span class="t">&lt;ruby&gt;</span>電<span class="t">&lt;rt&gt;</span>でん<span class="t">&lt;/rt&gt;</span>子<span class="t">&lt;rt&gt;</span>し<span class="t">&lt;/rt&gt;</span>書<span class="t">&lt;rt&gt;</span>しょ<span class="t">&lt;/rt&gt;</span>籍<span class="t">&lt;rt&gt;</span>せき<span class="t">&lt;/rt&gt;&lt;/ruby&gt;</span>
+<span class="t">&lt;/p&gt;</span>
+
+<span class="c">&lt;!-- 非対応リーダー向けに rp で囲んでフォールバック --&gt;</span>
+<span class="t">&lt;ruby&gt;</span>仮名<span class="t">&lt;rp&gt;</span>（<span class="t">&lt;/rp&gt;&lt;rt&gt;</span>かな<span class="t">&lt;/rt&gt;&lt;rp&gt;</span>）<span class="t">&lt;/rp&gt;&lt;/ruby&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <code class="inline">&lt;rt&gt;</code> はルビ本体（フリガナ）、<code class="inline">&lt;rp&gt;</code> は
+        非対応環境で「（ ）」のような括弧として表示されるフォールバック文字。EPUB 3 標準対応で、リフロー / FXL 双方で動作します。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">圏点（傍点） — text-emphasis</p>
+<pre class="code"><span class="v">.emphasis</span> {
+  <span class="k">-webkit-text-emphasis-style</span>: filled sesame;  <span class="c">/* ゴマ点 */</span>
+  <span class="k">text-emphasis-style</span>:         filled sesame;
+  <span class="k">-webkit-text-emphasis-position</span>: over right;   <span class="c">/* 縦書き時は右側 */</span>
+  <span class="k">text-emphasis-position</span>:         over right;
+}</pre>
+
+<pre class="code"><span class="t">&lt;p&gt;</span>これは<span class="t">&lt;span</span> <span class="k">class</span>=<span class="s">"emphasis"</span><span class="t">&gt;</span>絶対に<span class="t">&lt;/span&gt;</span>大事だ。<span class="t">&lt;/p&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        小説で「ここを強調したい」ときに使う傍点。<code class="inline">filled</code>（黒丸）/ <code class="inline">open</code>（白丸）
+        × <code class="inline">dot</code> / <code class="inline">circle</code> / <code class="inline">sesame</code>（ゴマ点）/
+        <code class="inline">triangle</code> の組み合わせから選べます。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">縦中横 — text-combine-upright</p>
+<pre class="code"><span class="v">.tcy</span> {
+  <span class="k">-webkit-text-combine</span>:        horizontal;   <span class="c">/* WebKit 旧仕様 */</span>
+  <span class="k">text-combine-upright</span>:         all;          <span class="c">/* 標準 */</span>
+}</pre>
+
+<pre class="code"><span class="t">&lt;p&gt;</span>昭和<span class="t">&lt;span</span> <span class="k">class</span>=<span class="s">"tcy"</span><span class="t">&gt;</span>64<span class="t">&lt;/span&gt;</span>年は短かった。<span class="t">&lt;/p&gt;</span>
+<span class="t">&lt;p&gt;</span>第<span class="t">&lt;span</span> <span class="k">class</span>=<span class="s">"tcy"</span><span class="t">&gt;</span>12<span class="t">&lt;/span&gt;</span>巻発売中。<span class="t">&lt;/p&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        縦書きの中で <strong>2〜3 桁の数字や英字</strong>を横に並べて 1 マスに収める組版。<code class="inline">text-combine-upright: all</code>
+        を当てると、内側のテキスト全体が「1 文字分の正方形」に押し込められます。日付・巻数・章番号でよく使う表現。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">英数字の向き — text-orientation</p>
+<pre class="code"><span class="c">/* 縦書きでも英数字を横向きのまま回転させない */</span>
+<span class="v">.upright</span> {
+  <span class="k">text-orientation</span>: upright;
+}
+
+<span class="c">/* 既定: mixed = 全角は縦・半角英数は 90° 回転（横向き）で配置 */</span>
+<span class="v">html</span> {
+  <span class="k">writing-mode</span>: vertical-rl;
+  <span class="k">text-orientation</span>: mixed;  <span class="c">/* 既定値 */</span>
+}</pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>text-orientation 値</th><th>挙動</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">mixed</td><td>全角は縦、半角英数は横向き（既定）</td><td>標準の縦書き本文</td></tr>
+          <tr><td class="mono">upright</td><td>すべての文字を縦に立てる</td><td>英字も縦に並べたい特殊組版</td></tr>
+          <tr><td class="mono">sideways</td><td>文字全体を 90° 回転</td><td>欧文タイトルなど</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>3 つの "方向" が連動する</h4>
+          <p>
+            縦書き本では (1) CSS の <code class="inline">writing-mode: vertical-rl</code>、(2) OPF spine の
+            <code class="inline">page-progression-direction="rtl"</code>、(3) HTML 要素の
+            <code class="inline">dir="rtl"</code> あるいは <code class="inline">lang="ja"</code> ——この
+            <strong>3 段が揃って</strong>初めて期待通りの挙動になります。CSS だけ縦書きにしても、ページめくりが
+            横書き方向（左→右）のままだと違和感が出るので注意。
+          </p>
+        </div>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">完成形 — 小説の冒頭 1 ページ</p>
+<pre class="code"><span class="t">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="k">xmlns</span>=<span class="s">"http://www.w3.org/1999/xhtml"</span> <span class="k">xml:lang</span>=<span class="s">"ja"</span> <span class="k">lang</span>=<span class="s">"ja"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">charset</span>=<span class="s">"utf-8"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;title&gt;</span>第一章<span class="t">&lt;/title&gt;</span>
+  <span class="t">&lt;style&gt;</span>
+    <span class="v">html</span> { <span class="k">writing-mode</span>: vertical-rl; <span class="k">font-family</span>: <span class="s">"游明朝"</span>, serif; }
+    <span class="v">body</span> { <span class="k">line-height</span>: 1.8; <span class="k">margin</span>: 2em; }
+    <span class="v">h1</span>   { <span class="k">font-size</span>: 1.4em; <span class="k">margin-bottom</span>: 2em; }
+    <span class="v">.tcy</span> { <span class="k">text-combine-upright</span>: all; }
+    <span class="v">em</span>   { <span class="k">font-style</span>: normal; <span class="k">text-emphasis</span>: filled sesame; }
+  <span class="t">&lt;/style&gt;</span>
+<span class="t">&lt;/head&gt;</span>
+<span class="t">&lt;body&gt;</span>
+  <span class="t">&lt;h1&gt;</span>第<span class="t">&lt;span</span> <span class="k">class</span>=<span class="s">"tcy"</span><span class="t">&gt;</span>01<span class="t">&lt;/span&gt;</span>章<span class="t">&lt;/h1&gt;</span>
+  <span class="t">&lt;p&gt;</span>
+    <span class="t">&lt;ruby&gt;</span>吾輩<span class="t">&lt;rt&gt;</span>わがはい<span class="t">&lt;/rt&gt;&lt;/ruby&gt;</span>は<span class="t">&lt;em&gt;</span>猫<span class="t">&lt;/em&gt;</span>である。
+    名前はまだ無い。
+  <span class="t">&lt;/p&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>ブラウザで確認できる</h4>
+          <p>
+            このコードはそのまま <code class="inline">.html</code> として保存して Safari / Chrome で開けば、
+            EPUB リーダーなしでもレンダリング結果が確認できます。EPUB 化前のレイアウト調整は、ブラウザで
+            イテレーションするのが最速です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 12 ============================== -->
+  <section id="versions">
+    <div class="sec-head"><span class="idx">12</span><h2>EPUB 2 と EPUB 3 の違い</h2><span class="count">主要な変更点</span></div>
+    <p class="sec-intro">
+      現代の EPUB はほぼ EPUB 3 系（3.0 → 3.0.1 → 3.2 → 3.3）。EPUB 2 は 2007 年の規格ですが、互換性のため
+      いまも併存することがあります。
+    </p>
+    <div class="demos">
+      <table class="t">
+        <thead>
+          <tr><th>項目</th><th>EPUB 2.0.1</th><th>EPUB 3.x</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>本文言語</td><td>XHTML 1.1</td><td>XHTML 5（HTML5 ベース）</td></tr>
+          <tr><td>目次</td><td class="mono">toc.ncx</td><td class="mono">nav.xhtml</td></tr>
+          <tr><td>音声・動画</td><td>非対応</td><td>HTML5 video/audio 対応</td></tr>
+          <tr><td>JavaScript</td><td>非対応</td><td>正式対応</td></tr>
+          <tr><td>縦書き・ルビ</td><td>限定的</td><td>CSS Writing Modes / HTML5 ruby で正式対応</td></tr>
+          <tr><td>固定レイアウト</td><td>非標準</td><td>正式仕様化</td></tr>
+          <tr><td>Media Overlays</td><td>無し</td><td>SMIL で本文と音声を同期</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>日本語縦書きは EPUB 3 から</h4>
+          <p>
+            EPUB 3.0 で <code class="inline">writing-mode: vertical-rl</code> や HTML5 ruby が正式採用され、
+            日本の出版社が EPUB を本格採用するきっかけになりました。日本語コンテンツは原則 EPUB 3 と考えてよいです。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 13 ============================== -->
+  <section id="drm">
+    <div class="sec-head"><span class="idx">13</span><h2>DRM（デジタル著作権管理）</h2><span class="count">仕様の "上" のレイヤー</span></div>
+    <p class="sec-intro">
+      DRM は EPUB 仕様の<strong>本体に含まれません</strong>。OCF コンテナの仕様には
+      <code class="inline">META-INF/encryption.xml</code> という「暗号化されたファイルを記述する場所」だけが
+      規定されており、<strong>暗号化方式そのものは各社バラバラ</strong>。だから「EPUB は DRM フリー」とも
+      「EPUB は DRM 付き」とも言える両義的な状態です。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">主要 DRM 方式の比較</p>
+      <table class="t">
+        <thead>
+          <tr><th>方式</th><th>採用ストア</th><th>特徴</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Adobe ADEPT</strong></td>
+            <td>Kobo · 旧 NOOK · 多くの欧米書店</td>
+            <td>業界デファクト。Adobe ID で端末紐付け。Adobe Digital Editions 経由で読む</td>
+          </tr>
+          <tr>
+            <td><strong>Apple FairPlay</strong></td>
+            <td>Apple Books</td>
+            <td>Apple ID と端末紐付け。完全に閉じた独自実装</td>
+          </tr>
+          <tr>
+            <td><strong>Readium LCP</strong></td>
+            <td>EDRLab 主導 · 仏英の公共図書館</td>
+            <td>オープン仕様の DRM。パスフレーズ認証で端末数制限なし。最近採用が拡大中</td>
+          </tr>
+          <tr>
+            <td><strong>Marlin</strong></td>
+            <td>BookLive! など日本系</td>
+            <td>Intertrust 製。日本の電子書店で採用例あり</td>
+          </tr>
+          <tr>
+            <td><strong>Social DRM</strong></td>
+            <td>O'Reilly · 技術書出版社</td>
+            <td>暗号化せず、購入者情報を電子透かしで埋め込む "ゆるい DRM"</td>
+          </tr>
+          <tr>
+            <td><strong>Amazon (KFX/AZW)</strong></td>
+            <td>Kindle</td>
+            <td>※そもそも EPUB ではなく独自フォーマット。EPUB を入稿しても KFX に変換される</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">META-INF/encryption.xml の例</p>
+<pre class="code"><span class="c">&lt;?xml version="1.0"?&gt;</span>
+<span class="t">&lt;encryption</span> <span class="k">xmlns</span>=<span class="s">"urn:oasis:names:tc:opendocument:xmlns:container"</span>
+            <span class="k">xmlns:enc</span>=<span class="s">"http://www.w3.org/2001/04/xmlenc#"</span><span class="t">&gt;</span>
+  <span class="t">&lt;enc:EncryptedData&gt;</span>
+    <span class="t">&lt;enc:EncryptionMethod</span>
+      <span class="k">Algorithm</span>=<span class="s">"http://www.w3.org/2001/04/xmlenc#aes256-cbc"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;enc:CipherData&gt;</span>
+      <span class="t">&lt;enc:CipherReference</span> <span class="k">URI</span>=<span class="s">"OEBPS/text/chap01.xhtml"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;/enc:CipherData&gt;</span>
+  <span class="t">&lt;/enc:EncryptedData&gt;</span>
+<span class="t">&lt;/encryption&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        この XML が示すのは「<code class="inline">chap01.xhtml</code> は AES-256-CBC で暗号化されている」という事実だけ。
+        <strong>復号鍵の取得方法</strong>（ストアサーバへの認証など）は仕様外で、各 DRM ベンダの独自プロトコルです。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">フォントの難読化（Font Mangling）</p>
+<pre class="code"><span class="c">&lt;!-- IDPF Font Obfuscation --&gt;</span>
+<span class="t">&lt;enc:EncryptedData&gt;</span>
+  <span class="t">&lt;enc:EncryptionMethod</span>
+    <span class="k">Algorithm</span>=<span class="s">"http://www.idpf.org/2008/embedding"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;enc:CipherData&gt;</span>
+    <span class="t">&lt;enc:CipherReference</span> <span class="k">URI</span>=<span class="s">"OEBPS/fonts/NotoSerifJP.otf"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;/enc:CipherData&gt;</span>
+<span class="t">&lt;/enc:EncryptedData&gt;</span></pre>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>埋め込みフォントだけは "ほぼ全 EPUB" に DRM がかかる</h4>
+          <p>
+            商用フォントを EPUB に埋め込む場合、<strong>フォントベンダのライセンス上、難読化が必須</strong>な
+            ことが多く、本文に DRM をかけない技術書でもフォントだけは encryption.xml で
+            <code class="inline">http://www.idpf.org/2008/embedding</code> 方式で難読化されます。これは
+            "意味のある暗号化" ではなく、「直接フォントファイルを抜き出されないようにする」程度の措置。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 14 ============================== -->
+  <section id="media-overlays">
+    <div class="sec-head"><span class="idx">14</span><h2>Media Overlays（音声同期）</h2><span class="count">SMIL · Read Aloud</span></div>
+    <p class="sec-intro">
+      Media Overlays は、<strong>本文テキストと音声ナレーションを同期再生</strong>する EPUB 3 の機能。
+      語学学習書、視覚障害者向けアクセシブル本、読み聞かせ絵本などで使われます。同期記述には
+      <strong>SMIL（Synchronized Multimedia Integration Language）</strong>という別の XML 言語を使用します。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">仕組みの全体像</p>
+      <div class="svg-frame">
+        <svg viewBox="0 0 720 220" aria-label="Media Overlays の同期構造">
+          <!-- XHTML 本文 -->
+          <rect class="wh" x="30" y="40" width="200" height="140" rx="8"/>
+          <text x="130" y="62" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">本文 XHTML</text>
+          <text x="130" y="85" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">chap01.xhtml</text>
+          <line x1="50" y1="100" x2="210" y2="100" stroke="#E6E3DA" stroke-width="1"/>
+          <text x="50" y="120" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">&lt;p id="<tspan fill="#D97757">p001</tspan>"&gt;吾輩は…&lt;/p&gt;</text>
+          <text x="50" y="138" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">&lt;p id="<tspan fill="#D97757">p002</tspan>"&gt;名前は…&lt;/p&gt;</text>
+          <text x="50" y="156" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">&lt;p id="<tspan fill="#D97757">p003</tspan>"&gt;どこで…&lt;/p&gt;</text>
+
+          <!-- SMIL -->
+          <rect class="oa" x="270" y="40" width="180" height="140" rx="8"/>
+          <text x="360" y="62" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">SMIL</text>
+          <text x="360" y="85" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">chap01.smil</text>
+          <line x1="290" y1="100" x2="430" y2="100" stroke="#D1CFC5" stroke-width="1"/>
+          <text x="360" y="125" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">id "p001" ↔ 0:00–0:03</text>
+          <text x="360" y="143" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">id "p002" ↔ 0:03–0:07</text>
+          <text x="360" y="161" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">id "p003" ↔ 0:07–0:12</text>
+
+          <!-- 音声 -->
+          <rect class="wh" x="490" y="40" width="200" height="140" rx="8"/>
+          <text x="590" y="62" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">音声ファイル</text>
+          <text x="590" y="85" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">chap01.mp3</text>
+          <!-- 音波 -->
+          <path d="M 510 130 Q 525 110 540 130 T 570 130 T 600 130 T 630 130 T 660 130 T 680 130"
+                stroke="#D97757" stroke-width="2" fill="none"/>
+          <path d="M 510 150 Q 525 165 540 150 T 570 150 T 600 150 T 630 150 T 660 150 T 680 150"
+                stroke="#D97757" stroke-width="2" fill="none"/>
+
+          <!-- 矢印 -->
+          <line class="lc" x1="230" y1="110" x2="270" y2="110"/>
+          <polygon class="cl" points="265,105 275,110 265,115"/>
+          <line class="lc" x1="450" y1="110" x2="490" y2="110"/>
+          <polygon class="cl" points="485,105 495,110 485,115"/>
+        </svg>
+      </div>
+
+      <p class="demo-label" style="margin-top: 24px;">SMIL ファイルの中身</p>
+<pre class="code"><span class="c">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="t">&lt;smil</span> <span class="k">xmlns</span>=<span class="s">"http://www.w3.org/ns/SMIL"</span>
+      <span class="k">xmlns:epub</span>=<span class="s">"http://www.idpf.org/2007/ops"</span>
+      <span class="k">version</span>=<span class="s">"3.0"</span><span class="t">&gt;</span>
+  <span class="t">&lt;body&gt;</span>
+    <span class="t">&lt;seq</span> <span class="k">id</span>=<span class="s">"chap01"</span> <span class="k">epub:textref</span>=<span class="s">"chap01.xhtml"</span> <span class="k">epub:type</span>=<span class="s">"chapter"</span><span class="t">&gt;</span>
+
+      <span class="t">&lt;par</span> <span class="k">id</span>=<span class="s">"par1"</span><span class="t">&gt;</span>
+        <span class="t">&lt;text</span>  <span class="k">src</span>=<span class="s">"chap01.xhtml#p001"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;audio</span> <span class="k">src</span>=<span class="s">"audio/chap01.mp3"</span> <span class="k">clipBegin</span>=<span class="s">"0:00:00.000"</span> <span class="k">clipEnd</span>=<span class="s">"0:00:03.500"</span><span class="t">/&gt;</span>
+      <span class="t">&lt;/par&gt;</span>
+
+      <span class="t">&lt;par</span> <span class="k">id</span>=<span class="s">"par2"</span><span class="t">&gt;</span>
+        <span class="t">&lt;text</span>  <span class="k">src</span>=<span class="s">"chap01.xhtml#p002"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;audio</span> <span class="k">src</span>=<span class="s">"audio/chap01.mp3"</span> <span class="k">clipBegin</span>=<span class="s">"0:00:03.500"</span> <span class="k">clipEnd</span>=<span class="s">"0:00:07.200"</span><span class="t">/&gt;</span>
+      <span class="t">&lt;/par&gt;</span>
+
+    <span class="t">&lt;/seq&gt;</span>
+  <span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/smil&gt;</span></pre>
+
+      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
+        <code class="inline">&lt;par&gt;</code>（parallel）が同期の最小単位。「この text と この audio は<strong>並行して</strong>再生される」
+        という意味で、リーダーは音声再生に合わせて該当テキストをハイライトします。
+      </p>
+
+      <p class="demo-label" style="margin-top: 24px;">OPF 側での結びつけ</p>
+<pre class="code"><span class="t">&lt;manifest&gt;</span>
+  <span class="c">&lt;!-- 本文 XHTML に media-overlay 属性で SMIL を紐付け --&gt;</span>
+  <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"chap01"</span>      <span class="k">href</span>=<span class="s">"text/chap01.xhtml"</span>
+        <span class="k">media-type</span>=<span class="s">"application/xhtml+xml"</span>
+        <span class="k">media-overlay</span>=<span class="s">"chap01-smil"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"chap01-smil"</span> <span class="k">href</span>=<span class="s">"text/chap01.smil"</span>
+        <span class="k">media-type</span>=<span class="s">"application/smil+xml"</span><span class="t">/&gt;</span>
+  <span class="t">&lt;item</span> <span class="k">id</span>=<span class="s">"audio01"</span>     <span class="k">href</span>=<span class="s">"audio/chap01.mp3"</span>
+        <span class="k">media-type</span>=<span class="s">"audio/mpeg"</span><span class="t">/&gt;</span>
+<span class="t">&lt;/manifest&gt;</span>
+
+<span class="t">&lt;metadata&gt;</span>
+  <span class="c">&lt;!-- 全本の総再生時間（必須） --&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"media:duration"</span><span class="t">&gt;</span>0:24:35<span class="t">&lt;/meta&gt;</span>
+  <span class="c">&lt;!-- ハイライト表示用の CSS クラス --&gt;</span>
+  <span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"media:active-class"</span><span class="t">&gt;</span>-epub-media-overlay-active<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;/metadata&gt;</span></pre>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>絵本やアクセシビリティで強い武器</h4>
+          <p>
+            Apple Books の "Read Aloud"、児童書の "読み聞かせモード"、視覚障害者向けの DAISY 規格との橋渡しなど、
+            応用範囲が広い機能です。一方、対応リーダーが限定的（Apple Books と一部専用アプリのみ実用レベル）
+            なのが現状の弱点。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 15 ============================== -->
+  <section id="apple">
+    <div class="sec-head"><span class="idx">15</span><h2>Apple Books の独自拡張</h2><span class="count">com.apple.ibooks.*</span></div>
+    <p class="sec-intro">
+      Apple Books（旧 iBooks）は EPUB の "拡張パイオニア" として、仕様外の独自メタデータや CSS プロパティを
+      多数追加してきました。多くは <strong>後に EPUB 3 標準に取り込まれた</strong>もの（縦中横、テキストエンファシスなど）。
+      ただし現在も Apple Books でしか動かない独自機能はいくつか残っています。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">META-INF/com.apple.ibooks.display-options.xml</p>
+<pre class="code"><span class="c">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="t">&lt;display_options&gt;</span>
+
+  <span class="c">&lt;!-- iPad / iPhone 共通設定 --&gt;</span>
+  <span class="t">&lt;platform</span> <span class="k">name</span>=<span class="s">"*"</span><span class="t">&gt;</span>
+
+    <span class="c">&lt;!-- 埋め込みフォントを使う宣言（重要） --&gt;</span>
+    <span class="t">&lt;option</span> <span class="k">name</span>=<span class="s">"specified-fonts"</span><span class="t">&gt;</span>true<span class="t">&lt;/option&gt;</span>
+
+    <span class="c">&lt;!-- 固定レイアウト宣言（旧 iBooks 形式） --&gt;</span>
+    <span class="t">&lt;option</span> <span class="k">name</span>=<span class="s">"fixed-layout"</span><span class="t">&gt;</span>true<span class="t">&lt;/option&gt;</span>
+
+    <span class="c">&lt;!-- 表紙を見開きで表示せず単独ページに --&gt;</span>
+    <span class="t">&lt;option</span> <span class="k">name</span>=<span class="s">"open-to-spread"</span><span class="t">&gt;</span>false<span class="t">&lt;/option&gt;</span>
+
+    <span class="c">&lt;!-- インタラクティブ要素を許可 --&gt;</span>
+    <span class="t">&lt;option</span> <span class="k">name</span>=<span class="s">"interactive"</span><span class="t">&gt;</span>true<span class="t">&lt;/option&gt;</span>
+
+  <span class="t">&lt;/platform&gt;</span>
+
+  <span class="c">&lt;!-- iPhone のみの設定も可能 --&gt;</span>
+  <span class="t">&lt;platform</span> <span class="k">name</span>=<span class="s">"iphone"</span><span class="t">&gt;</span>
+    <span class="t">&lt;option</span> <span class="k">name</span>=<span class="s">"orientation-lock"</span><span class="t">&gt;</span>portrait-only<span class="t">&lt;/option&gt;</span>
+  <span class="t">&lt;/platform&gt;</span>
+
+<span class="t">&lt;/display_options&gt;</span></pre>
+
+      <table class="t">
+        <thead>
+          <tr><th>オプション</th><th>意味</th><th>備考</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">specified-fonts</td><td>埋め込みフォントを優先利用</td><td>これを <code class="inline">true</code> にしないと Apple Books はシステムフォントで上書きする</td></tr>
+          <tr><td class="mono">fixed-layout</td><td>固定レイアウト宣言</td><td>EPUB 3 の <code class="inline">rendition:layout</code> と二重に書くのが慣習</td></tr>
+          <tr><td class="mono">open-to-spread</td><td>表紙を単独表示するか</td><td>漫画では <code class="inline">false</code> 推奨（表紙単独 → 中身は見開き）</td></tr>
+          <tr><td class="mono">interactive</td><td>JS / インタラクティブ要素の許可</td><td>EPUB 3 では本来不要だが、古い iBooks 互換のため</td></tr>
+          <tr><td class="mono">orientation-lock</td><td>画面の向きを固定</td><td><code class="inline">portrait-only</code> / <code class="inline">landscape-only</code></td></tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">独自 CSS / メタデータ</p>
+<pre class="code"><span class="c">/* Apple Books 独自の本文配色制御 */</span>
+<span class="v">html</span> {
+  <span class="k">-webkit-text-size-adjust</span>: none;        <span class="c">/* 文字サイズ自動調整を抑止 */</span>
+}
+
+<span class="c">/* ナイトモード時の色を上書きさせない */</span>
+<span class="v">.cover</span> {
+  <span class="k">-webkit-color-correction</span>: srgb;
+}</pre>
+
+<pre class="code"><span class="c">&lt;!-- OPF metadata --&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"ibooks:version"</span><span class="t">&gt;</span>1.1.0<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"ibooks:specified-fonts"</span><span class="t">&gt;</span>true<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"ibooks:binding"</span><span class="t">&gt;</span>true<span class="t">&lt;/meta&gt;</span>     <span class="c">&lt;!-- 製本見せ --&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"ibooks:scroll-axis"</span><span class="t">&gt;</span>vertical<span class="t">&lt;/meta&gt;</span>
+<span class="t">&lt;meta</span> <span class="k">property</span>=<span class="s">"rendition:layout"</span><span class="t">&gt;</span>pre-paginated<span class="t">&lt;/meta&gt;</span></pre>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>display-options.xml は "保険" として今も書く</h4>
+          <p>
+            EPUB 3 標準の <code class="inline">rendition:*</code> プロパティだけで本来は十分ですが、
+            古い iBooks（iOS 8 以前）が EPUB 3 を完全には理解しないため、出版社の入稿要件として
+            <strong>display-options.xml の併記が今も必須</strong>なケースが残っています。Apple 公式の
+            "iBooks Asset Guide" で形式が定義されています。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 16 ============================== -->
+  <section id="readers">
+    <div class="sec-head"><span class="idx">16</span><h2>リーダーアプリの実装差異</h2><span class="count">主要 5 プラットフォーム</span></div>
+    <p class="sec-intro">
+      EPUB 仕様は厳密ですが、リーダーアプリの実装は<strong>仕様の解釈と対応範囲がバラバラ</strong>。
+      "Web のクロスブラウザ問題" と同じ構造で、出版社の現場では「Apple Books で確認 → Kobo で確認 → Kindle で確認」という
+      多段テストが日常的です。
+    </p>
+    <div class="demos">
+
+      <p class="demo-label">対応状況の比較マトリクス</p>
+      <table class="t">
+        <thead>
+          <tr>
+            <th>機能</th>
+            <th>Apple Books</th>
+            <th>Kobo</th>
+            <th>Google Play Books</th>
+            <th>Kindle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>EPUB 3 リフロー</td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+            <td><span class="pill pill-clay pill-dot">変換</span></td>
+          </tr>
+          <tr>
+            <td>固定レイアウト（FXL）</td>
+            <td><span class="pill pill-olive pill-dot">良好</span></td>
+            <td><span class="pill pill-olive pill-dot">良好</span></td>
+            <td><span class="pill pill-clay pill-dot">限定的</span></td>
+            <td><span class="pill pill-clay pill-dot">変換</span></td>
+          </tr>
+          <tr>
+            <td>縦書き（vertical-rl）</td>
+            <td><span class="pill pill-olive pill-dot">良好</span></td>
+            <td><span class="pill pill-olive pill-dot">良好</span></td>
+            <td><span class="pill pill-oat">部分</span></td>
+            <td><span class="pill pill-olive pill-dot">良好</span></td>
+          </tr>
+          <tr>
+            <td>ルビ</td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+            <td><span class="pill pill-oat">部分</span></td>
+            <td><span class="pill pill-olive pill-dot">完全</span></td>
+          </tr>
+          <tr>
+            <td>JavaScript</td>
+            <td><span class="pill pill-olive pill-dot">対応</span></td>
+            <td><span class="pill pill-clay pill-dot">無効化</span></td>
+            <td><span class="pill pill-clay pill-dot">無効化</span></td>
+            <td><span class="pill pill-clay pill-dot">無効化</span></td>
+          </tr>
+          <tr>
+            <td>Media Overlays</td>
+            <td><span class="pill pill-olive pill-dot">対応</span></td>
+            <td><span class="pill pill-clay pill-dot">非対応</span></td>
+            <td><span class="pill pill-clay pill-dot">非対応</span></td>
+            <td><span class="pill pill-clay pill-dot">非対応</span></td>
+          </tr>
+          <tr>
+            <td>埋め込みフォント</td>
+            <td><span class="pill pill-oat">要宣言</span></td>
+            <td><span class="pill pill-olive pill-dot">対応</span></td>
+            <td><span class="pill pill-olive pill-dot">対応</span></td>
+            <td><span class="pill pill-oat">置換あり</span></td>
+          </tr>
+          <tr>
+            <td>独自フォーマット変換</td>
+            <td><span class="pill pill-olive pill-dot">EPUB のまま</span></td>
+            <td><span class="pill pill-olive pill-dot">EPUB のまま</span></td>
+            <td><span class="pill pill-olive pill-dot">EPUB のまま</span></td>
+            <td><span class="pill pill-clay pill-dot">KFX へ変換</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="demo-label" style="margin-top: 24px;">レンダリングエンジン</p>
+      <table class="t">
+        <thead>
+          <tr><th>リーダー</th><th>エンジン</th><th>挙動の傾向</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Apple Books</strong></td><td class="mono">WebKit</td><td>Safari に近い。CSS の最新仕様への追従が早い</td></tr>
+          <tr><td><strong>Kobo (新)</strong></td><td class="mono">Readium 2 / Webkit</td><td>e-Ink 端末は描画速度優先で機能制限あり</td></tr>
+          <tr><td><strong>Google Play Books</strong></td><td class="mono">Chromium ベース</td><td>EPUB → Web 表示に内部変換。CSS が一部効かない</td></tr>
+          <tr><td><strong>Kindle</strong></td><td class="mono">独自</td><td>EPUB を入稿 → Amazon サーバで KFX に変換。再現性は最も低い</td></tr>
+          <tr><td><strong>Adobe Digital Editions</strong></td><td class="mono">RMSDK</td><td>Adobe DRM のリファレンス実装。CSS 対応は古め</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>Kindle は EPUB ではない（実質的に）</h4>
+          <p>
+            Kindle Direct Publishing には <code class="inline">.epub</code> を入稿できますが、Amazon サーバが
+            <strong>KFX という独自フォーマットへ自動変換</strong>します。この変換の過程で CSS の一部が無視されたり、
+            FXL の見開きが崩れたりするので、Kindle 向けには <strong>必ず Kindle Previewer で再確認</strong>するのが鉄則です。
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>「最大公約数」で書く戦略</h4>
+          <p>
+            実用上は<strong>最も対応が悪いリーダー</strong>を基準に書くのが安全。具体的には
+            「JavaScript を使わない」「複雑な CSS（grid, flexbox の入れ子, custom properties）を避ける」
+            「Apple 独自拡張は併記する」という保守的方針を取ると、5 プラットフォーム横断で破綻しにくくなります。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 17 ============================== -->
+  <section id="tools">
+    <div class="sec-head"><span class="idx">17</span><h2>触って確かめるためのツール</h2><span class="count">macOS で使えるもの</span></div>
+    <p class="sec-intro">
+      実際に EPUB を分解・作成・検証するための定番ツールを挙げます。手を動かすのが一番理解が早いです。
+    </p>
+    <div class="demos">
+      <ol class="serif-list">
+        <li><div><strong>unzip / Finder で解凍</strong>：手元にある <code class="inline">.epub</code> をコピーして拡張子を <code class="inline">.zip</code> にすれば中身が見える。EPUB の正体を実感する最短ルート。</div></li>
+        <li><div><strong>EPUBCheck</strong>：W3C 公式の検証ツール（Java）。<code class="inline">brew install epubcheck</code> で入る。仕様違反をエラーで教えてくれる。</div></li>
+        <li><div><strong>Sigil</strong>：オープンソースの EPUB 専用エディタ。WYSIWYG ではなくコード編集寄り。GUI で manifest や spine を弄れる。</div></li>
+        <li><div><strong>Calibre</strong>：電子書籍管理アプリ。MOBI/AZW3 ⇄ EPUB 変換、メタデータ編集、リーダー機能を兼備。</div></li>
+        <li><div><strong>Apple Books</strong>：macOS 標準。手元の <code class="inline">.epub</code> をダブルクリックすれば読める。リファレンス実装的に挙動が見られる。</div></li>
+        <li><div><strong>Pandoc</strong>：Markdown ↔ EPUB の相互変換が可能。<code class="inline">pandoc input.md -o book.epub</code> の 1 行で生成できる。EPUB 入門に最適。</div></li>
+      </ol>
+
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>まず Pandoc で 1 つ作ってみる</h4>
+          <p>
+            手持ちの Markdown があれば <code class="inline">pandoc README.md -o test.epub</code> だけで EPUB が作れます。
+            その <code class="inline">test.epub</code> を <code class="inline">.zip</code> に改名して解凍すれば、
+            ここまで説明したファイル構造がそのまま現れます。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Footer ============================== -->
+  <footer>
+    <span class="k">"EPUB は出版業界の作法で梱包された Web サイトである。"</span>
+    <span>EPUB 3.3 仕様 · <a href="https://www.w3.org/TR/epub-33/">w3.org/TR/epub-33</a></span>
+  </footer>
+
+</div>
+</body>
+</html>

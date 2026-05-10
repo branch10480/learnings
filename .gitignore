@@ -1,0 +1,17 @@
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# python http.server etc
+__pycache__/
+*.pyc
+
+# local-only drafts
+entries/_drafts/
