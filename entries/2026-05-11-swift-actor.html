@@ -70,6 +70,23 @@
     border-bottom: var(--b-rule);
     margin-bottom: 12px;
   }
+  a.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    text-decoration: none;
+    margin-bottom: 28px;
+    padding: 6px 12px;
+    border-radius: var(--r-pill);
+    border: var(--b-rule);
+    background: var(--paper);
+    transition: color 120ms, border-color 120ms;
+  }
+  a.back-link:hover { color: var(--slate); border-color: var(--slate); }
   .eyebrow {
     font-family: var(--mono);
     font-size: 12px;
@@ -375,6 +392,7 @@
 <div class="wrap">
 
   <header class="masthead">
+    <a href="../index.html" class="back-link">← All entries</a>
     <div class="eyebrow">Language deep-dive · Swift 5.5+</div>
     <h1 class="display">Actor は <em>キューを内蔵した</em>参照型である。</h1>
     <p class="lead">
