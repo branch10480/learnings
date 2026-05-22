@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>EPUB とは何か — 仕様と内部構造の解説</title>
 
 <!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
@@ -50,6 +51,39 @@
 
     --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
     --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  }
+
+  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
+     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
+     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。markdownobserver の
+     user.css と同じ dark トークンを採用。SVG 図解は inline fill 属性で色を
+     持つため Dark でも light "paper insert" として残す (Apple Notes reader 方式)。 */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ivory:   #1a1916;
+      --paper:   #26241f;
+      --slate:   #d4cfc1;
+      --clay:    #D97757;
+      --clay-d:  #e08576;
+      --oat:     #4a463d;
+      --olive:   #a8c97f;
+      --olive-d: #b8df96;
+      --mustard: #e0bb7a;
+      --ruby:    #d97766;
+      --g100:    #26241f;
+      --g200:    #36332d;
+      --g300:    #3a3833;
+      --g500:    #9a958a;
+      --g700:    #c8c2b3;
+
+      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+    }
+    .svg-frame { background: #FAF9F5; border-color: #3a3833; }
+    .callout-warn  { background: rgba(224, 187, 122, 0.10); }
+    .callout-warn .ico { color: #e0bb7a; }
+    .callout-error { background: rgba(217, 119, 102, 0.10); }
+    code.inline { background: #36332d; }
   }
 
   * { box-sizing: border-box; }
