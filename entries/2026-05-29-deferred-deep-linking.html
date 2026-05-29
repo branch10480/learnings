@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Deferred Deep Linking の仕組み</title>
+
+<!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
+<meta name="learning:title" content="Deferred Deep Linking の仕組み">
+<meta name="learning:date" content="2026-05-29">
+<meta name="learning:tags" content="deep-linking, mobile, ios, attribution, privacy, apple">
+<meta name="learning:summary" content="アプリ未インストールのユーザーを、インストールを挟んでもリンク先の特定画面へ着地させる技術。ストアがリンク情報をアプリに渡さないプライバシー境界を、Android は Play Install Referrer（決定論的）、iOS はフィンガープリンティング・クリップボード・App Clips で迂回する。Universal Links や SKAdNetwork / AdAttributionKit との関係、Firebase Dynamic Links 終了（2025-08）後の選択肢までを通読する。">
+<meta name="learning:reading-time" content="18">
+<!-- =============================================================== -->
+
+<style>
+  :root {
+    --ivory:   #FAF9F5;
+    --paper:   #FFFFFF;
+    --slate:   #141413;
+    --clay:    #D97757;
+    --clay-d:  #B85C3E;
+    --oat:     #E3DACC;
+    --olive:   #788C5D;
+    --olive-d: #5C6E45;
+    --mustard: #C78E3F;
+    --ruby:    #B04A3F;
+    --g100:    #F0EEE6;
+    --g200:    #E6E3DA;
+    --g300:    #D1CFC5;
+    --g500:    #87867F;
+    --g700:    #3D3D3A;
+
+    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
+             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
+    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
+             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    --r-pill:  999px;
+    --r-card:  14px;
+    --r-panel: 12px;
+    --r-row:   8px;
+    --r-chip:  6px;
+
+    --b-hair: 1px solid var(--g200);
+    --b-rule: 1.5px solid var(--g300);
+    --b-strong: 1.5px solid var(--slate);
+
+    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
+    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+
+    /* semantic aliases — dark で値だけ再マップする。コンポーネントは var() で
+       参照するので、CSS のソース順（@media を前に置くか後に置くか）に依存せず
+       dark が確実に効く。直値 + @media セレクタ上書きだと同詳細度でソース順負け
+       する（learnings 旧 entry が踏んでいた罠）ため、design-system 流の変数方式に倣う。 */
+    --callout-warn-bg:  #FFF8EB;
+    --callout-warn-fg:  #8C6A1F;
+    --callout-error-bg: #FBEEEC;
+    --callout-error-fg: var(--ruby);
+    --svg-frame-bg:     var(--paper);
+    --chip-bg:          var(--g100);
+  }
+
+  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
+     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
+     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。learnings 既存 entry と
+     同じ dark トークンを採用（リポジトリ内で dark 表示を揃えるため）。SVG 図解は
+     inline fill 属性で色を持つため Dark でも light "paper insert" として残す。 */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ivory:   #1a1916;
+      --paper:   #26241f;
+      --slate:   #d4cfc1;
+      --clay:    #D97757;
+      --clay-d:  #e08576;
+      --oat:     #4a463d;
+      --olive:   #a8c97f;
+      --olive-d: #b8df96;
+      --mustard: #e0bb7a;
+      --ruby:    #d97766;
+      --g100:    #26241f;
+      --g200:    #36332d;
+      --g300:    #3a3833;
+      --g500:    #9a958a;
+      --g700:    #c8c2b3;
+
+      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+
+      /* semantic aliases を dark 値に再マップ（コンポーネント側は var() 参照なので
+         ここを書き換えるだけで dark 表示が切り替わる。セレクタ上書き不要 = 順序非依存）。
+         --svg-frame-bg は dark でも light ivory に固定 = SVG 図解が inline fill で
+         light 色を持つための "paper insert"（Apple Notes reader 方式）。 */
+      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
+      --callout-warn-fg:  #e0bb7a;
+      --callout-error-bg: rgba(217, 119, 102, 0.10);
+      --callout-error-fg: #d97766;
+      --svg-frame-bg:     #FAF9F5;
+      --chip-bg:          #36332d;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+
+  /* ───────────── Masthead ───────────── */
+  header.masthead {
+    padding: 80px 0 56px;
+    border-bottom: var(--b-rule);
+    margin-bottom: 12px;
+  }
+  a.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--g500);
+    text-decoration: none;
+    margin-bottom: 28px;
+    padding: 6px 12px;
+    border-radius: var(--r-pill);
+    border: var(--b-rule);
+    background: var(--paper);
+    transition: color 120ms, border-color 120ms;
+  }
+  @media (hover: hover) {
+    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--g500);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 24px; height: 1.5px;
+    background: var(--clay);
+  }
+  h1.display {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 5.2vw, 60px);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    max-width: 20ch;
+    /* 「仕組み」のような和文の文節が単語途中で改行されるのを防ぐ（CJK のみに効く） */
+    word-break: keep-all;
+    line-break: strict;
+  }
+  h1.display em { font-style: italic; color: var(--clay); }
+  .lead {
+    font-size: 16.5px;
+    color: var(--g700);
+    margin: 22px 0 0;
+    max-width: 680px;
+  }
+  .lead a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--g500);
+  }
+  .meta span strong { color: var(--g700); font-weight: 500; }
+
+  /* ───────────── TOC pills ───────────── */
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 26px 0 0;
+  }
+  nav.toc a {
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border: var(--b-rule);
+    border-radius: var(--r-pill);
+    text-decoration: none;
+    color: var(--g700);
+    background: var(--paper);
+    transition: border-color 120ms, color 120ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
+  @media (hover: hover) {
+    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
+    nav.toc a:hover .n { color: var(--clay); }
+  }
+
+  /* ───────────── Section ───────────── */
+  section { margin-top: 70px; scroll-margin-top: 28px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--clay);
+    font-weight: 600;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 27px;
+    margin: 0;
+    letter-spacing: -0.012em;
+  }
+  .sec-body { margin-left: 50px; max-width: 820px; }
+  @media (max-width: 640px) { .sec-body { margin-left: 0; } }
+  .sec-body p { margin: 0 0 15px; color: var(--g700); }
+  .sec-body p.first { font-size: 16.5px; color: var(--slate); }
+  .sec-body strong { color: var(--slate); font-weight: 600; }
+  .sec-body em { font-style: italic; }
+  .sec-body h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 19px;
+    color: var(--slate);
+    margin: 30px 0 10px;
+    letter-spacing: -0.008em;
+  }
+  .sec-body a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  .demo-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--g500);
+    margin: 26px 0 8px;
+  }
+
+  /* ───────────── Callout ───────────── */
+  .callout {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+    margin: 20px 0;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-left: 4px solid var(--clay);
+    border-radius: var(--r-panel);
+  }
+  .callout .ico { font-family: var(--serif); font-style: italic; font-size: 22px; line-height: 1; color: var(--clay); }
+  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
+  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
+  .callout-note    { border-left-color: var(--clay); }
+  .callout-success { border-left-color: var(--olive); }
+  .callout-success .ico { color: var(--olive-d); }
+  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
+  .callout-warn .ico { color: var(--callout-warn-fg); }
+  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
+  .callout-error .ico { color: var(--callout-error-fg); }
+
+  /* ───────────── Table ───────────── */
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    font-size: 13.5px;
+    margin: 20px 0;
+  }
+  table.t th, table.t td { text-align: left; padding: 11px 14px; border-bottom: var(--b-hair); vertical-align: top; }
+  table.t thead th {
+    font: 500 11.5px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--g500);
+    background: var(--g100);
+  }
+  table.t tbody tr:last-child td { border-bottom: none; }
+  table.t td .k { color: var(--slate); font-weight: 600; }
+
+  /* ───────────── Code ───────────── */
+  pre.code {
+    margin: 16px 0;
+    background: var(--g100);
+    border: var(--b-hair);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--g700);
+    overflow-x: auto;
+  }
+  pre.code .k { color: var(--olive-d); }
+  pre.code .s { color: var(--clay-d); }
+  pre.code .c { color: var(--g500); font-style: italic; }
+  pre.code .v { color: var(--slate); }
+  code.inline {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--chip-bg);
+    padding: 1px 6px;
+    border-radius: var(--r-chip);
+    color: var(--g700);
+  }
+
+  /* ───────────── Lists ───────────── */
+  ol.serif-list { list-style: none; counter-reset: serif; padding: 0; margin: 18px 0; }
+  ol.serif-list li {
+    counter-increment: serif;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: var(--b-hair);
+  }
+  ol.serif-list li:last-child { border-bottom: none; }
+  ol.serif-list li::before {
+    content: counter(serif, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--clay);
+    padding-top: 3px;
+  }
+  ol.serif-list li strong { color: var(--slate); }
+  ol.serif-list li p { margin: 4px 0 0; font-size: 13.5px; color: var(--g700); }
+  ul.dot-list { list-style: none; padding: 0; margin: 16px 0; }
+  ul.dot-list li { padding: 7px 0 7px 22px; position: relative; font-size: 14.5px; color: var(--g700); }
+  ul.dot-list li::before {
+    content: "";
+    position: absolute; left: 4px; top: 15px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--clay);
+  }
+  ul.dot-list li strong { color: var(--slate); }
+
+  /* ───────────── KPI ───────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin: 22px 0 4px;
+  }
+  .kpi {
+    background: var(--paper);
+    border: var(--b-rule);
+    border-radius: var(--r-panel);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kpi .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--g500); }
+  .kpi .val { font-family: var(--serif); font-size: 27px; font-weight: 500; line-height: 1.1; color: var(--slate); letter-spacing: -0.01em; }
+  .kpi .sub { font-family: var(--mono); font-size: 11px; color: var(--g500); }
+
+  /* ───────────── SVG ───────────── */
+  .svg-frame { background: var(--svg-frame-bg); border: var(--b-rule); border-radius: var(--r-panel); padding: 22px; margin: 20px 0; }
+  .svg-frame svg { width: 100%; height: auto; display: block; }
+  .svg-cap { font-family: var(--mono); font-size: 11px; color: var(--g500); margin-top: 12px; text-align: center; }
+  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
+  .fl { fill: var(--g300); }
+  .cl { fill: var(--clay); }
+  .ol { fill: var(--olive); }
+  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
+  .sl { fill: var(--slate); }
+  .wh { fill: #FFFFFF; stroke: var(--g500); stroke-width: 2.5; }
+  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lo { stroke: var(--olive); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .lm { stroke: #C78E3F; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .da { stroke-dasharray: 5 5; }
+
+  /* ───────────── Footer ───────────── */
+  footer {
+    margin-top: 110px;
+    border-top: var(--b-rule);
+    padding-top: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--g500);
+  }
+  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
+  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============================== Masthead ============================== -->
+  <header class="masthead">
+    <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
+    <div class="eyebrow">Mobile · Deep Linking · Attribution</div>
+    <h1 class="display">Deferred Deep Linking の<em>仕組み</em></h1>
+    <p class="lead">
+      「リンクをタップ → アプリ未インストール → ストアでインストール → <strong>それでも狙った画面に着地する</strong>」。
+      この一見あたりまえの体験は、ストアがリンク情報をアプリに渡さない<em>プライバシーの壁</em>を、
+      プラットフォームごとに異なる手段で迂回することで成立している。その仕組みを、Android / iOS の
+      非対称性と <a href="https://firebase.google.com/support/dynamic-links-faq">Firebase Dynamic Links 終了（2025-08）</a>後の現在地まで含めて分解する。
+    </p>
+    <div class="meta">
+      <span><strong>Date</strong> 2026-05-29</span>
+      <span><strong>Reading</strong> 18 min</span>
+      <span><strong>Platforms</strong> iOS · Android</span>
+      <span><strong>Tags</strong> deep-linking · attribution · privacy</span>
+    </div>
+    <nav class="toc">
+      <a href="#tldr">3行で <span class="n">01</span></a>
+      <a href="#kinds">3種類のリンク <span class="n">02</span></a>
+      <a href="#wall">核心の壁 <span class="n">03</span></a>
+      <a href="#android">Android <span class="n">04</span></a>
+      <a href="#ios">iOS の3迂回 <span class="n">05</span></a>
+      <a href="#flow">全体フロー <span class="n">06</span></a>
+      <a href="#attribution">計測との交差 <span class="n">07</span></a>
+      <a href="#ecosystem">2025–2026 <span class="n">08</span></a>
+      <a href="#pitfalls">実装の勘所 <span class="n">09</span></a>
+    </nav>
+  </header>
+
+  <!-- ============================== 01 TL;DR ============================== -->
+  <section id="tldr">
+    <div class="sec-head"><span class="idx">01</span><h2>3行で言うと</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        <strong>Deferred Deep Linking（遅延ディープリンク, DDL）</strong>とは、
+        <em>アプリを持っていない</em>ユーザーがリンクをタップしたとき、
+        インストールという「中断」を挟んでも、初回起動時に<strong>本来開きたかった特定の画面・コンテンツへ着地させる</strong>技術のこと。
+      </p>
+      <ul class="dot-list">
+        <li>通常のディープリンクは「<strong>すでにアプリがある</strong>ユーザーを正しい画面へ」運ぶ。DDL は「<strong>これからインストールする</strong>ユーザーを正しい画面へ」運ぶ — ここが決定的に難しい。</li>
+        <li>難しさの正体は<strong>プライバシー境界</strong>。App Store / Play Store は「どのリンクから来たか」をインストール後のアプリに教えてくれない（指紋採取・追跡を防ぐための意図的な遮断）。</li>
+        <li>だから DDL は壁を<strong>迂回</strong>する。Android は OS 公式の <em>Play Install Referrer</em>（決定論的）。iOS は公式手段が無く、<em>フィンガープリンティング</em>（確率的）・<em>クリップボード</em>・<em>App Clips</em> を組み合わせる。</li>
+      </ul>
+
+      <p class="demo-label">数字で見る DDL</p>
+      <div class="kpi-grid">
+        <div class="kpi"><span class="lbl">FDL 終了</span><span class="val">2025-08-25</span><span class="sub">Firebase Dynamic Links</span></div>
+        <div class="kpi"><span class="lbl">iOS fingerprint 窓</span><span class="val">10分〜72h</span><span class="sub">確率マッチ有効期間</span></div>
+        <div class="kpi"><span class="lbl">Play Referrer 保持</span><span class="val">90日</span><span class="sub">再インストールまで不変</span></div>
+        <div class="kpi"><span class="lbl">AAK 再エンゲージ</span><span class="val">35日</span><span class="sub">Universal Link 経由</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 02 kinds ============================== -->
+  <section id="kinds">
+    <div class="sec-head"><span class="idx">02</span><h2>まず「3種類のリンク」を分ける</h2></div>
+    <div class="sec-body">
+      <p class="first">DDL を理解する前に、混同されがちな3つの概念を分離しておく。これらは<em>積み重なった層</em>であって、対立概念ではない。</p>
+
+      <table class="t">
+        <thead>
+          <tr><th>種類</th><th>解決する問題</th><th>アプリの有無</th><th>iOS / Android の実体</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="k">URL スキーム</span><br><code class="inline">myapp://item/42</code></td>
+            <td>アプリ内の特定画面を開く（最古の方式）</td>
+            <td>インストール済み前提</td>
+            <td>カスタムスキーム。未登録だと無反応・他アプリに乗っ取られうる</td>
+          </tr>
+          <tr>
+            <td><span class="k">Universal Links / App Links</span><br><code class="inline">https://ex.com/item/42</code></td>
+            <td>通常の <code class="inline">https</code> URL で<em>直接</em>アプリを開く（無ければ Web へ）</td>
+            <td>インストール済み前提</td>
+            <td>iOS=<code class="inline">apple-app-site-association</code>, Android=<code class="inline">assetlinks.json</code> をドメインに置き OS が所有権を検証</td>
+          </tr>
+          <tr>
+            <td><span class="k">Deferred Deep Link</span></td>
+            <td><strong>未インストール</strong>ユーザーを、インストール後に目的地へ</td>
+            <td>未インストールを扱う</td>
+            <td>OS 標準機能では完結しない。referrer / fingerprint / clipboard で文脈を「運ぶ」</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Universal Links（iOS）と App Links（Android）は「アプリが<em>既にある</em>」ケースの王道で、
+        どちらも <strong>HTTPS ドメインの所有権検証</strong>を土台にする。OS はリンクをタップした瞬間に
+        「このURLを処理できる検証済みアプリがあるか？」を確認し、あれば即アプリを開き、なければブラウザに落とす。
+      </p>
+      <p>
+        DDL はそのさらに上の層だ。<strong>「アプリが無いから、まずインストールさせる。でもインストール後に元の目的地を覚えておく」</strong>
+        — この「覚えておく」を OS が手伝ってくれないところに、すべての複雑さが宿る。
+      </p>
+
+      <p class="demo-label">Universal Links 用 apple-app-site-association（ドメイン直下に配置）</p>
+<pre class="code"><span class="c">// https://ex.com/.well-known/apple-app-site-association  (Content-Type: application/json)</span>
+{
+  <span class="s">"applinks"</span>: {
+    <span class="s">"apps"</span>: [],
+    <span class="s">"details"</span>: [
+      {
+        <span class="s">"appID"</span>: <span class="s">"TEAMID.com.example.app"</span>,
+        <span class="s">"paths"</span>: [ <span class="s">"/item/*"</span>, <span class="s">"/invite/*"</span> ]
+      }
+    ]
+  }
+}</pre>
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>所有権検証 = なりすまし防止</h4>
+          <p>AASA / assetlinks.json をドメインに置けるのは、そのドメインを管理できる人だけ。これにより「他人のドメインのリンクを横取りするアプリ」を OS レベルで防いでいる。DDL ベンダーが独自ドメイン（短縮URL）を要求するのもこの仕組みに乗るため。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 03 wall ============================== -->
+  <section id="wall">
+    <div class="sec-head"><span class="idx">03</span><h2>核心の壁 — ストアはリンク情報を渡さない</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        DDL の本質的な課題はただ一つ。<strong>「リンクをクリックした事実」と「インストール後に初めて起動したアプリ」の間が、ストアによって意図的に分断されている</strong>こと。
+      </p>
+      <p>
+        あなたがリンクをタップ → App Store / Play Store に飛ばされ → アプリをインストール → 起動する。
+        このとき、アプリは「自分がどのリンク経由でインストールされたか」を<em>知らされない</em>。
+        ストアは教えてくれないし、それは仕様だ。直接データを渡せてしまうと、
+        大規模なユーザー追跡・フィンガープリンティングの温床になるため、Apple も Google も意図的に塞いでいる。
+      </p>
+      <p>
+        したがって DDL の実装とは、突き詰めれば<strong>「この壁をどう迂回して、クリック時の文脈をインストール後のアプリへ運ぶか」</strong>の一点に尽きる。
+        そして<em>運び方</em>がプラットフォームによって大きく違う。ここに iOS / Android の非対称性が生まれる。
+      </p>
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>「ディープリンク」と「アトリビューション」は別物</h4>
+          <p>文脈を運ぶ仕組みは、しばしば「どの広告経由でインストールされたか」を測る<em>アトリビューション</em>（後述の SKAdNetwork 等）と混同される。DDL は<strong>ルーティング</strong>（どの画面に着地させるか）、アトリビューションは<strong>計測</strong>（どこから来たか）。同じ MMP SDK が両方を提供することが多いが、目的は分けて考えると整理しやすい。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 04 android ============================== -->
+  <section id="android">
+    <div class="sec-head"><span class="idx">04</span><h2>Android — Play Install Referrer（決定論・OS公式）</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        Android には壁を越える<strong>OS 公式の正規ルート</strong>がある。それが
+        <a href="https://developer.android.com/google/play/installreferrer/library">Play Install Referrer API</a> だ。
+        Play Store 自身が referrer 文字列を保持し、インストール後にアプリの SDK がそれを取得できる。
+        マッチは推測ではなく<strong>ほぼ 100% 正確（決定論的）</strong>になる。
+      </p>
+
+      <h3>仕組み</h3>
+      <ol class="serif-list">
+        <li><div><strong>クリック時</strong><p>リンク（広告）に一意の <code class="inline">referrer</code> パラメータ（click_id 等）を付与し、Play Store へ誘導。Store がこの値を一時保存する。</p></div></li>
+        <li><div><strong>インストール → 初回起動</strong><p>アプリ内の SDK が <code class="inline">InstallReferrerClient</code> で Play Store に接続し、保存された referrer を取り出す。</p></div></li>
+        <li><div><strong>復元 → 着地</strong><p>取り出した click_id をバックエンドに問い合わせ、元の deep link 先を解決して目的画面へ遷移。</p></div></li>
+      </ol>
+
+      <p class="demo-label">InstallReferrerClient（Kotlin）— 初回起動時に1回だけ呼ぶ</p>
+<pre class="code"><span class="k">val</span> client = InstallReferrerClient.newBuilder(context).build()
+client.startConnection(<span class="k">object</span> : InstallReferrerStateListener {
+  <span class="k">override fun</span> onInstallReferrerSetupFinished(responseCode: <span class="v">Int</span>) {
+    <span class="k">if</span> (responseCode == InstallReferrerResponse.OK) {
+      <span class="k">val</span> details = client.installReferrer        <span class="c">// ReferrerDetails</span>
+      <span class="k">val</span> referrer = details.installReferrer       <span class="c">// "utm_source=...&click_id=abc123"</span>
+      <span class="k">val</span> clickTs  = details.referrerClickTimestampSeconds
+      <span class="c">// → click_id を解決して目的画面へルーティング</span>
+      client.endConnection()
+    }
+  }
+  <span class="k">override fun</span> onInstallReferrerServiceDisconnected() { <span class="c">/* retry */</span> }
+})</pre>
+
+      <ul class="dot-list">
+        <li><strong>AIDL インターフェース</strong>として実装される。Kotlin/Java からは <code class="inline">Play Install Referrer Library</code> でラップして使うのが標準。</li>
+        <li>referrer 情報は<strong>90日間</strong>保持され、再インストールしない限り変わらない。無駄な呼び出しを避けるため<strong>初回起動の1回だけ</strong>取得するのが定石。</li>
+        <li>旧来の <code class="inline">install_referrer</code> ブロードキャスト Intent は<strong>廃止済み</strong>。Play Store はもうこの broadcast を送らない。</li>
+      </ul>
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>Android が「楽な側」である理由</h4>
+          <p>click_id を Play Store 自身が永続化してくれるので、確率マッチも時間窓も要らない。iOS で必要になる回りくどい迂回は、Android では基本的に不要。DDL の難しさは事実上「iOS をどうするか」の問題に集約される。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 05 ios ============================== -->
+  <section id="ios">
+    <div class="sec-head"><span class="idx">05</span><h2>iOS — 公式 referrer が無い世界の3つの迂回</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        iOS には Install Referrer に相当する公式機構が<strong>存在しない</strong>。Apple は App Store をプライバシー境界として明確に扱う。
+        そのため DDL ベンダーは3つの迂回手段を、単独またはハイブリッドで使う。
+      </p>
+
+      <h3>(a) フィンガープリンティング — 確率的マッチング</h3>
+      <p>
+        最も歴史が長い方式。<strong>クリック時に環境の「スナップショット」</strong>（IP アドレス・User-Agent・デバイス機種・画面解像度・OS バージョン等の<em>非識別シグナルの組み合わせ</em>）を取り、
+        サーバーに保存する。ユーザーがインストールして初回起動すると、<strong>2枚目のスナップショット</strong>を端末側で取得。
+        両者を<strong>短い時間窓（典型的に 10分〜72時間）</strong>内で突き合わせ、一致信頼度が閾値を超えれば元のパラメータを引き渡す。
+      </p>
+      <div class="callout callout-error">
+        <div class="ico">!</div>
+        <div>
+          <h4>モダン iOS で精度が落ちている</h4>
+          <p><strong>App Tracking Transparency (ATT)</strong> が IDFA ベースのマッチングを制限し、<strong>iCloud Private Relay</strong>（iOS 15+）が iCloud+ ユーザーの IP アドレスを隠す。フィンガープリンティングの主軸だった IP マッチが Private Relay 下では機能しないため、確率方式単独の信頼性は年々下がっている。なお Apple のガイドライン上、<em>10分・単回・非追跡</em>の範囲なら Tracking には当たらないとされる運用が一般的。</p>
+        </div>
+      </div>
+
+      <h3>(b) クリップボード — 決定論的マッチング</h3>
+      <p>
+        フィンガープリンティングが Private Relay で崩れる問題への回答。<strong>deep link そのものを端末のクリップボード（Universal Pasteboard）にコピー</strong>しておき、
+        インストール後の初回起動でアプリがそれを読み取る。ネットワーク識別子に一切依存しないため、Private Relay ユーザーでも<strong>確実に</strong>復元できる。Branch の <em>NativeLink</em> がこの代表例。
+      </p>
+
+      <p class="demo-label">クリップボードから deep link を復元（Swift）</p>
+<pre class="code"><span class="c">// アプリ初回起動時。UIPasteboard へのアクセスはユーザーに見える操作</span>
+<span class="k">if</span> UIPasteboard.general.hasStrings {
+  <span class="k">if let</span> copied = UIPasteboard.general.string,
+     <span class="k">let</span> url = URL(string: copied),
+     url.host == <span class="s">"ex.com"</span> {          <span class="c">// 自分のドメインだけ採用</span>
+    router.deepLink(to: url)            <span class="c">// → 目的画面へ着地</span>
+    UIPasteboard.general.items = []     <span class="c">// 使い終えたら消す</span>
+  }
+}</pre>
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>iOS のペースト通知・許可に注意</h4>
+          <p>iOS 14 以降、アプリがクリップボードを読むと「○○が△△からペーストしました」というバナーが出る。iOS 16 以降は読み取り時に<strong>ユーザー許可ダイアログ</strong>が出ることもある。そのため実装では「アプリを入手（リンクをコピー）」のような<em>ユーザーが明示的にコピーを選ぶ UX</em>とセットにして、許可を自然に得る設計にする。<code class="inline">hasStrings</code> など <code class="inline">detectPatterns</code> 系 API で中身を読まずに存在判定する手も使われる。</p>
+        </div>
+      </div>
+
+      <h3>(c) App Clips — Apple 公式の軽量アプリ</h3>
+      <p>
+        <a href="https://www.branch.io/resources/blog/nativelink-and-app-clips-solving-the-deferred-deep-linking-challenges-of-private-relay/">App Clips</a> は、フルアプリをインストールせずに即起動できる<strong>軽量版アプリ</strong>。
+        DDL 文脈では「未インストール時に App Clip を起動してランディングとして使い、ユーザーがフルアプリを入手したら<strong>元の deep link を App Clip からフルアプリへ直接引き渡す</strong>」という流れを作れる。
+        IP に依存しないため Private Relay 対策として推奨されるが、クリップボード方式が1ステップで済むのに対し、App Clip は導入ステップが多いのがトレードオフ。
+      </p>
+
+      <table class="t">
+        <thead><tr><th>迂回手段</th><th>確実性</th><th>Private Relay 耐性</th><th>主な難点</th></tr></thead>
+        <tbody>
+          <tr><td><span class="k">フィンガープリンティング</span></td><td>確率的</td><td>弱い（IP 隠蔽で崩れる）</td><td>ATT / Private Relay で精度低下・時間窓の制約</td></tr>
+          <tr><td><span class="k">クリップボード</span></td><td>決定論的</td><td>強い</td><td>ペースト通知・許可 UX の設計が必要</td></tr>
+          <tr><td><span class="k">App Clips</span></td><td>決定論的</td><td>強い</td><td>実装ステップが多い・App Clip 自体の整備</td></tr>
+        </tbody>
+      </table>
+      <p>実運用では<strong>これらのハイブリッド</strong>（まずクリップボード、駄目ならフィンガープリンティングにフォールバック）が一般的だ。</p>
+    </div>
+  </section>
+
+  <!-- ============================== 06 flow ============================== -->
+  <section id="flow">
+    <div class="sec-head"><span class="idx">06</span><h2>全体フロー — 壁とその越え方</h2></div>
+    <div class="sec-body">
+      <p class="first">クリックから着地までを1枚に。中央の<em>プライバシーの壁</em>を、3つの手段がそれぞれの方法で越えているのが DDL の全景だ。</p>
+      <div class="svg-frame">
+        <svg viewBox="0 0 760 380" aria-label="Deferred deep linking の全体フロー図">
+          <!-- 上段の直線フロー -->
+          <!-- node 1: tap -->
+          <rect class="wh" x="14" y="40" width="120" height="60" rx="10"/>
+          <text x="74" y="66" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">① タップ</text>
+          <text x="74" y="86" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#87867F">web link</text>
+
+          <!-- node 2: store -->
+          <rect class="oa" x="190" y="40" width="120" height="60" rx="10"/>
+          <text x="250" y="66" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">② ストアへ</text>
+          <text x="250" y="86" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#5C6E45">文脈を保存</text>
+
+          <!-- wall -->
+          <line class="ln da" x1="380" y1="20" x2="380" y2="270" stroke="#B04A3F"/>
+          <text x="380" y="16" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#B04A3F">privacy wall</text>
+          <text x="380" y="288" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9.5" fill="#B04A3F">ストアは文脈を渡さない</text>
+
+          <!-- node 3: install -->
+          <rect class="wh" x="450" y="40" width="130" height="60" rx="10"/>
+          <text x="515" y="66" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">③ 初回起動</text>
+          <text x="515" y="86" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#87867F">SDK が復元</text>
+
+          <!-- node 4: land -->
+          <rect class="cl" x="632" y="40" width="114" height="60" rx="10"/>
+          <text x="689" y="66" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#FFFFFF">④ 着地</text>
+          <text x="689" y="86" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#FFF1EA">/item/42</text>
+
+          <!-- arrows top row -->
+          <line class="ln" x1="134" y1="70" x2="186" y2="70"/>
+          <polygon class="fl" points="181,65 191,70 181,75"/>
+          <line class="ln" x1="580" y1="70" x2="628" y2="70"/>
+          <polygon class="cl" points="623,65 633,70 623,75"/>
+
+          <!-- 3 lanes crossing the wall: store(250,100) → install(515,100) -->
+          <!-- (1) Android referrer (olive, solid) -->
+          <path class="lo" d="M250 108 C 250 150, 515 150, 515 108"/>
+          <polygon class="ol" points="510,118 515,108 520,118"/>
+          <rect x="300" y="138" width="160" height="24" rx="6" fill="#788C5D"/>
+          <text x="380" y="154" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#FFFFFF">Android: Install Referrer</text>
+
+          <!-- (2) iOS clipboard (clay, solid) -->
+          <path class="lc" d="M250 112 C 250 205, 515 205, 515 112"/>
+          <polygon class="cl" points="510,122 515,112 520,122"/>
+          <rect x="296" y="193" width="168" height="24" rx="6" fill="#D97757"/>
+          <text x="380" y="209" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#FFFFFF">iOS: Clipboard / App Clip</text>
+
+          <!-- (3) iOS fingerprint (mustard, dashed = probabilistic) -->
+          <path class="lm da" d="M250 116 C 250 258, 515 258, 515 116"/>
+          <polygon points="510,126 515,116 520,126" fill="#C78E3F"/>
+          <rect x="292" y="246" width="176" height="24" rx="6" fill="#C78E3F"/>
+          <text x="380" y="262" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#FFFFFF">iOS: Fingerprint（確率）</text>
+
+          <!-- legend -->
+          <line class="lo" x1="40" y1="330" x2="70" y2="330"/>
+          <text x="78" y="334" font-family="ui-monospace, monospace" font-size="10.5" fill="#3D3D3A">実線 = 決定論的（確実）</text>
+          <line class="lm da" x1="330" y1="330" x2="360" y2="330"/>
+          <text x="368" y="334" font-family="ui-monospace, monospace" font-size="10.5" fill="#3D3D3A">破線 = 確率的（時間窓マッチ）</text>
+        </svg>
+        <div class="svg-cap">クリック時に保存した文脈を、3つの経路のいずれかで「壁」の向こうの初回起動へ運ぶ</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 07 attribution ============================== -->
+  <section id="attribution">
+    <div class="sec-head"><span class="idx">07</span><h2>計測フレームワークとの交差 — SKAN → AdAttributionKit</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        DDL（ルーティング）の隣には、Apple 公式の<strong>プライバシー保護型アトリビューション</strong>（計測）がある。直接の DDL 手段ではないが、密接に絡むので押さえておく。
+      </p>
+
+      <h3>SKAdNetwork (SKAN)</h3>
+      <ul class="dot-list">
+        <li>Apple 独自の<strong>アプリインストール計測</strong>フレームワーク（2018 登場）。デバイス識別子に頼らず、広告接触とインストールを結びつける。</li>
+        <li><strong>iOS 14.5（2021）</strong>で ATT が導入され、IDFA が事実上使えなくなったことで、決定論的計測の唯一の正規手段として一気に主役化。</li>
+        <li>ポストバックは<em>集計され遅延</em>し、<strong>conversion value（最大63段階）</strong>でインストール後イベントを粗く伝える。個票は返らない。</li>
+      </ul>
+
+      <h3>AdAttributionKit (AAK) — WWDC 2024 の後継</h3>
+      <p>SKAN を土台に拡張した新フレームワーク。両者は<strong>相互運用可能</strong>で当面は共存する。DDL と交差するのは特に <em>再エンゲージメント</em>だ。</p>
+      <ol class="serif-list">
+        <li><div><strong>複数ストア対応</strong><p>EU の Digital Markets Act 対応として iOS 17.4（2024-03）で代替ストアにも対応。どこから入れたかを示す <code class="inline">marketplace identifier</code> を持つ（SKAN には無い）。</p></div></li>
+        <li><div><strong>再エンゲージメント（DDL との接点）</strong><p><code class="inline">eligible-for-re-engagement</code> を立てた広告を、既にアプリを持つユーザーがタップすると、<strong>Universal Link でアプリを開き、リンク先の画面へ誘導</strong>。Universal Link 経由なら最大<strong>35日</strong>のコンバージョン計測が可能。</p></div></li>
+        <li><div><strong>厳格化と検証</strong><p>全インプレッションを <strong>JWS（JSON Web Signature）で署名</strong>必須。2秒以上視聴された広告のみカウント。<em>Developer Mode</em> で時間ランダム化を外し、検証を高速化できる。</p></div></li>
+      </ol>
+      <div class="callout callout-note">
+        <div class="ico">i</div>
+        <div>
+          <h4>SKAN の廃止予定は「無い」</h4>
+          <p>2026年5月時点で、Apple は SKAdNetwork の廃止時期を発表していない。AAK は「いずれの後継」と位置づけられつつ、当面は SKAN と並走する。アトリビューションが両方走るときは「直近にタップした広告」優先、タップが無ければ「直近に視聴した広告」優先で、クリックスルーがビュースルーに勝つ。なお AAK には Safari 向けの <em>Web AAK</em>（Private Click Measurement の後継）もある。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 08 ecosystem ============================== -->
+  <section id="ecosystem">
+    <div class="sec-head"><span class="idx">08</span><h2>エコシステム 2025–2026 — FDL 終了と代替</h2></div>
+    <div class="sec-body">
+      <p class="first">
+        DDL の現実的な選択は、2025年8月に大きく動いた。長年「無料の定番」だった
+        <strong>Firebase Dynamic Links (FDL) が 2025-08-25 に完全終了</strong>したのだ。
+      </p>
+      <ul class="dot-list">
+        <li>終了後、FDL のリンク（独自ドメイン・<code class="inline">*.page.link</code> 双方）は<strong>HTTP 404</strong>を返す。新規リンク作成も不可。<code class="inline">page.link</code> サブドメインは消滅した。</li>
+        <li>FDL の分析データは終了日までにエクスポートしなかった分は<strong>復元不能</strong>。多くのチームが移行を迫られた。</li>
+      </ul>
+
+      <p class="demo-label">移行先の主な選択肢</p>
+      <table class="t">
+        <thead><tr><th>選択肢</th><th>立ち位置</th><th>こんなチームに</th></tr></thead>
+        <tbody>
+          <tr><td><span class="k">Branch</span></td><td>ディープリンク特化（計測は別途）</td><td>DDL / web-to-app が主目的。FDL の最も素直な後継</td></tr>
+          <tr><td><span class="k">AppsFlyer (OneLink)</span></td><td>フル MMP + 強力な DDL</td><td>有料 UA を回し、計測も一体で欲しい大規模チーム</td></tr>
+          <tr><td><span class="k">Adjust</span></td><td>フル MMP（プライバシー計測に強い）</td><td>EU/APAC 等の規制環境で計測を重視</td></tr>
+          <tr><td><span class="k">Dub / ChottuLink 等</span></td><td>軽量・FDL の 1:1 代替系</td><td>計測は不要、リンクだけ欲しい小〜中規模</td></tr>
+          <tr><td><span class="k">自前 (Universal Links + 独自サーバー)</span></td><td>第三者依存ゼロ</td><td>フルコントロール志向。ただし DDL 部分（clipboard 等）は自作が必要</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warn">
+        <div class="ico">!</div>
+        <div>
+          <h4>「計測が要るか」で選ぶ</h4>
+          <p>FDL ユーザーの多くは<em>計測（アトリビューション）を使っていなかった</em>。「ディープリンクが欲しいだけ」なら、フル MMP（AppsFlyer / Adjust）は重すぎる。逆に有料広告を回すなら MMP 一体型が効く。Universal Links だけの自前構成は依存ゼロだが、<strong>未インストール時に目的画面へ飛ばすロジック（clipboard / Pasteboard でパラメータ保存）は OS が用意してくれない</strong>点に注意。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 09 pitfalls ============================== -->
+  <section id="pitfalls">
+    <div class="sec-head"><span class="idx">09</span><h2>実装の勘所とまとめ</h2></div>
+    <div class="sec-body">
+      <p class="first">最後に、DDL を実装・選定するときに効く要点を凝縮しておく。</p>
+      <ul class="dot-list">
+        <li><strong>iOS / Android の非対称性を前提に。</strong> Android は Install Referrer でほぼ解決。難しさは iOS に集中する。</li>
+        <li><strong>iOS はハイブリッドが現実解。</strong> Private Relay 耐性のあるクリップボード / App Clip を主軸に、フィンガープリンティングをフォールバックに。</li>
+        <li><strong>時間窓を意識する。</strong> フィンガープリンティングは 10分〜72時間の窓でしか当たらない。インストールが遅いと取りこぼす。</li>
+        <li><strong>クリップボードは UX とセット。</strong> ペースト通知・許可ダイアログを「コピーして続行」の自然な流れで吸収する設計に。</li>
+        <li><strong>ルーティングと計測を分けて考える。</strong> 「どの画面へ」(DDL) と「どこから来たか」(SKAN/AAK) は別レイヤー。混ぜると要件が膨らむ。</li>
+        <li><strong>ドメイン所有権が土台。</strong> Universal Links / App Links は AASA / assetlinks.json が正しく配信されていることが大前提。ここが崩れると全部ブラウザに落ちる。</li>
+      </ul>
+
+      <div class="callout callout-success">
+        <div class="ico">✓</div>
+        <div>
+          <h4>一文でまとめると</h4>
+          <p>Deferred Deep Linking とは「<strong>ストアが意図的に作ったプライバシーの壁を越えて、クリック時の文脈を初回起動のアプリへ運ぶ</strong>」技術。Android は OS 公式の Install Referrer で決定論的に、iOS は公式手段が無いためフィンガープリンティング・クリップボード・App Clips を組み合わせて越える。FDL 終了後は Branch / AppsFlyer / Adjust / 軽量系から、計測の要否で選ぶ。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Footer ============================== -->
+  <footer>
+    <span class="k">"Quiet but exact."</span>
+    <span>Built with <a href="https://claude.com/claude-code">Claude Code</a> · ivory + clay</span>
+  </footer>
+
+</div>
+</body>
+</html>
