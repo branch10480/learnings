@@ -51,6 +51,16 @@
 
     --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
     --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+
+    /* semantic aliases — dark で値だけ再マップ。コンポーネントは var() 参照なので
+       CSS のソース順に依存せず dark が効く（旧テンプレの直値 + @media セレクタ
+       上書きは同詳細度でソース順負けし、dark callout が light 背景のまま浮いた）。 */
+    --callout-warn-bg:  #FFF8EB;
+    --callout-warn-fg:  #8C6A1F;
+    --callout-error-bg: #FBF0EE;
+    --callout-error-fg: var(--ruby);
+    --svg-frame-bg:     var(--paper);
+    --chip-bg:          var(--g100);
   }
 
   /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
@@ -78,12 +88,14 @@
 
       --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
       --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+
+      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
+      --callout-warn-fg:  #e0bb7a;
+      --callout-error-bg: rgba(217, 119, 102, 0.10);
+      --callout-error-fg: #d97766;
+      --svg-frame-bg:     #FAF9F5;
+      --chip-bg:          #36332d;
     }
-    .svg-frame { background: #FAF9F5; border-color: #3a3833; }
-    .callout-warn  { background: rgba(224, 187, 122, 0.10); }
-    .callout-warn .ico { color: #e0bb7a; }
-    .callout-error { background: rgba(217, 119, 102, 0.10); }
-    code.inline { background: #36332d; }
   }
 
   * { box-sizing: border-box; }
@@ -253,7 +265,7 @@
   code.inline {
     font-family: var(--mono);
     font-size: 0.92em;
-    background: var(--g100);
+    background: var(--chip-bg);
     padding: 1px 6px;
     border-radius: var(--r-chip);
     color: var(--g700);
@@ -281,10 +293,10 @@
   .callout-note    { border-left-color: var(--clay); }
   .callout-success { border-left-color: var(--olive); }
   .callout-success .ico { color: var(--olive-d); }
-  .callout-warn    { border-left-color: var(--mustard); background: #FFF8EB; }
-  .callout-warn .ico { color: #8C6A1F; }
-  .callout-error   { border-left-color: var(--ruby); background: #FBF0EE; }
-  .callout-error .ico { color: var(--ruby); }
+  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
+  .callout-warn .ico { color: var(--callout-warn-fg); }
+  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
+  .callout-error .ico { color: var(--callout-error-fg); }
 
   table.t {
     width: 100%;
@@ -366,7 +378,7 @@
   .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
 
   .svg-frame {
-    background: var(--paper);
+    background: var(--svg-frame-bg);
     border: var(--b-rule);
     border-radius: var(--r-panel);
     padding: 24px;
