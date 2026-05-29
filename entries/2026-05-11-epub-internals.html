@@ -159,6 +159,9 @@
     letter-spacing: -0.018em;
     margin: 0 0 8px;
     max-width: 20ch;
+    /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
+    word-break: keep-all;
+    line-break: strict;
   }
   h1.display em {
     font-style: italic;
