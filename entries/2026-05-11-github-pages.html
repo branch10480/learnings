@@ -15,470 +15,531 @@
 <!-- =============================================================== -->
 
 <style>
-  :root {
-    --ivory:   #FAF9F5;
-    --paper:   #FFFFFF;
-    --slate:   #141413;
-    --clay:    #D97757;
-    --clay-d:  #B85C3E;
-    --oat:     #E3DACC;
-    --olive:   #788C5D;
-    --olive-d: #5C6E45;
-    --mustard: #C78E3F;
-    --ruby:    #B04A3F;
-    --g100:    #F0EEE6;
-    --g200:    #E6E3DA;
-    --g300:    #D1CFC5;
-    --g500:    #87867F;
-    --g700:    #3D3D3A;
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   GitHub Pages の絶対 URL で参照する。
+   オフライン時はシステム mono へフォールバックする。
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
 
-    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
-             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
-    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
-             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+/* ============================================================
+   :root tokens — Toshi Design System（真実の源は design-system.html）
+   ============================================================ */
+:root {
+  color-scheme: light dark;
 
-    --r-pill:  999px;
-    --r-card:  14px;
-    --r-panel: 12px;
-    --r-row:   8px;
-    --r-chip:  6px;
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
 
-    --b-hair: 1px solid var(--g200);
-    --b-rule: 1.5px solid var(--g300);
-    --b-strong: 1.5px solid var(--slate);
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
 
-    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
-    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
 
-    /* semantic aliases — dark で値だけ再マップ。コンポーネントは var() 参照なので
-       CSS のソース順に依存せず dark が効く（旧テンプレの直値 + @media セレクタ
-       上書きは同詳細度でソース順負けし、dark callout が light 背景のまま浮いた）。 */
-    --callout-warn-bg:  #FFF8EB;
-    --callout-warn-fg:  #8C6A1F;
-    --callout-error-bg: #FBF0EE;
-    --callout-error-fg: var(--ruby);
-    --svg-frame-bg:     var(--paper);
-    --chip-bg:          var(--g100);
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
+
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
+
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
+
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
   }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
-  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
-     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
-     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。markdownobserver の
-     user.css と同じ dark トークンを採用。SVG 図解は inline fill 属性で色を
-     持つため Dark でも light "paper insert" として残す (Apple Notes reader 方式)。 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ivory:   #1a1916;
-      --paper:   #26241f;
-      --slate:   #d4cfc1;
-      --clay:    #D97757;
-      --clay-d:  #e08576;
-      --oat:     #4a463d;
-      --olive:   #a8c97f;
-      --olive-d: #b8df96;
-      --mustard: #e0bb7a;
-      --ruby:    #d97766;
-      --g100:    #26241f;
-      --g200:    #36332d;
-      --g300:    #3a3833;
-      --g500:    #9a958a;
-      --g700:    #c8c2b3;
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
 
-      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
-      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+/* ============================================================
+   Article — 1 カラムのコンテンツ
+   ============================================================ */
+.article { max-width: 760px; margin: 0 auto; padding: 64px 22px 120px; }
 
-      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
-      --callout-warn-fg:  #e0bb7a;
-      --callout-error-bg: rgba(217, 119, 102, 0.10);
-      --callout-error-fg: #d97766;
-      --svg-frame-bg:     #FAF9F5;
-      --chip-bg:          #36332d;
-    }
-  }
+.doc-header { padding-bottom: 28px; border-bottom: 1px solid var(--hairline); }
+a.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 28px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  transition: color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  a.back-link:hover { color: var(--text); border-color: var(--separator); text-decoration: none; }
+}
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 44px);
+  font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
+  /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
+  word-break: keep-all;
+  line-break: strict;
+}
+.doc-header h1 em { font-style: normal; color: var(--tint); }
+.doc-header .abstract { margin: 14px 0 0; font-size: 19px; color: var(--text-2); line-height: 1.45; }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--ivory);
-    color: var(--slate);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+.doc-section { padding: 44px 0 8px; scroll-margin-top: 24px; }
+.doc-section + .doc-section { border-top: 1px solid var(--hairline); margin-top: 36px; }
+.doc-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.012em; margin: 0 0 8px; }
+.doc-section h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+.doc-section p { color: var(--text); font-size: 15px; line-height: 1.6; }
+.doc-section p.lede { color: var(--text-2); font-size: 16px; margin-top: 0; }
+.demo-label {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin: 24px 0 8px;
+}
 
-  header.masthead {
-    padding: 80px 0 56px;
-    border-bottom: var(--b-rule);
-    margin-bottom: 12px;
-  }
-  a.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    text-decoration: none;
-    margin-bottom: 28px;
-    padding: 6px 12px;
-    border-radius: var(--r-pill);
-    border: var(--b-rule);
-    background: var(--paper);
-    transition: color 120ms, border-color 120ms;
-  }
-  @media (hover: hover) {
-    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-bottom: 18px;
+/* ============================================================
+   Theme toggle — 右上にフローティング配置
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Floating in-page menu
+   ============================================================ */
+.otp {
+  position: fixed;
+  right: 24px; top: 64px;
+  width: 210px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+  z-index: 40;
+}
+.otp .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 0 12px 8px;
+}
+.otp a {
+  display: block;
+  font-size: 12.5px; color: var(--text-2);
+  padding: 5px 12px; border-radius: var(--r-sm);
+  transition: color 120ms, background 120ms;
+}
+.otp a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+.otp a.is-current { color: var(--tint); font-weight: 600; }
+
+/* 狭い画面: 右下のフローティングボタン + ポップオーバー */
+.fab { display: none; }
+@media (max-width: 1239px) {
+  .otp { display: none; }
+  .fab {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    position: fixed; right: 20px; bottom: 24px; z-index: 60;
+    width: 50px; height: 50px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: var(--tint-fill); color: var(--on-tint);
+    border: none; cursor: pointer;
+    box-shadow: var(--sh-menu);
   }
-  .eyebrow::before {
-    content: "";
-    width: 24px; height: 1.5px;
-    background: var(--clay);
-  }
-  h1.display {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(38px, 5.4vw, 62px);
-    line-height: 1.06;
-    letter-spacing: -0.018em;
-    margin: 0 0 8px;
-    max-width: 18ch;
-    /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
-    word-break: keep-all;
-    line-break: strict;
-  }
-  h1.display em { font-style: italic; color: var(--clay); }
-  .lead {
-    font-size: 16.5px;
-    color: var(--g700);
-    margin: 22px 0 0;
-    max-width: 680px;
-  }
-  .meta {
-    margin-top: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--g500);
-  }
-  .meta span strong { color: var(--g700); font-weight: 500; }
+  .fab svg { width: 22px; height: 22px; }
+}
+.fab-panel {
+  display: none;
+  position: fixed; right: 20px; bottom: 86px; z-index: 60;
+  width: min(260px, calc(100vw - 40px));
+  max-height: 55vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+}
+.fab-panel.is-open { display: block; }
+.fab-panel .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); padding: 0 12px 8px;
+}
+.fab-panel a {
+  display: block; font-size: 14px; color: var(--text-2);
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.fab-panel a:hover { background: var(--bg-alt); color: var(--text); text-decoration: none; }
+.fab-panel a.is-current { color: var(--tint); font-weight: 600; }
 
-  nav.toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 26px 0 0;
-  }
-  nav.toc a {
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border: var(--b-rule);
-    border-radius: var(--r-pill);
-    text-decoration: none;
-    color: var(--g700);
-    background: var(--paper);
-    transition: border-color 120ms, color 120ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
-  @media (hover: hover) {
-    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
-    nav.toc a:hover .n { color: var(--clay); }
-  }
+/* ============================================================
+   Components
+   ============================================================ */
 
-  section { margin-top: 72px; scroll-margin-top: 28px; }
-  .sec-head {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    margin-bottom: 10px;
-  }
-  .sec-head .idx {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--clay);
-    font-weight: 600;
-    width: 34px;
-    flex-shrink: 0;
-  }
-  .sec-head h2 {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 27px;
-    margin: 0;
-    letter-spacing: -0.012em;
-  }
-  .sec-head .count {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--g500);
-    background: var(--g100);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-  }
-  .sec-intro {
-    font-size: 14.5px;
-    color: var(--g700);
-    max-width: 760px;
-    margin: 0 0 24px 50px;
-  }
-  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
-  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
-  .demo-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-    margin: 0 0 8px;
-  }
+/* --- Asides --- */
+.aside {
+  border: 1px solid var(--hairline);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 14px 0;
+  background: var(--bg-alt);
+}
+.aside .aside-label { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+.aside p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.aside-note      { border-left-color: var(--text-3); }
+.aside-note      .aside-label { color: var(--text-2); }
+.aside-important { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 6%, var(--bg-elev)); }
+.aside-important .aside-label { color: var(--purple); }
+.aside-tip       { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 6%, var(--bg-elev)); }
+.aside-tip       .aside-label { color: var(--green); }
+.aside-warning   { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 6%, var(--bg-elev)); }
+.aside-warning   .aside-label { color: var(--red); }
 
-  pre.code {
-    margin: 0;
-    background: var(--g100);
-    border: var(--b-hair);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--g700);
-    overflow-x: auto;
-  }
-  pre.code .k { color: var(--olive-d); }
-  pre.code .s { color: var(--clay-d); }
-  pre.code .c { color: var(--g500); font-style: italic; }
-  pre.code .v { color: var(--slate); }
-  pre.code .t { color: var(--clay-d); }
-  pre.code .n { color: var(--clay); }
-  code.inline {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--chip-bg);
-    padding: 1px 6px;
-    border-radius: var(--r-chip);
-    color: var(--g700);
-  }
+/* --- Code --- */
+pre.listing {
+  background: var(--bg-code);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 14px 0;
+}
+pre.listing .k { color: var(--syn-k); font-weight: 500; }
+pre.listing .t { color: var(--syn-t); }
+pre.listing .s { color: var(--syn-s); }
+pre.listing .n { color: var(--syn-n); }
+pre.listing .c { color: var(--syn-c); }
+pre.listing .f { color: var(--syn-f); }
+pre.listing .d { color: var(--syn-d); }
+code.inline {
+  font-size: 0.88em;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* コピーボタン — JS が全 pre.listing を .code-wrap で包んで自動付与 */
+.code-wrap { position: relative; margin: 14px 0; }
+.code-wrap pre.listing { margin: 0; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 120ms, border-color 120ms;
+}
+.code-wrap:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copy-btn:hover { color: var(--text); border-color: var(--separator); }
+.copy-btn.is-copied { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.copy-btn svg { width: 15px; height: 15px; }
 
-  .callout {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    gap: 14px;
-    padding: 16px 18px;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-left: 4px solid var(--clay);
-    border-radius: var(--r-panel);
-  }
-  .callout .ico {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--clay);
-  }
-  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
-  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
-  .callout-note    { border-left-color: var(--clay); }
-  .callout-success { border-left-color: var(--olive); }
-  .callout-success .ico { color: var(--olive-d); }
-  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
-  .callout-warn .ico { color: var(--callout-warn-fg); }
-  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
-  .callout-error .ico { color: var(--callout-error-fg); }
+/* --- Tables --- */
+table.params {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+  margin: 14px 0;
+}
+table.params th, table.params td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+table.params thead th {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  border-bottom: 1px solid var(--separator);
+}
+table.params td.param { font-family: var(--font-mono); font-size: 13px; color: var(--syn-d); }
+table.params td.type  { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+table.params tbody tr:hover { background: var(--bg-alt); }
 
-  table.t {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    overflow: hidden;
-    font-size: 13.5px;
-  }
-  table.t th, table.t td {
-    text-align: left;
-    padding: 12px 16px;
-    border-bottom: var(--b-hair);
-  }
-  table.t thead th {
-    font: 500 12px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    background: var(--g100);
-  }
-  table.t tbody tr:last-child td { border-bottom: none; }
-  @media (hover: hover) {
-    table.t tbody tr:hover { background: var(--g100); }
-  }
-  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+/* --- Lists --- */
+ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 14px 0; }
+ol.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 15px;
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--text-2);
+  font: 600 12px var(--font-text);
+  display: flex; align-items: center; justify-content: center;
+}
+ul.plain { padding-left: 1.3em; margin: 14px 0; }
+ul.plain li { margin: 6px 0; font-size: 15px; line-height: 1.6; }
 
-  ol.serif-list {
-    list-style: none;
-    counter-reset: serif;
-    padding: 0;
-    margin: 0;
-  }
-  ol.serif-list li {
-    counter-increment: serif;
-    display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: var(--b-hair);
-  }
-  ol.serif-list li:last-child { border-bottom: none; }
-  ol.serif-list li::before {
-    content: counter(serif, decimal-leading-zero);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--clay);
-    padding-top: 3px;
-  }
-  ul.dot-list { list-style: none; padding: 0; margin: 0; }
-  ul.dot-list li {
-    padding: 8px 0 8px 22px;
-    position: relative;
-    font-size: 14px;
-  }
-  ul.dot-list li::before {
-    content: "";
-    position: absolute; left: 4px; top: 16px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--clay);
-  }
+/* --- KPI tiles --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 14px 0;
+}
+.kpi {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi .lbl {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.kpi .val {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.kpi .delta { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
 
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 11px;
-    border-radius: var(--r-pill);
-    font: 500 12px var(--sans);
-    border: var(--b-rule);
-    background: var(--paper);
-    color: var(--g700);
-  }
-  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
-  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
-  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
-  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+/* --- Compare grid --- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare > div {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font: 600 12px var(--font-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.compare p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
 
-  .svg-frame {
-    background: var(--svg-frame-bg);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 24px;
-  }
-  .svg-frame svg { width: 100%; height: auto; display: block; }
-  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
-  .fl { fill: var(--g300); }
-  .cl { fill: var(--clay); }
-  .ol { fill: var(--olive); }
-  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
-  .sl { fill: var(--slate); }
-  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
-  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .da { stroke-dasharray: 4 4; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font: 600 11px var(--font-text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.pill-olive { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
 
-  .compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-  }
-  .compare h4 {
-    margin: 0 0 10px;
-    font: 500 13px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-  }
+/* --- Diagram frame --- */
+.frame {
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: var(--bg-elev);
+  margin: 14px 0;
+}
+.frame svg { width: 100%; height: auto; display: block; }
 
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-  }
-  .kpi {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .kpi .lbl {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--g500);
-  }
-  .kpi .val {
-    font-family: var(--serif);
-    font-size: 32px;
-    font-weight: 500;
-    line-height: 1.1;
-    color: var(--slate);
-    letter-spacing: -0.01em;
-  }
-  .kpi .delta { font-family: var(--mono); font-size: 12px; color: var(--g700); }
-
-  footer {
-    margin-top: 120px;
-    border-top: var(--b-rule);
-    padding-top: 36px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: var(--g500);
-  }
-  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
-  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="masthead">
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<div class="article">
+
+  <header class="doc-header">
     <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
-    <div class="eyebrow">Static hosting · 2026</div>
-    <h1 class="display">Pages は <em>静的サイトの自販機</em>である。</h1>
-    <p class="lead">
+    <p class="eyebrow">Static hosting · 2026</p>
+    <h1>Pages は <em>静的サイトの自販機</em>である。</h1>
+    <p class="abstract">
       GitHub Pages はリポジトリの中身を HTTPS 配信する静的ホスティングサービス。
       デプロイの仕組みは「<strong>Branch ソース</strong>」と「<strong>GitHub Actions ソース</strong>」の 2 種類。
       何が起きるとサイトが更新されるのか、何が起きると失敗するのか、
@@ -490,182 +551,154 @@
       <span><strong>容量上限</strong> 1 GB</span>
       <span><strong>帯域</strong> 100 GB/月（ソフト制限）</span>
     </div>
-    <nav class="toc">
-      <a href="#what">Pages とは <span class="n">01</span></a>
-      <a href="#sources">2 つのデプロイソース <span class="n">02</span></a>
-      <a href="#branch">Branch ソース <span class="n">03</span></a>
-      <a href="#actions">Actions ソース <span class="n">04</span></a>
-      <a href="#triggers">何でデプロイされるか <span class="n">05</span></a>
-      <a href="#anatomy">workflow の解剖 <span class="n">06</span></a>
-      <a href="#url">URL とドメイン <span class="n">07</span></a>
-      <a href="#limits">制限事項 <span class="n">08</span></a>
-      <a href="#pitfalls">落とし穴 <span class="n">09</span></a>
-      <a href="#realworld">この learnings リポでの実例 <span class="n">10</span></a>
-    </nav>
   </header>
 
   <!-- ============================== 01 ============================== -->
-  <section id="what">
-    <div class="sec-head"><span class="idx">01</span><h2>GitHub Pages とは何か</h2><span class="count">overview</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="what" data-title="Pages とは">
+    <h2>GitHub Pages とは何か</h2>
+    <p class="lede">
       GitHub Pages はリポジトリの中身を <strong>静的サイトとして HTTPS で配信</strong>する無料サービス。
       Public リポジトリならアカウントを問わず使え、Pro 以上なら Private リポジトリの内容も
       アクセス制限付きで配信できます。Jekyll などのビルドエンジンを通すこともできるし、
       生の HTML/CSS/JS をそのまま置くこともできます。
     </p>
-    <div class="demos">
-      <div class="kpi-grid">
-        <div class="kpi"><span class="lbl">提供</span><span class="val">2008</span><span class="delta">無料サービスとして開始</span></div>
-        <div class="kpi"><span class="lbl">配信</span><span class="val">Fastly</span><span class="delta">CDN 経由</span></div>
-        <div class="kpi"><span class="lbl">SSL</span><span class="val">自動</span><span class="delta">Let's Encrypt</span></div>
-        <div class="kpi"><span class="lbl">サーバ処理</span><span class="val">無し</span><span class="delta">SSG / SPA 専用</span></div>
-      </div>
+    <div class="kpi-grid">
+      <div class="kpi"><span class="lbl">提供</span><span class="val">2008</span><span class="delta">無料サービスとして開始</span></div>
+      <div class="kpi"><span class="lbl">配信</span><span class="val">Fastly</span><span class="delta">CDN 経由</span></div>
+      <div class="kpi"><span class="lbl">SSL</span><span class="val">自動</span><span class="delta">Let's Encrypt</span></div>
+      <div class="kpi"><span class="lbl">サーバ処理</span><span class="val">無し</span><span class="delta">SSG / SPA 専用</span></div>
+    </div>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>動的処理は一切ない</h4>
-          <p>
-            Pages は完全に静的な配信のみ。PHP/Node などのサーバサイド実行はできず、
-            データベース接続も無理。<strong>ブラウザ JavaScript と外部 API へのリクエスト</strong>のみで
-            完結する SPA / 静的サイト専用です。動的なものが要るなら Cloudflare Workers や Vercel へ。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">動的処理は一切ない</p>
+      <p>
+        Pages は完全に静的な配信のみ。PHP/Node などのサーバサイド実行はできず、
+        データベース接続も無理。<strong>ブラウザ JavaScript と外部 API へのリクエスト</strong>のみで
+        完結する SPA / 静的サイト専用です。動的なものが要るなら Cloudflare Workers や Vercel へ。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 02 ============================== -->
-  <section id="sources">
-    <div class="sec-head"><span class="idx">02</span><h2>2 つのデプロイソース</h2><span class="count">Branch · Actions</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="sources" data-title="2 つのデプロイソース">
+    <h2>2 つのデプロイソース</h2>
+    <p class="lede">
       GitHub Pages には<strong>「コンテンツの取得元」が 2 種類</strong>あります。これがデプロイの仕組みを
       理解する上で最も重要な分岐点。リポジトリ設定 <code class="inline">Settings → Pages → Build and deployment → Source</code> で
       切り替えます。
     </p>
-    <div class="demos">
-      <div class="compare">
-        <div>
-          <h4>① Deploy from a branch</h4>
-          <p style="margin: 0; font-size: 13.5px; color: var(--g700);">
-            指定したブランチ（<code class="inline">main</code> や <code class="inline">gh-pages</code>）の
-            ルートまたは <code class="inline">/docs</code> フォルダを GitHub が<strong>自動的に拾って</strong>配信する。
-            push するだけでデプロイ。Jekyll 自動ビルドが走る。
-          </p>
-        </div>
-        <div>
-          <h4>② GitHub Actions <span class="pill pill-olive">推奨</span></h4>
-          <p style="margin: 0; font-size: 13.5px; color: var(--g700);">
-            自分で書いた workflow が <code class="inline">actions/deploy-pages</code> 経由で
-            artifact をアップロードして配信。<strong>ビルドプロセスを完全制御</strong>でき、
-            Vite / Next.js / Astro など任意のフレームワークが使える。
-          </p>
-        </div>
+    <div class="compare">
+      <div>
+        <h4>① Deploy from a branch</h4>
+        <p>
+          指定したブランチ（<code class="inline">main</code> や <code class="inline">gh-pages</code>）の
+          ルートまたは <code class="inline">/docs</code> フォルダを GitHub が<strong>自動的に拾って</strong>配信する。
+          push するだけでデプロイ。Jekyll 自動ビルドが走る。
+        </p>
       </div>
-
-      <table class="t">
-        <thead>
-          <tr><th>観点</th><th>Branch ソース</th><th>Actions ソース</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>セットアップ</td><td>最も簡単（クリック数回）</td><td>workflow ファイル作成が必要</td></tr>
-          <tr><td>ビルドエンジン</td><td>Jekyll 固定 (or 無し)</td><td>任意（Hugo, Vite, etc.）</td></tr>
-          <tr><td>カスタマイズ</td><td>限定的</td><td>完全自由</td></tr>
-          <tr><td>トリガー</td><td>ブランチへの push のみ</td><td>push / schedule / dispatch / etc.</td></tr>
-          <tr><td>ビルド時間</td><td>制限あり（10 分）</td><td>Actions の枠（無料 2000 分/月）</td></tr>
-          <tr><td>デプロイ前のテスト</td><td>困難</td><td>同 workflow に組み込める</td></tr>
-        </tbody>
-      </table>
-
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>新規プロジェクトは Actions ソース一択</h4>
-          <p>
-            柔軟性・将来性ともに圧倒的。Branch ソースは「README.md だけ Jekyll で公開したい」
-            のような最小構成のときだけ価値があります。<strong>本ドキュメントの残りの大半は
-            Actions ソース前提</strong>で書きます。
-          </p>
-        </div>
+      <div>
+        <h4>② GitHub Actions <span class="pill pill-olive">推奨</span></h4>
+        <p>
+          自分で書いた workflow が <code class="inline">actions/deploy-pages</code> 経由で
+          artifact をアップロードして配信。<strong>ビルドプロセスを完全制御</strong>でき、
+          Vite / Next.js / Astro など任意のフレームワークが使える。
+        </p>
       </div>
+    </div>
+
+    <table class="params">
+      <thead>
+        <tr><th>観点</th><th>Branch ソース</th><th>Actions ソース</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>セットアップ</td><td>最も簡単（クリック数回）</td><td>workflow ファイル作成が必要</td></tr>
+        <tr><td>ビルドエンジン</td><td>Jekyll 固定 (or 無し)</td><td>任意（Hugo, Vite, etc.）</td></tr>
+        <tr><td>カスタマイズ</td><td>限定的</td><td>完全自由</td></tr>
+        <tr><td>トリガー</td><td>ブランチへの push のみ</td><td>push / schedule / dispatch / etc.</td></tr>
+        <tr><td>ビルド時間</td><td>制限あり（10 分）</td><td>Actions の枠（無料 2000 分/月）</td></tr>
+        <tr><td>デプロイ前のテスト</td><td>困難</td><td>同 workflow に組み込める</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aside aside-tip">
+      <p class="aside-label">新規プロジェクトは Actions ソース一択</p>
+      <p>
+        柔軟性・将来性ともに圧倒的。Branch ソースは「README.md だけ Jekyll で公開したい」
+        のような最小構成のときだけ価値があります。<strong>本ドキュメントの残りの大半は
+        Actions ソース前提</strong>で書きます。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 03 ============================== -->
-  <section id="branch">
-    <div class="sec-head"><span class="idx">03</span><h2>Branch ソースの内部</h2><span class="count">最小構成</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="branch" data-title="Branch ソース">
+    <h2>Branch ソースの内部</h2>
+    <p class="lede">
       Branch ソースを選ぶと、内部では <strong>"pages-build-deployment" という GitHub 製の隠れワークフロー</strong>が
       勝手に走ります。Actions タブには表示されますが、ファイルとしては存在しません。
     </p>
-    <div class="demos">
-      <p class="demo-label">Branch ソース選択時の挙動</p>
-      <ol class="serif-list">
-        <li><div>指定ブランチに push が起きると、<code class="inline">pages-build-deployment</code> ワークフローが起動。</div></li>
-        <li><div>リポジトリのルート（または <code class="inline">/docs</code>）に <code class="inline">_config.yml</code> があれば <strong>Jekyll</strong> でビルド。なければ生の HTML をそのまま配信。</div></li>
-        <li><div>ビルド成果物が GitHub Pages のサーバに配置され、Fastly CDN を経由して配信開始。</div></li>
-      </ol>
+    <p class="demo-label">Branch ソース選択時の挙動</p>
+    <ol class="steps">
+      <li><div>指定ブランチに push が起きると、<code class="inline">pages-build-deployment</code> ワークフローが起動。</div></li>
+      <li><div>リポジトリのルート（または <code class="inline">/docs</code>）に <code class="inline">_config.yml</code> があれば <strong>Jekyll</strong> でビルド。なければ生の HTML をそのまま配信。</div></li>
+      <li><div>ビルド成果物が GitHub Pages のサーバに配置され、Fastly CDN を経由して配信開始。</div></li>
+    </ol>
 
-<pre class="code"><span class="c"># Settings → Pages の設定例</span>
+<pre class="listing"><span class="c"># Settings → Pages の設定例</span>
 <span class="k">Source</span>:        Deploy from a branch
 <span class="k">Branch</span>:        main
 <span class="k">Folder</span>:        / (root)   <span class="c"># または /docs</span></pre>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>Jekyll が勝手に動くと厄介な場合がある</h4>
-          <p>
-            ファイル名が <code class="inline">_</code> で始まるディレクトリ（例: <code class="inline">_data/</code>）が
-            <strong>Jekyll の規約で公開されない</strong>などの罠がある。これを止めたい場合は
-            リポジトリのルートに空の <code class="inline">.nojekyll</code> ファイルを置くと
-            Jekyll 処理がスキップされ、ファイルがそのまま配信されます。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">Jekyll が勝手に動くと厄介な場合がある</p>
+      <p>
+        ファイル名が <code class="inline">_</code> で始まるディレクトリ（例: <code class="inline">_data/</code>）が
+        <strong>Jekyll の規約で公開されない</strong>などの罠がある。これを止めたい場合は
+        リポジトリのルートに空の <code class="inline">.nojekyll</code> ファイルを置くと
+        Jekyll 処理がスキップされ、ファイルがそのまま配信されます。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 04 ============================== -->
-  <section id="actions">
-    <div class="sec-head"><span class="idx">04</span><h2>GitHub Actions ソースの内部</h2><span class="count">標準パターン</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="actions" data-title="Actions ソース">
+    <h2>GitHub Actions ソースの内部</h2>
+    <p class="lede">
       Actions ソースは <strong>3 つの公式 action</strong>で成り立っています。これらが順序通りに動くと
       Pages にデプロイされる、という固定の儀式があります。
     </p>
-    <div class="demos">
-      <div class="svg-frame">
-        <svg viewBox="0 0 720 220" aria-label="Pages デプロイの 3 段階">
-          <!-- 1. configure -->
-          <rect class="wh" x="20" y="60" width="180" height="100" rx="10" stroke="#D97757"/>
-          <text x="110" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">configure-pages</text>
-          <text x="110" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v5</text>
-          <text x="110" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">Pages が有効か確認</text>
+    <div class="frame">
+      <svg viewBox="0 0 720 220" aria-label="Pages デプロイの 3 段階">
+        <!-- 1. configure -->
+        <rect x="20" y="60" width="180" height="100" rx="10" style="fill: var(--bg-elev); stroke: var(--tint); stroke-width: 2;"/>
+        <text x="110" y="92" text-anchor="middle" style="font-family: var(--font-text); font-size: 14px; font-weight: 600; fill: var(--text);">configure-pages</text>
+        <text x="110" y="115" text-anchor="middle" style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-2);">@v5</text>
+        <text x="110" y="140" text-anchor="middle" style="font-family: var(--font-text); font-size: 11px; fill: var(--text-3);">Pages が有効か確認</text>
 
-          <line class="lc" x1="200" y1="110" x2="265" y2="110"/>
-          <polygon class="cl" points="260,105 270,110 260,115"/>
+        <line x1="200" y1="110" x2="265" y2="110" style="stroke: var(--tint); stroke-width: 2.5; stroke-linecap: round;"/>
+        <polygon points="260,105 270,110 260,115" style="fill: var(--tint);"/>
 
-          <!-- 2. upload -->
-          <rect class="oa" x="270" y="60" width="180" height="100" rx="10"/>
-          <text x="360" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">upload-pages-artifact</text>
-          <text x="360" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v3</text>
-          <text x="360" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#3D3D3A">配信物を tar で梱包</text>
+        <!-- 2. upload -->
+        <rect x="270" y="60" width="180" height="100" rx="10" style="fill: var(--bg-alt); stroke: var(--separator); stroke-width: 2;"/>
+        <text x="360" y="92" text-anchor="middle" style="font-family: var(--font-text); font-size: 14px; font-weight: 600; fill: var(--text);">upload-pages-artifact</text>
+        <text x="360" y="115" text-anchor="middle" style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-2);">@v3</text>
+        <text x="360" y="140" text-anchor="middle" style="font-family: var(--font-text); font-size: 11px; fill: var(--text-2);">配信物を tar で梱包</text>
 
-          <line class="lc" x1="450" y1="110" x2="515" y2="110"/>
-          <polygon class="cl" points="510,105 520,110 510,115"/>
+        <line x1="450" y1="110" x2="515" y2="110" style="stroke: var(--tint); stroke-width: 2.5; stroke-linecap: round;"/>
+        <polygon points="510,105 520,110 510,115" style="fill: var(--tint);"/>
 
-          <!-- 3. deploy -->
-          <rect class="wh" x="520" y="60" width="180" height="100" rx="10" stroke="#788C5D"/>
-          <text x="610" y="92" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">deploy-pages</text>
-          <text x="610" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">@v4</text>
-          <text x="610" y="140" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#5C6E45">Pages サーバへ反映</text>
+        <!-- 3. deploy -->
+        <rect x="520" y="60" width="180" height="100" rx="10" style="fill: var(--bg-elev); stroke: var(--green); stroke-width: 2;"/>
+        <text x="610" y="92" text-anchor="middle" style="font-family: var(--font-text); font-size: 14px; font-weight: 600; fill: var(--text);">deploy-pages</text>
+        <text x="610" y="115" text-anchor="middle" style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-2);">@v4</text>
+        <text x="610" y="140" text-anchor="middle" style="font-family: var(--font-text); font-size: 11px; fill: var(--green);">Pages サーバへ反映</text>
 
-          <text x="360" y="200" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="13" fill="#87867F">この 3 ステップが順に成功するとサイトが更新される</text>
-        </svg>
-      </div>
+        <text x="360" y="200" text-anchor="middle" style="font-family: var(--font-text); font-size: 13px; fill: var(--text-3);">この 3 ステップが順に成功するとサイトが更新される</text>
+      </svg>
+    </div>
 
-      <p class="demo-label" style="margin-top: 24px;">最小構成の workflow</p>
-<pre class="code"><span class="c"># .github/workflows/pages.yml</span>
+    <p class="demo-label">最小構成の workflow</p>
+<pre class="listing"><span class="c"># .github/workflows/pages.yml</span>
 <span class="k">name</span>: Deploy to GitHub Pages
 
 <span class="k">on</span>:
@@ -680,7 +713,7 @@
 
 <span class="k">concurrency</span>:                  <span class="c"># 同時に複数走らせない</span>
   <span class="k">group</span>: <span class="s">"pages"</span>
-  <span class="k">cancel-in-progress</span>: <span class="v">false</span>
+  <span class="k">cancel-in-progress</span>: false
 
 <span class="k">jobs</span>:
   <span class="k">deploy</span>:
@@ -694,7 +727,7 @@
       - <span class="k">name</span>: Setup Pages
         <span class="k">uses</span>: actions/configure-pages@v5
         <span class="k">with</span>:
-          <span class="k">enablement</span>: <span class="v">true</span>     <span class="c"># Pages 未有効でも自動で有効化</span>
+          <span class="k">enablement</span>: true     <span class="c"># Pages 未有効でも自動で有効化</span>
 
       - <span class="k">name</span>: Upload artifact
         <span class="k">uses</span>: actions/upload-pages-artifact@v3
@@ -705,63 +738,61 @@
         <span class="k">id</span>: deployment
         <span class="k">uses</span>: actions/deploy-pages@v4</pre>
 
-      <table class="t">
-        <thead>
-          <tr><th>action</th><th>役割</th><th>キーポイント</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="mono">configure-pages</td><td>Pages 設定の取得・有効化</td><td><code class="inline">enablement: true</code> で自動有効化</td></tr>
-          <tr><td class="mono">upload-pages-artifact</td><td>配信物を tar.gz にして artifact 化</td><td><code class="inline">path</code> で配信ルートを指定</td></tr>
-          <tr><td class="mono">deploy-pages</td><td>artifact を Pages サーバへ展開</td><td>戻り値の <code class="inline">page_url</code> が公開 URL</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="params">
+      <thead>
+        <tr><th>action</th><th>役割</th><th>キーポイント</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="type">configure-pages</td><td>Pages 設定の取得・有効化</td><td><code class="inline">enablement: true</code> で自動有効化</td></tr>
+        <tr><td class="type">upload-pages-artifact</td><td>配信物を tar.gz にして artifact 化</td><td><code class="inline">path</code> で配信ルートを指定</td></tr>
+        <tr><td class="type">deploy-pages</td><td>artifact を Pages サーバへ展開</td><td>戻り値の <code class="inline">page_url</code> が公開 URL</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <!-- ============================== 05 ============================== -->
-  <section id="triggers">
-    <div class="sec-head"><span class="idx">05</span><h2>何をするとデプロイされるか</h2><span class="count">トリガー条件</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="triggers" data-title="トリガー条件">
+    <h2>何をするとデプロイされるか</h2>
+    <p class="lede">
       Actions ソースの場合、デプロイのトリガーは <strong>workflow ファイルの <code class="inline">on:</code> セクション</strong>で
       完全に決まります。GitHub Pages 自体には「自動的に push を見張る」機能はなく、
       あなたが書いた workflow が起動条件を持つ仕組みです。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>トリガー</th><th>記述例</th><th>用途</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>push</strong></td>
-            <td class="mono">on: push: branches: [main]</td>
-            <td>main への push 直後に毎回デプロイ（最も一般的）</td>
-          </tr>
-          <tr>
-            <td><strong>workflow_dispatch</strong></td>
-            <td class="mono">on: workflow_dispatch:</td>
-            <td>Actions タブから手動でボタン実行</td>
-          </tr>
-          <tr>
-            <td><strong>schedule</strong></td>
-            <td class="mono">on: schedule: - cron: '0 0 * * *'</td>
-            <td>毎日特定時刻に再ビルド（外部データ取り込みなど）</td>
-          </tr>
-          <tr>
-            <td><strong>release</strong></td>
-            <td class="mono">on: release: types: [published]</td>
-            <td>GitHub Release 公開時のみデプロイ</td>
-          </tr>
-          <tr>
-            <td><strong>repository_dispatch</strong></td>
-            <td class="mono">on: repository_dispatch:</td>
-            <td>外部 API 経由で起動（Webhook 連携）</td>
-          </tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>トリガー</th><th>記述例</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>push</strong></td>
+          <td class="type">on: push: branches: [main]</td>
+          <td>main への push 直後に毎回デプロイ（最も一般的）</td>
+        </tr>
+        <tr>
+          <td><strong>workflow_dispatch</strong></td>
+          <td class="type">on: workflow_dispatch:</td>
+          <td>Actions タブから手動でボタン実行</td>
+        </tr>
+        <tr>
+          <td><strong>schedule</strong></td>
+          <td class="type">on: schedule: - cron: '0 0 * * *'</td>
+          <td>毎日特定時刻に再ビルド（外部データ取り込みなど）</td>
+        </tr>
+        <tr>
+          <td><strong>release</strong></td>
+          <td class="type">on: release: types: [published]</td>
+          <td>GitHub Release 公開時のみデプロイ</td>
+        </tr>
+        <tr>
+          <td><strong>repository_dispatch</strong></td>
+          <td class="type">on: repository_dispatch:</td>
+          <td>外部 API 経由で起動（Webhook 連携）</td>
+        </tr>
+      </tbody>
+    </table>
 
-      <p class="demo-label" style="margin-top: 24px;">手動再実行のコマンド</p>
-<pre class="code"><span class="c"># Actions タブから手動起動するのと同じ</span>
+    <p class="demo-label">手動再実行のコマンド</p>
+<pre class="listing"><span class="c"># Actions タブから手動起動するのと同じ</span>
 gh workflow run <span class="s">"Deploy to GitHub Pages"</span> --ref main
 
 <span class="c"># 直近の run を確認</span>
@@ -773,100 +804,93 @@ gh run view &lt;run-id&gt; --log
 <span class="c"># 失敗ログだけ抽出</span>
 gh run view &lt;run-id&gt; --log-failed</pre>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>"何を変更すると" デプロイされるか</h4>
-          <p>
-            push トリガーは <strong>ブランチに push があれば内容に関わらず</strong>起動します。
-            「README.md を直しただけ」でもデプロイが走ります。HTML ファイル変更時のみに絞りたければ
-            <code class="inline">on.push.paths: ['**/*.html', '**/*.css']</code> のように指定可能です。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">"何を変更すると" デプロイされるか</p>
+      <p>
+        push トリガーは <strong>ブランチに push があれば内容に関わらず</strong>起動します。
+        「README.md を直しただけ」でもデプロイが走ります。HTML ファイル変更時のみに絞りたければ
+        <code class="inline">on.push.paths: ['**/*.html', '**/*.css']</code> のように指定可能です。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 06 ============================== -->
-  <section id="anatomy">
-    <div class="sec-head"><span class="idx">06</span><h2>workflow の重要パーツ</h2><span class="count">permissions · concurrency</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="anatomy" data-title="workflow の解剖">
+    <h2>workflow の重要パーツ</h2>
+    <p class="lede">
       Pages デプロイ workflow には<strong>「これがないと動かない」セクション</strong>がいくつかあります。
       コピペで動かしている人も多いですが、各部の意味を押さえておくとトラブル時に困りません。
     </p>
-    <div class="demos">
-      <p class="demo-label">permissions ブロック</p>
-<pre class="code"><span class="k">permissions</span>:
+    <p class="demo-label">permissions ブロック</p>
+<pre class="listing"><span class="k">permissions</span>:
   <span class="k">contents</span>: read       <span class="c"># コードの読み取り (checkout 用)</span>
   <span class="k">pages</span>: write        <span class="c"># Pages へのデプロイ権限</span>
   <span class="k">id-token</span>: write     <span class="c"># OIDC トークン発行 (Pages の認証に使用)</span></pre>
 
-      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
-        <strong>これを書き忘れると "Resource not accessible by integration" エラー</strong>でデプロイが失敗します。
-        一般的なワークフローでは <code class="inline">contents: read</code> がデフォルトですが、
-        <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> は
-        明示的に許可しないと得られません。
-      </p>
+    <p style="font-size: 14px; color: var(--text-2); margin: 0;">
+      <strong>これを書き忘れると "Resource not accessible by integration" エラー</strong>でデプロイが失敗します。
+      一般的なワークフローでは <code class="inline">contents: read</code> がデフォルトですが、
+      <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> は
+      明示的に許可しないと得られません。
+    </p>
 
-      <p class="demo-label" style="margin-top: 24px;">concurrency ブロック</p>
-<pre class="code"><span class="k">concurrency</span>:
+    <p class="demo-label">concurrency ブロック</p>
+<pre class="listing"><span class="k">concurrency</span>:
   <span class="k">group</span>: <span class="s">"pages"</span>
-  <span class="k">cancel-in-progress</span>: <span class="v">false</span></pre>
+  <span class="k">cancel-in-progress</span>: false</pre>
 
-      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
-        <strong>同名 group の workflow が同時に走らないようにキューイング</strong>する設定。
-        Pages サーバへのデプロイは 1 つずつ処理されるべきなので、これがないと
-        速い連続 push で奇妙なレースコンディションが起きます。
-        <code class="inline">cancel-in-progress: false</code> にしておくと、走行中のデプロイを
-        後発が中断しなくなり安全。
-      </p>
+    <p style="font-size: 14px; color: var(--text-2); margin: 0;">
+      <strong>同名 group の workflow が同時に走らないようにキューイング</strong>する設定。
+      Pages サーバへのデプロイは 1 つずつ処理されるべきなので、これがないと
+      速い連続 push で奇妙なレースコンディションが起きます。
+      <code class="inline">cancel-in-progress: false</code> にしておくと、走行中のデプロイを
+      後発が中断しなくなり安全。
+    </p>
 
-      <p class="demo-label" style="margin-top: 24px;">environment ブロック</p>
-<pre class="code"><span class="k">environment</span>:
+    <p class="demo-label">environment ブロック</p>
+<pre class="listing"><span class="k">environment</span>:
   <span class="k">name</span>: github-pages
   <span class="k">url</span>: <span class="s">${{ steps.deployment.outputs.page_url }}</span></pre>
 
-      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
-        <strong>"github-pages" は予約名</strong>で、Pages デプロイには必須。
-        <code class="inline">url</code> を設定すると Actions の UI に「サイトを開く」ボタンが出るのと、
-        Releases や PR にデプロイ URL が紐付くので便利。
-      </p>
-    </div>
+    <p style="font-size: 14px; color: var(--text-2); margin: 0;">
+      <strong>"github-pages" は予約名</strong>で、Pages デプロイには必須。
+      <code class="inline">url</code> を設定すると Actions の UI に「サイトを開く」ボタンが出るのと、
+      Releases や PR にデプロイ URL が紐付くので便利。
+    </p>
   </section>
 
   <!-- ============================== 07 ============================== -->
-  <section id="url">
-    <div class="sec-head"><span class="idx">07</span><h2>URL の決まり方とカスタムドメイン</h2><span class="count">routing</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="url" data-title="URL とドメイン">
+    <h2>URL の決まり方とカスタムドメイン</h2>
+    <p class="lede">
       Pages の URL はリポジトリ名から機械的に決まります。User/Organization サイトと
       Project サイトでパターンが異なるのが少しややこしい。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>種類</th><th>リポジトリ名</th><th>URL</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>User サイト</strong></td>
-            <td class="mono">&lt;username&gt;.github.io</td>
-            <td class="mono">https://&lt;username&gt;.github.io/</td>
-          </tr>
-          <tr>
-            <td><strong>Project サイト</strong></td>
-            <td class="mono">任意の名前 (例: learnings)</td>
-            <td class="mono">https://&lt;username&gt;.github.io/&lt;repo&gt;/</td>
-          </tr>
-          <tr>
-            <td><strong>Organization サイト</strong></td>
-            <td class="mono">&lt;org&gt;.github.io</td>
-            <td class="mono">https://&lt;org&gt;.github.io/</td>
-          </tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>種類</th><th>リポジトリ名</th><th>URL</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>User サイト</strong></td>
+          <td class="type">&lt;username&gt;.github.io</td>
+          <td class="type">https://&lt;username&gt;.github.io/</td>
+        </tr>
+        <tr>
+          <td><strong>Project サイト</strong></td>
+          <td class="type">任意の名前 (例: learnings)</td>
+          <td class="type">https://&lt;username&gt;.github.io/&lt;repo&gt;/</td>
+        </tr>
+        <tr>
+          <td><strong>Organization サイト</strong></td>
+          <td class="type">&lt;org&gt;.github.io</td>
+          <td class="type">https://&lt;org&gt;.github.io/</td>
+        </tr>
+      </tbody>
+    </table>
 
-      <p class="demo-label" style="margin-top: 24px;">Project サイトの "サブパス問題"</p>
-<pre class="code"><span class="c">&lt;!-- ❌ 絶対パスはサブパスで壊れる --&gt;</span>
+    <p class="demo-label">Project サイトの "サブパス問題"</p>
+<pre class="listing"><span class="c">&lt;!-- ❌ 絶対パスはサブパスで壊れる --&gt;</span>
 <span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"/style.css"</span><span class="t">&gt;</span>
 <span class="c">// → https://user.github.io/style.css を見に行く（404）</span>
 
@@ -876,13 +900,13 @@ gh run view &lt;run-id&gt; --log-failed</pre>
 <span class="c">&lt;!-- ✅ サブパス込み (固定なら) --&gt;</span>
 <span class="t">&lt;link</span> <span class="k">rel</span>=<span class="s">"stylesheet"</span> <span class="k">href</span>=<span class="s">"/learnings/style.css"</span><span class="t">&gt;</span></pre>
 
-      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
-        Vite / Next.js などのフレームワークでは <code class="inline">base</code> 設定で対応します。
-        <code class="inline">vite.config.js</code> なら <code class="inline">base: '/learnings/'</code>。
-      </p>
+    <p style="font-size: 14px; color: var(--text-2); margin: 0;">
+      Vite / Next.js などのフレームワークでは <code class="inline">base</code> 設定で対応します。
+      <code class="inline">vite.config.js</code> なら <code class="inline">base: '/learnings/'</code>。
+    </p>
 
-      <p class="demo-label" style="margin-top: 24px;">カスタムドメインの設定</p>
-<pre class="code"><span class="c"># 1. リポジトリ直下に CNAME ファイルを置く</span>
+    <p class="demo-label">カスタムドメインの設定</p>
+<pre class="listing"><span class="c"># 1. リポジトリ直下に CNAME ファイルを置く</span>
 echo <span class="s">"learnings.example.com"</span> &gt; CNAME
 
 <span class="c"># 2. DNS で CNAME / ALIAS レコードを設定</span>
@@ -890,84 +914,75 @@ echo <span class="s">"learnings.example.com"</span> &gt; CNAME
 
 <span class="c"># 3. Settings → Pages で "Enforce HTTPS" をオン</span>
 <span class="c">#    (Let's Encrypt 証明書が自動発行)</span></pre>
-    </div>
   </section>
 
   <!-- ============================== 08 ============================== -->
-  <section id="limits">
-    <div class="sec-head"><span class="idx">08</span><h2>制限事項</h2><span class="count">クォータ</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="limits" data-title="制限事項">
+    <h2>制限事項</h2>
+    <p class="lede">
       Pages は無料で使えますが、いくつかの<strong>ソフト/ハード制限</strong>があります。
       個人利用の範囲ではほぼ気にならないものの、知っておくと安心。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>項目</th><th>制限</th><th>備考</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>リポジトリサイズ</td><td>1 GB（推奨）</td><td>超えると警告</td></tr>
-          <tr><td>公開後のサイトサイズ</td><td>1 GB（ハード）</td><td>超えるとデプロイ失敗</td></tr>
-          <tr><td>帯域</td><td>100 GB/月（ソフト）</td><td>超過時は CDN 制限がかかる場合あり</td></tr>
-          <tr><td>ビルド時間</td><td>10 分（Branch ソース）</td><td>Actions ソースは Actions の枠</td></tr>
-          <tr><td>デプロイ頻度</td><td>10 回/時（推奨）</td><td>超えるとレート制限</td></tr>
-          <tr><td>Public リポジトリ</td><td>無料</td><td>誰でも閲覧可</td></tr>
-          <tr><td>Private リポジトリ</td><td>Pro 以上のみ</td><td>Free プランでは不可</td></tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>項目</th><th>制限</th><th>備考</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>リポジトリサイズ</td><td>1 GB（推奨）</td><td>超えると警告</td></tr>
+        <tr><td>公開後のサイトサイズ</td><td>1 GB（ハード）</td><td>超えるとデプロイ失敗</td></tr>
+        <tr><td>帯域</td><td>100 GB/月（ソフト）</td><td>超過時は CDN 制限がかかる場合あり</td></tr>
+        <tr><td>ビルド時間</td><td>10 分（Branch ソース）</td><td>Actions ソースは Actions の枠</td></tr>
+        <tr><td>デプロイ頻度</td><td>10 回/時（推奨）</td><td>超えるとレート制限</td></tr>
+        <tr><td>Public リポジトリ</td><td>無料</td><td>誰でも閲覧可</td></tr>
+        <tr><td>Private リポジトリ</td><td>Pro 以上のみ</td><td>Free プランでは不可</td></tr>
+      </tbody>
+    </table>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>商用・大規模配信には不向き</h4>
-          <p>
-            GitHub Pages は<strong>明示的に「商用 e コマースサイトを目的としたものではない」</strong>と TOS に書かれています。
-            ある程度のトラフィックを見込むサイトや、商用目的のサイトは Cloudflare Pages / Vercel / Netlify など
-            CDN ホスティング専業サービスの方が安全。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">商用・大規模配信には不向き</p>
+      <p>
+        GitHub Pages は<strong>明示的に「商用 e コマースサイトを目的としたものではない」</strong>と TOS に書かれています。
+        ある程度のトラフィックを見込むサイトや、商用目的のサイトは Cloudflare Pages / Vercel / Netlify など
+        CDN ホスティング専業サービスの方が安全。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 09 ============================== -->
-  <section id="pitfalls">
-    <div class="sec-head"><span class="idx">09</span><h2>よくある落とし穴</h2><span class="count">checklist</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="pitfalls" data-title="落とし穴">
+    <h2>よくある落とし穴</h2>
+    <p class="lede">
       自分や他人がハマりがちな典型パターン。トラブル時はこのリストを上から見ていくと早い。
     </p>
-    <div class="demos">
-      <ol class="serif-list">
-        <li><div><strong>Pages が有効化されていない</strong>: Settings → Pages で source が "None" のまま。<code class="inline">configure-pages</code> action の <code class="inline">enablement: true</code> で自動化可能。</div></li>
-        <li><div><strong>permissions が足りない</strong>: <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> がないと "Resource not accessible" エラー。</div></li>
-        <li><div><strong>upload-pages-artifact の path 間違い</strong>: <code class="inline">path: 'dist'</code> と書いたのに <code class="inline">build/</code> にビルドしている、など。</div></li>
-        <li><div><strong>サブパスでの絶対 URL</strong>: <code class="inline">/style.css</code> がサブドメインで 404。相対パスかフレームワークの <code class="inline">base</code> 設定で対応。</div></li>
-        <li><div><strong>Jekyll の自動処理</strong>: <code class="inline">_data/</code> 等のフォルダが配信されない。<code class="inline">.nojekyll</code> ファイルでスキップ。</div></li>
-        <li><div><strong>ブラウザのキャッシュ</strong>: 「デプロイしたのに古いまま」は CDN ではなく Service Worker や HTTP cache。シークレットウィンドウで確認。</div></li>
-        <li><div><strong>HTTPS 証明書が出ない</strong>: カスタムドメインの DNS 浸透待ち（最大 24 時間）。CNAME が正しいか dig で確認。</div></li>
-        <li><div><strong>Workflow が 2 回走る</strong>: <code class="inline">push</code> と <code class="inline">pull_request</code> の両方をトリガーにすると、PR 時に同じ commit で 2 回起動。</div></li>
-      </ol>
-    </div>
+    <ol class="steps">
+      <li><div><strong>Pages が有効化されていない</strong>: Settings → Pages で source が "None" のまま。<code class="inline">configure-pages</code> action の <code class="inline">enablement: true</code> で自動化可能。</div></li>
+      <li><div><strong>permissions が足りない</strong>: <code class="inline">pages: write</code> と <code class="inline">id-token: write</code> がないと "Resource not accessible" エラー。</div></li>
+      <li><div><strong>upload-pages-artifact の path 間違い</strong>: <code class="inline">path: 'dist'</code> と書いたのに <code class="inline">build/</code> にビルドしている、など。</div></li>
+      <li><div><strong>サブパスでの絶対 URL</strong>: <code class="inline">/style.css</code> がサブドメインで 404。相対パスかフレームワークの <code class="inline">base</code> 設定で対応。</div></li>
+      <li><div><strong>Jekyll の自動処理</strong>: <code class="inline">_data/</code> 等のフォルダが配信されない。<code class="inline">.nojekyll</code> ファイルでスキップ。</div></li>
+      <li><div><strong>ブラウザのキャッシュ</strong>: 「デプロイしたのに古いまま」は CDN ではなく Service Worker や HTTP cache。シークレットウィンドウで確認。</div></li>
+      <li><div><strong>HTTPS 証明書が出ない</strong>: カスタムドメインの DNS 浸透待ち（最大 24 時間）。CNAME が正しいか dig で確認。</div></li>
+      <li><div><strong>Workflow が 2 回走る</strong>: <code class="inline">push</code> と <code class="inline">pull_request</code> の両方をトリガーにすると、PR 時に同じ commit で 2 回起動。</div></li>
+    </ol>
   </section>
 
   <!-- ============================== 10 ============================== -->
-  <section id="realworld">
-    <div class="sec-head"><span class="idx">10</span><h2>この learnings リポでの実例</h2><span class="count">live story</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="realworld" data-title="実例">
+    <h2>この learnings リポでの実例</h2>
+    <p class="lede">
       この learnings サイト自体が GitHub Pages 上で動いており、構築時に実際にハマったパターンが
       ありました。生きた教訓として記録しておきます。
     </p>
-    <div class="demos">
-      <p class="demo-label">起きた事象</p>
-      <ol class="serif-list">
-        <li><div><code class="inline">gh repo create branch10480/learnings --public --push</code> でリポジトリを作成し、最初の workflow が起動。</div></li>
-        <li><div>ところが Pages 設定がまだ "None" のままだったため、<code class="inline">configure-pages@v5</code> が <strong>"Get Pages site failed. Not Found"</strong> でエラー終了。</div></li>
-        <li><div>後から <code class="inline">gh api -X POST repos/.../pages -f build_type=workflow</code> で Pages を有効化。</div></li>
-        <li><div>すでに失敗した workflow はそのまま残り、サイトは未公開のまま。<code class="inline">gh workflow run</code> で手動再実行してようやくデプロイ成功。</div></li>
-      </ol>
+    <p class="demo-label">起きた事象</p>
+    <ol class="steps">
+      <li><div><code class="inline">gh repo create branch10480/learnings --public --push</code> でリポジトリを作成し、最初の workflow が起動。</div></li>
+      <li><div>ところが Pages 設定がまだ "None" のままだったため、<code class="inline">configure-pages@v5</code> が <strong>"Get Pages site failed. Not Found"</strong> でエラー終了。</div></li>
+      <li><div>後から <code class="inline">gh api -X POST repos/.../pages -f build_type=workflow</code> で Pages を有効化。</div></li>
+      <li><div>すでに失敗した workflow はそのまま残り、サイトは未公開のまま。<code class="inline">gh workflow run</code> で手動再実行してようやくデプロイ成功。</div></li>
+    </ol>
 
-      <p class="demo-label" style="margin-top: 24px;">学んだ教訓</p>
-<pre class="code"><span class="c"># ❌ うちらが最初書いた pages.yml</span>
+    <p class="demo-label">学んだ教訓</p>
+<pre class="listing"><span class="c"># ❌ うちらが最初書いた pages.yml</span>
 - <span class="k">name</span>: Setup Pages
   <span class="k">uses</span>: actions/configure-pages@v5
 
@@ -975,23 +990,20 @@ echo <span class="s">"learnings.example.com"</span> &gt; CNAME
 - <span class="k">name</span>: Setup Pages
   <span class="k">uses</span>: actions/configure-pages@v5
   <span class="k">with</span>:
-    <span class="k">enablement</span>: <span class="v">true</span></pre>
+    <span class="k">enablement</span>: true</pre>
 
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>新規リポジトリでは enablement: true を必ず付ける</h4>
-          <p>
-            <code class="inline">enablement: true</code> を最初から書いておけば、Pages 設定なしの状態でも
-            <strong>action 自身が GitHub API で Pages を有効化</strong>してから作業を続けます。
-            初回 push でいきなり成功する状態に持っていけるので、新規プロジェクトのテンプレートに
-            必ず含めておくのが正解。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-tip">
+      <p class="aside-label">新規リポジトリでは enablement: true を必ず付ける</p>
+      <p>
+        <code class="inline">enablement: true</code> を最初から書いておけば、Pages 設定なしの状態でも
+        <strong>action 自身が GitHub API で Pages を有効化</strong>してから作業を続けます。
+        初回 push でいきなり成功する状態に持っていけるので、新規プロジェクトのテンプレートに
+        必ず含めておくのが正解。
+      </p>
+    </div>
 
-      <p class="demo-label" style="margin-top: 24px;">デプロイ確認の最短ルート</p>
-<pre class="code"><span class="c"># 直近の workflow 実行を見る</span>
+    <p class="demo-label">デプロイ確認の最短ルート</p>
+<pre class="listing"><span class="c"># 直近の workflow 実行を見る</span>
 gh run list --limit 3
 
 <span class="c"># 進行中のものを終わるまで watch</span>
@@ -1001,25 +1013,161 @@ gh run watch &lt;run-id&gt; --exit-status
 curl -sI https://branch10480.github.io/learnings/ | head -3
 <span class="c"># → HTTP/2 200 が返ってくれば成功</span></pre>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>デプロイ成功 ≠ サイト反映</h4>
-          <p>
-            <code class="inline">deploy-pages</code> action 完了後、CDN への反映には
-            <strong>数十秒〜数分のラグ</strong>があります。「workflow は緑なのにサイトに変更が反映されない」と感じても、
-            まず 1〜2 分待ち、シークレットウィンドウや <code class="inline">curl</code> で実物を確認しましょう。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">デプロイ成功 ≠ サイト反映</p>
+      <p>
+        <code class="inline">deploy-pages</code> action 完了後、CDN への反映には
+        <strong>数十秒〜数分のラグ</strong>があります。「workflow は緑なのにサイトに変更が反映されない」と感じても、
+        まず 1〜2 分待ち、シークレットウィンドウや <code class="inline">curl</code> で実物を確認しましょう。
+      </p>
     </div>
   </section>
 
-  <footer>
-    <span class="k">"Quiet but exact."</span>
+  <footer class="pagefooter">
+    <span>"Quiet but exact."</span>
     <span>GitHub Pages docs · <a href="https://docs.github.com/pages">docs.github.com/pages</a></span>
   </footer>
 
 </div>
+
+<!-- ============================ Floating in-page menu ============================ -->
+<aside class="otp" aria-label="このページ内">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="otp"></nav>
+</aside>
+<button class="fab" id="fab" aria-label="ページ内メニューを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="13" y2="17"/>
+  </svg>
+</button>
+<div class="fab-panel" id="fabPanel">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="fab"></nav>
+</div>
+
+<script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Floating menu — .doc-section[id][data-title] から自動生成
+   ============================================================ */
+const sections = document.querySelectorAll('.doc-section[id][data-title]');
+const links = [...sections].map(s =>
+  `<a href="#${s.id}" data-spy="${s.id}">${s.dataset.title}</a>`).join('');
+document.querySelector('[data-rail="otp"]').innerHTML = links;
+document.querySelector('[data-rail="fab"]').innerHTML = links;
+
+/* Scrollspy — 現在のセクションをハイライト */
+const visible = new Set();
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) visible.add(e.target.id);
+    else visible.delete(e.target.id);
+  });
+  let current = null;
+  for (const s of sections) {                  // DOM 順で最初に見えているもの
+    if (visible.has(s.id)) { current = s.id; break; }
+  }
+  if (current) {
+    document.querySelectorAll('[data-spy]').forEach(a => {
+      a.classList.toggle('is-current', a.dataset.spy === current);
+    });
+  }
+}, { rootMargin: '-20px 0px -55% 0px' });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   Floating button（狭い画面のポップオーバー）
+   ============================================================ */
+(function () {
+  const fab = document.getElementById('fab');
+  const panel = document.getElementById('fabPanel');
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+  panel.addEventListener('click', e => {
+    if (e.target.closest('a')) panel.classList.remove('is-open');
+  });
+})();
+
+/* ============================================================
+   Copy button — 全 pre.listing に自動付与（design-system と同実装）
+   ============================================================ */
+(function () {
+  const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2.5"/>
+    <path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>`;
+  const ICON_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+  document.querySelectorAll('pre.listing').forEach(pre => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.setAttribute('aria-label', 'コードをコピー');
+    btn.innerHTML = ICON_COPY;
+    let timer = null;
+    const reset = () => {
+      clearTimeout(timer); timer = null;
+      btn.innerHTML = ICON_COPY;
+      btn.classList.remove('is-copied');
+    };
+    btn.addEventListener('click', async () => {
+      const code = pre.textContent.replace(/\s+$/, '');
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      clearTimeout(timer);
+      btn.innerHTML = ICON_DONE;
+      btn.classList.add('is-copied');
+      timer = setTimeout(reset, 1600);
+    });
+    // ホバーが外れたらフェードアウト完了後にアイコンを差し戻す
+    wrap.addEventListener('mouseleave', () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = setTimeout(reset, 220);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>

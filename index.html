@@ -8,334 +8,420 @@
 <meta name="description" content="自分が分からなかったことを HTML で残しておく書庫。">
 
 <style>
-  :root {
-    --ivory:   #FAF9F5;
-    --paper:   #FFFFFF;
-    --slate:   #141413;
-    --clay:    #D97757;
-    --clay-d:  #B85C3E;
-    --oat:     #E3DACC;
-    --olive:   #788C5D;
-    --olive-d: #5C6E45;
-    --mustard: #C78E3F;
-    --ruby:    #B04A3F;
-    --g100:    #F0EEE6;
-    --g200:    #E6E3DA;
-    --g300:    #D1CFC5;
-    --g500:    #87867F;
-    --g700:    #3D3D3A;
+/* ============================================================
+   Learnings index — Toshi Design System (Apple Docs flavored)
+   トークンの真実の源は branch10480/design-system 本体。
+   ============================================================ */
 
-    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
-             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
-    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
-             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   GitHub Pages の絶対 URL で参照。オフライン時はシステム mono へ。
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
 
-    --r-pill:  999px;
-    --r-card:  14px;
-    --r-panel: 12px;
+/* ============================================================
+   :root tokens — design-system.html と同一（コピー元の真実は本体側）
+   ============================================================ */
+:root {
+  color-scheme: light dark;
 
-    --b-hair: 1px solid var(--g200);
-    --b-rule: 1.5px solid var(--g300);
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
 
-    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
-  }
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
 
-  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
-     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
-     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。markdownobserver の
-     user.css と同じ dark トークンを採用。SVG 図解は inline fill 属性で色を
-     持つため Dark でも light "paper insert" として残す (Apple Notes reader 方式)。 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ivory:   #1a1916;
-      --paper:   #26241f;
-      --slate:   #d4cfc1;
-      --clay:    #D97757;
-      --clay-d:  #e08576;
-      --oat:     #4a463d;
-      --olive:   #a8c97f;
-      --olive-d: #b8df96;
-      --mustard: #e0bb7a;
-      --ruby:    #d97766;
-      --g100:    #26241f;
-      --g200:    #36332d;
-      --g300:    #3a3833;
-      --g500:    #9a958a;
-      --g700:    #c8c2b3;
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
 
-      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
-    }
-    .svg-frame { background: #FAF9F5; border-color: #3a3833; }
-    .callout-warn  { background: rgba(224, 187, 122, 0.10); }
-    .callout-warn .ico { color: #e0bb7a; }
-    .callout-error { background: rgba(217, 119, 102, 0.10); }
-    code.inline { background: #36332d; }
-  }
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--ivory);
-    color: var(--slate);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
 
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
-  header.masthead {
-    padding: 80px 0 48px;
-    border-bottom: var(--b-rule);
-    margin-bottom: 12px;
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-bottom: 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .eyebrow::before {
-    content: "";
-    width: 24px; height: 1.5px;
-    background: var(--clay);
-  }
-  h1.display {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(40px, 5.6vw, 66px);
-    line-height: 1.04;
-    letter-spacing: -0.02em;
-    margin: 0 0 8px;
-    max-width: 18ch;
-  }
-  h1.display em {
-    font-style: italic;
-    color: var(--clay);
-  }
-  .lead {
-    font-size: 16.5px;
-    color: var(--g700);
-    margin: 22px 0 0;
-    max-width: 640px;
-  }
-  .lead a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
 
-  .meta {
-    margin-top: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--g500);
-  }
-  .meta span strong { color: var(--g700); font-weight: 500; }
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
 
-  /* ───────────────────────────────────────────
-     Tag filter
-     ─────────────────────────────────────────── */
-  .filter-bar {
-    margin: 40px 0 28px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
   }
-  .filter-bar .label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-right: 8px;
-  }
-  .tag-btn {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-pill);
-    padding: 6px 14px;
-    font: 500 12.5px var(--sans);
-    color: var(--g700);
-    cursor: pointer;
-    transition: all 120ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  @media (hover: hover) {
-    .tag-btn:hover { border-color: var(--slate); color: var(--slate); }
-  }
-  .tag-btn .count {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--g500);
-  }
-  .tag-btn.is-active {
-    background: var(--slate);
-    color: var(--ivory);
-    border-color: var(--slate);
-  }
-  .tag-btn.is-active .count { color: var(--oat); }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
-  /* ───────────────────────────────────────────
-     Entry cards
-     ─────────────────────────────────────────── */
-  .grid-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 18px;
-  }
-  a.card {
-    display: flex;
-    flex-direction: column;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-card);
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
+
+/* ============================================================
+   Theme toggle — 右上のフローティングピル（auto → light → dark）
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Hero — Apple Developer Docs 風のホームヘッダー
+   ============================================================ */
+.hero {
+  background: var(--bg-alt);
+  padding: 96px 22px 60px;
+  text-align: center;
+}
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.hero h1 {
+  margin: 0 auto;
+  font-size: clamp(34px, 5.2vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.14;
+  word-break: keep-all;
+  line-break: strict;
+}
+.hero .abstract {
+  margin: 20px auto 0;
+  max-width: 640px;
+  font-size: 19px; line-height: 1.45;
+  color: var(--text-2);
+  font-weight: 400;
+}
+.hero .abstract a { color: var(--tint); }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: center;
+  margin-top: 26px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
+
+/* ============================================================
+   Main container
+   ============================================================ */
+.home-section { max-width: 1024px; margin: 0 auto; padding: 0 22px 96px; }
+
+/* ============================================================
+   Tag filter — Apple 風ピル
+   ============================================================ */
+.filter-bar {
+  margin: 36px 0 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.filter-bar .label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-right: 6px;
+}
+.tag-btn {
+  background: var(--bg-alt);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  font: 400 13px var(--font-text);
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  .tag-btn:hover { border-color: var(--separator); }
+}
+.tag-btn .count {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.tag-btn.is-active {
+  background: var(--tint-fill);
+  color: var(--on-tint);
+}
+.tag-btn.is-active:hover { background: var(--tint-fill-hover); border-color: transparent; }
+.tag-btn.is-active .count { color: color-mix(in srgb, var(--on-tint) 75%, transparent); }
+
+/* ============================================================
+   Entry cards
+   ============================================================ */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 20px;
+}
+a.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-1);
+  color: inherit;
+  text-decoration: none;
+  padding: 24px 24px 20px;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+@media (hover: hover) {
+  a.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-2);
     text-decoration: none;
-    color: inherit;
-    padding: 22px 24px 18px;
-    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
   }
-  @media (hover: hover) {
-    a.card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--sh-card);
-      border-color: var(--slate);
-    }
-  }
-  .card .date {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    margin-bottom: 8px;
-  }
-  .card .title {
-    font-family: var(--serif);
-    font-size: 21px;
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--slate);
-    margin: 0 0 10px;
-    letter-spacing: -0.012em;
-  }
-  .card .summary {
-    font-size: 13.5px;
-    color: var(--g700);
-    line-height: 1.55;
-    margin: 0 0 16px;
-    flex: 1;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .card .footer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    border-top: 1px solid var(--g100);
-    padding-top: 12px;
-  }
-  .card .tag {
-    font: 500 10.5px var(--mono);
-    color: var(--g700);
-    background: var(--g100);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-  }
-  .card .reading {
-    margin-left: auto;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    color: var(--g500);
-  }
+}
+.card .date {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.card .title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+.card .summary {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 0 0 16px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card .footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+.card .tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--bg-alt);
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+}
+.card .reading {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
 
-  /* hidden by filter */
-  a.card.is-hidden { display: none; }
+/* hidden by filter */
+a.card.is-hidden { display: none; }
 
-  /* empty state */
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--g500);
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 17px;
-  }
+/* empty state */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-3);
+  font-size: 16px;
+}
 
-  /* ───────────────────────────────────────────
-     About section
-     ─────────────────────────────────────────── */
-  section.about {
-    margin-top: 80px;
-    padding: 36px 40px;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-  }
-  section.about h2 {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 500;
-    margin: 0 0 12px;
-    letter-spacing: -0.01em;
-  }
-  section.about p { margin: 0 0 10px; color: var(--g700); font-size: 14px; }
-  section.about code {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--g100);
-    padding: 1px 6px;
-    border-radius: 6px;
-    color: var(--g700);
-  }
+/* ============================================================
+   About section
+   ============================================================ */
+section.about {
+  margin-top: 72px;
+  padding: 32px 36px;
+  background: var(--bg-alt);
+  border-radius: var(--r-xl);
+}
+section.about h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  margin: 0 0 12px;
+}
+section.about p { margin: 0 0 10px; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+section.about p:last-child { margin-bottom: 0; }
+section.about code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+}
 
-  footer {
-    margin-top: 80px;
-    border-top: var(--b-rule);
-    padding-top: 36px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: var(--g500);
-  }
-  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
-  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="masthead">
-    <div class="eyebrow">Personal · learning archive</div>
-    <h1 class="display">わからなかったことを <em>静かに残す</em>書庫。</h1>
-    <p class="lead">
-      branch10480 が「これ、ちゃんと理解してなかったな」と思ったトピックを、その都度 HTML にして貯めていく場所。
-      design-system は <a href="https://github.com/branch10480/castle">castle/html-artifact</a> を踏襲した
-      ivory + clay。1 ファイル完結なので、リンクを開けばその場で読めます。
-    </p>
-    <div class="meta" id="stats">
-      <span><strong>Entries</strong> <span data-stat="count">—</span></span>
-      <span><strong>Tags</strong> <span data-stat="tags">—</span></span>
-      <span><strong>Latest</strong> <span data-stat="latest">—</span></span>
-      <span><strong>Source</strong> github.com/branch10480/learnings</span>
-    </div>
-  </header>
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<header class="hero">
+  <p class="eyebrow">Personal · learning archive</p>
+  <h1>わからなかったことを静かに残す書庫。</h1>
+  <p class="abstract">
+    branch10480 が「これ、ちゃんと理解してなかったな」と思ったトピックを、その都度 HTML にして貯めていく場所。
+    デザインは <a href="https://branch10480.github.io/design-system/">Toshi Design System</a>
+    （Apple Developer Documentation flavored）。1 ファイル完結なので、リンクを開けばその場で読めます。
+  </p>
+  <div class="meta" id="stats">
+    <span><strong>Entries</strong> <span data-stat="count">—</span></span>
+    <span><strong>Tags</strong> <span data-stat="tags">—</span></span>
+    <span><strong>Latest</strong> <span data-stat="latest">—</span></span>
+    <span><strong>Source</strong> github.com/branch10480/learnings</span>
+  </div>
+</header>
+
+<main class="home-section">
 
   <!-- タグフィルタ（JS でレンダリング） -->
   <div class="filter-bar" id="filter-bar">
@@ -344,7 +430,7 @@
   </div>
 
   <!-- エントリ一覧（JS でレンダリング） -->
-  <div class="grid-cards" id="entries"></div>
+  <div class="entry-grid" id="entries"></div>
 
   <!-- 0 件のとき -->
   <div class="empty" id="empty" style="display:none;">No entries match this tag.</div>
@@ -362,11 +448,12 @@
     </p>
   </section>
 
-  <footer>
-    <span class="k">"Quiet but exact."</span>
-    <span>Built with <a href="https://claude.com/claude-code">Claude Code</a> · ivory + clay</span>
+  <footer class="pagefooter">
+    <span>Quiet but exact.</span>
+    <span>Built with <a href="https://claude.com/claude-code">Claude Code</a> · Toshi Design System</span>
   </footer>
-</div>
+
+</main>
 
 <script type="application/json" id="entries-data">
 [
@@ -477,6 +564,34 @@
 </script>
 
 <script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通（tds-theme）
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Entries — #entries-data の JSON から一覧を描画
+   ============================================================ */
 (() => {
   const data = JSON.parse(document.getElementById('entries-data').textContent);
   const entriesEl = document.getElementById('entries');

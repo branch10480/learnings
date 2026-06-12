@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
 <title>Swift の Actor — 並行性の新しい基盤</title>
 
 <!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
@@ -15,443 +14,518 @@
 <!-- =============================================================== -->
 
 <style>
-  :root {
-    --ivory:   #FAF9F5;
-    --paper:   #FFFFFF;
-    --slate:   #141413;
-    --clay:    #D97757;
-    --clay-d:  #B85C3E;
-    --oat:     #E3DACC;
-    --olive:   #788C5D;
-    --olive-d: #5C6E45;
-    --mustard: #C78E3F;
-    --ruby:    #B04A3F;
-    --g100:    #F0EEE6;
-    --g200:    #E6E3DA;
-    --g300:    #D1CFC5;
-    --g500:    #87867F;
-    --g700:    #3D3D3A;
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
 
-    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
-             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
-    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
-             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+/* ============================================================
+   :root tokens — Toshi Design System
+   ============================================================ */
+:root {
+  color-scheme: light dark;
 
-    --r-pill:  999px;
-    --r-card:  14px;
-    --r-panel: 12px;
-    --r-row:   8px;
-    --r-chip:  6px;
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
 
-    --b-hair: 1px solid var(--g200);
-    --b-rule: 1.5px solid var(--g300);
-    --b-strong: 1.5px solid var(--slate);
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
 
-    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
-    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
 
-    /* semantic aliases — dark で値だけ再マップ。コンポーネントは var() 参照なので
-       CSS のソース順に依存せず dark が効く（旧テンプレの直値 + @media セレクタ
-       上書きは同詳細度でソース順負けし、dark callout が light 背景のまま浮いた）。 */
-    --callout-warn-bg:  #FFF8EB;
-    --callout-warn-fg:  #8C6A1F;
-    --callout-error-bg: #FBF0EE;
-    --callout-error-fg: var(--ruby);
-    --svg-frame-bg:     var(--paper);
-    --chip-bg:          var(--g100);
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
+
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
+
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
+
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
   }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
-  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
-     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
-     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。markdownobserver の
-     user.css と同じ dark トークンを採用。SVG 図解は inline fill 属性で色を
-     持つため Dark でも light "paper insert" として残す (Apple Notes reader 方式)。 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ivory:   #1a1916;
-      --paper:   #26241f;
-      --slate:   #d4cfc1;
-      --clay:    #D97757;
-      --clay-d:  #e08576;
-      --oat:     #4a463d;
-      --olive:   #a8c97f;
-      --olive-d: #b8df96;
-      --mustard: #e0bb7a;
-      --ruby:    #d97766;
-      --g100:    #26241f;
-      --g200:    #36332d;
-      --g300:    #3a3833;
-      --g500:    #9a958a;
-      --g700:    #c8c2b3;
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
 
-      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
-      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+/* ============================================================
+   Article — 1 カラムのコンテンツ
+   ============================================================ */
+.article { max-width: 760px; margin: 0 auto; padding: 64px 22px 120px; }
 
-      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
-      --callout-warn-fg:  #e0bb7a;
-      --callout-error-bg: rgba(217, 119, 102, 0.10);
-      --callout-error-fg: #d97766;
-      --svg-frame-bg:     #FAF9F5;
-      --chip-bg:          #36332d;
-    }
-  }
+.doc-header { padding-bottom: 28px; border-bottom: 1px solid var(--hairline); }
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 44px);
+  font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
+  /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
+  word-break: keep-all;
+  line-break: strict;
+}
+.doc-header h1 em { font-style: normal; color: var(--tint); }
+.doc-header .abstract { margin: 14px 0 0; font-size: 19px; color: var(--text-2); line-height: 1.45; }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--ivory);
-    color: var(--slate);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+a.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 28px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  transition: color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  a.back-link:hover { color: var(--text); border-color: var(--separator); }
+}
 
-  header.masthead {
-    padding: 80px 0 56px;
-    border-bottom: var(--b-rule);
-    margin-bottom: 12px;
-  }
-  a.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    text-decoration: none;
-    margin-bottom: 28px;
-    padding: 6px 12px;
-    border-radius: var(--r-pill);
-    border: var(--b-rule);
-    background: var(--paper);
-    transition: color 120ms, border-color 120ms;
-  }
-  @media (hover: hover) {
-    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-bottom: 18px;
+.doc-section { padding: 44px 0 8px; scroll-margin-top: 24px; }
+.doc-section + .doc-section { border-top: 1px solid var(--hairline); margin-top: 36px; }
+.doc-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.012em; margin: 0 0 8px; }
+.doc-section h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+.doc-section p { color: var(--text); font-size: 15px; line-height: 1.6; }
+.doc-section p.lede { color: var(--text-2); font-size: 16px; margin-top: 0; }
+
+.demo-label {
+  font: 500 11px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin: 24px 0 8px;
+}
+
+/* ============================================================
+   Theme toggle — ナビがないので右上にフローティング配置
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Floating in-page menu
+   ============================================================ */
+.otp {
+  position: fixed;
+  right: 24px; top: 64px;
+  width: 210px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+  z-index: 40;
+}
+.otp .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 0 12px 8px;
+}
+.otp a {
+  display: block;
+  font-size: 12.5px; color: var(--text-2);
+  padding: 5px 12px; border-radius: var(--r-sm);
+  transition: color 120ms, background 120ms;
+}
+.otp a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+.otp a.is-current { color: var(--tint); font-weight: 600; }
+
+/* 狭い画面: 右下のフローティングボタン + ポップオーバー */
+.fab { display: none; }
+@media (max-width: 1239px) {
+  .otp { display: none; }
+  .fab {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    position: fixed; right: 20px; bottom: 24px; z-index: 60;
+    width: 50px; height: 50px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: var(--tint-fill); color: var(--on-tint);
+    border: none; cursor: pointer;
+    box-shadow: var(--sh-menu);
   }
-  .eyebrow::before {
-    content: "";
-    width: 24px; height: 1.5px;
-    background: var(--clay);
-  }
-  h1.display {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(38px, 5.4vw, 62px);
-    line-height: 1.06;
-    letter-spacing: -0.018em;
-    margin: 0 0 8px;
-    max-width: 18ch;
-    /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
-    word-break: keep-all;
-    line-break: strict;
-  }
-  h1.display em { font-style: italic; color: var(--clay); }
-  .lead {
-    font-size: 16.5px;
-    color: var(--g700);
-    margin: 22px 0 0;
-    max-width: 680px;
-  }
-  .meta {
-    margin-top: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--g500);
-  }
-  .meta span strong { color: var(--g700); font-weight: 500; }
+  .fab svg { width: 22px; height: 22px; }
+}
+.fab-panel {
+  display: none;
+  position: fixed; right: 20px; bottom: 86px; z-index: 60;
+  width: min(260px, calc(100vw - 40px));
+  max-height: 55vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+}
+.fab-panel.is-open { display: block; }
+.fab-panel .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); padding: 0 12px 8px;
+}
+.fab-panel a {
+  display: block; font-size: 14px; color: var(--text-2);
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.fab-panel a:hover { background: var(--bg-alt); color: var(--text); text-decoration: none; }
+.fab-panel a.is-current { color: var(--tint); font-weight: 600; }
 
-  nav.toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 26px 0 0;
-  }
-  nav.toc a {
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border: var(--b-rule);
-    border-radius: var(--r-pill);
-    text-decoration: none;
-    color: var(--g700);
-    background: var(--paper);
-    transition: border-color 120ms, color 120ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
-  @media (hover: hover) {
-    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
-    nav.toc a:hover .n { color: var(--clay); }
-  }
+/* ============================================================
+   Components
+   ============================================================ */
 
-  section { margin-top: 72px; scroll-margin-top: 28px; }
-  .sec-head {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    margin-bottom: 10px;
-  }
-  .sec-head .idx {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--clay);
-    font-weight: 600;
-    width: 34px;
-    flex-shrink: 0;
-  }
-  .sec-head h2 {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 27px;
-    margin: 0;
-    letter-spacing: -0.012em;
-  }
-  .sec-head .count {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--g500);
-    background: var(--g100);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-  }
-  .sec-intro {
-    font-size: 14.5px;
-    color: var(--g700);
-    max-width: 760px;
-    margin: 0 0 24px 50px;
-  }
-  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
-  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
-  .demo-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-    margin: 0 0 8px;
-  }
+/* --- Asides --- */
+.aside {
+  border: 1px solid var(--hairline);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 14px 0;
+  background: var(--bg-alt);
+}
+.aside .aside-label { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+.aside p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.aside-note      { border-left-color: var(--text-3); }
+.aside-note      .aside-label { color: var(--text-2); }
+.aside-important { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 6%, var(--bg-elev)); }
+.aside-important .aside-label { color: var(--purple); }
+.aside-tip       { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 6%, var(--bg-elev)); }
+.aside-tip       .aside-label { color: var(--green); }
+.aside-warning   { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 6%, var(--bg-elev)); }
+.aside-warning   .aside-label { color: var(--red); }
 
-  pre.code {
-    margin: 0;
-    background: var(--g100);
-    border: var(--b-hair);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--g700);
-    overflow-x: auto;
-  }
-  pre.code .k { color: var(--olive-d); }
-  pre.code .s { color: var(--clay-d); }
-  pre.code .c { color: var(--g500); font-style: italic; }
-  pre.code .v { color: var(--slate); }
-  pre.code .t { color: var(--clay-d); }
-  pre.code .n { color: var(--clay); }
-  code.inline {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--chip-bg);
-    padding: 1px 6px;
-    border-radius: var(--r-chip);
-    color: var(--g700);
-  }
+/* --- Code --- */
+pre.listing {
+  background: var(--bg-code);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 14px 0;
+}
+pre.listing .k { color: var(--syn-k); font-weight: 500; }
+pre.listing .t { color: var(--syn-t); }
+pre.listing .s { color: var(--syn-s); }
+pre.listing .n { color: var(--syn-n); }
+pre.listing .c { color: var(--syn-c); }
+pre.listing .f { color: var(--syn-f); }
+pre.listing .d { color: var(--syn-d); }
+code.inline {
+  font-size: 0.88em;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* コピーボタン — JS が全 pre.listing を .code-wrap で包んで自動付与 */
+.code-wrap { position: relative; margin: 14px 0; }
+.code-wrap pre.listing { margin: 0; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 120ms, border-color 120ms;
+}
+.code-wrap:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copy-btn:hover { color: var(--text); border-color: var(--separator); }
+.copy-btn.is-copied { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.copy-btn svg { width: 15px; height: 15px; }
 
-  .callout {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    gap: 14px;
-    padding: 16px 18px;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-left: 4px solid var(--clay);
-    border-radius: var(--r-panel);
-  }
-  .callout .ico {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--clay);
-  }
-  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
-  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
-  .callout-note    { border-left-color: var(--clay); }
-  .callout-success { border-left-color: var(--olive); }
-  .callout-success .ico { color: var(--olive-d); }
-  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
-  .callout-warn .ico { color: var(--callout-warn-fg); }
-  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
-  .callout-error .ico { color: var(--callout-error-fg); }
+/* --- Tables --- */
+table.params {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+  margin: 14px 0;
+}
+table.params th, table.params td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+table.params thead th {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  border-bottom: 1px solid var(--separator);
+}
+table.params td.param { font-family: var(--font-mono); font-size: 13px; color: var(--syn-d); }
+table.params td.type  { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+table.params tbody tr:hover { background: var(--bg-alt); }
 
-  table.t {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    overflow: hidden;
-    font-size: 13.5px;
-  }
-  table.t th, table.t td {
-    text-align: left;
-    padding: 12px 16px;
-    border-bottom: var(--b-hair);
-  }
-  table.t thead th {
-    font: 500 12px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    background: var(--g100);
-  }
-  table.t tbody tr:last-child td { border-bottom: none; }
-  @media (hover: hover) {
-    table.t tbody tr:hover { background: var(--g100); }
-  }
-  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+/* --- Lists --- */
+ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 14px 0; }
+ol.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 15px;
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--text-2);
+  font: 600 12px var(--font-text);
+  display: flex; align-items: center; justify-content: center;
+}
+ul.plain { padding-left: 1.3em; margin: 14px 0; }
+ul.plain li { margin: 6px 0; font-size: 15px; line-height: 1.6; }
 
-  ol.serif-list {
-    list-style: none;
-    counter-reset: serif;
-    padding: 0;
-    margin: 0;
-  }
-  ol.serif-list li {
-    counter-increment: serif;
-    display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: var(--b-hair);
-  }
-  ol.serif-list li:last-child { border-bottom: none; }
-  ol.serif-list li::before {
-    content: counter(serif, decimal-leading-zero);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--clay);
-    padding-top: 3px;
-  }
-  ul.dot-list { list-style: none; padding: 0; margin: 0; }
-  ul.dot-list li {
-    padding: 8px 0 8px 22px;
-    position: relative;
-    font-size: 14px;
-  }
-  ul.dot-list li::before {
-    content: "";
-    position: absolute; left: 4px; top: 16px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--clay);
-  }
+/* --- Pills（Sendable 表で使用） --- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font: 500 12px var(--font-text);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  color: var(--text-2);
+}
+.pill-green   { background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); border-color: transparent; }
+.pill-red     { background: color-mix(in srgb, var(--red) 12%, transparent);   color: var(--red);   border-color: transparent; }
+.pill-neutral { background: var(--bg-alt); color: var(--text-2); border-color: transparent; }
 
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 11px;
-    border-radius: var(--r-pill);
-    font: 500 12px var(--sans);
-    border: var(--b-rule);
-    background: var(--paper);
-    color: var(--g700);
-  }
-  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
-  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
-  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
-  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+/* --- 比較 2 カラム --- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare > div {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font: 600 12px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.compare h4.bad  { color: var(--red); }
+.compare h4.good { color: var(--green); }
 
-  .svg-frame {
-    background: var(--svg-frame-bg);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 24px;
-  }
-  .svg-frame svg { width: 100%; height: auto; display: block; }
-  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
-  .fl { fill: var(--g300); }
-  .cl { fill: var(--clay); }
-  .ol { fill: var(--olive); }
-  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
-  .sl { fill: var(--slate); }
-  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
-  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .da { stroke-dasharray: 4 4; }
+/* --- 図解フレーム（SVG）--- */
+.frame {
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: var(--bg-elev);
+  margin: 14px 0;
+}
+.frame svg { width: 100%; height: auto; display: block; }
+.frame svg text { font-family: var(--font-mono); }
+.frame .sv-node        { fill: var(--bg-elev); stroke: var(--separator); stroke-width: 2.5; }
+.frame .sv-node-accent { fill: var(--bg-elev); stroke: var(--tint); stroke-width: 3; }
+.frame .sv-box         { fill: var(--bg-alt); stroke: var(--separator); stroke-width: 2.5; }
+.frame .sv-accent-fill { fill: var(--tint); }
+.frame .sv-line        { stroke: var(--separator); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+.frame .sv-line-accent { stroke: var(--tint); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+.frame .sv-hair        { stroke: var(--hairline); stroke-width: 1; }
+.frame .sv-dash        { stroke-dasharray: 4 4; }
+.frame text.sv-t1      { fill: var(--text); }
+.frame text.sv-t2      { fill: var(--text-2); }
+.frame text.sv-t3      { fill: var(--text-3); }
+.frame text.sv-accent  { fill: var(--tint); }
+.frame text.sv-warn    { fill: var(--red); }
+.frame text.sv-note    { font-family: var(--font-text); font-style: italic; }
 
-  /* 比較 2 カラム */
-  .compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-  }
-  .compare h4 {
-    margin: 0 0 10px;
-    font: 500 13px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-  }
-  .compare h4.bad  { color: var(--ruby); }
-  .compare h4.good { color: var(--olive-d); }
-
-  footer {
-    margin-top: 120px;
-    border-top: var(--b-rule);
-    padding-top: 36px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: var(--g500);
-  }
-  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
-  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="masthead">
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<div class="article">
+
+  <header class="doc-header">
     <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
-    <div class="eyebrow">Language deep-dive · Swift 5.5+</div>
-    <h1 class="display">Actor は <em>キューを内蔵した</em>参照型である。</h1>
-    <p class="lead">
-      Swift 5.5 で導入された <code>actor</code> は、class でも struct でもない第三の参照型。
+    <p class="eyebrow">Language deep-dive · Swift 5.5+</p>
+    <h1>Actor は <em>キューを内蔵した</em>参照型である。</h1>
+    <p class="abstract">
+      Swift 5.5 で導入された <code class="inline">actor</code> は、class でも struct でもない第三の参照型。
       内部状態へのアクセスを自動的にシリアライズすることで、データ競合（data race）を
       コンパイル時に防ぐ。本ドキュメントは「なぜ class では駄目だったのか」から
       Reentrancy の落とし穴まで、段階的に解説します。
@@ -462,173 +536,148 @@
       <span><strong>提案</strong> SE-0306 Concurrency</span>
       <span><strong>strict mode</strong> Swift 6</span>
     </div>
-    <nav class="toc">
-      <a href="#what">Actor とは <span class="n">01</span></a>
-      <a href="#why">なぜ必要か <span class="n">02</span></a>
-      <a href="#syntax">基本構文 <span class="n">03</span></a>
-      <a href="#isolation">Isolation <span class="n">04</span></a>
-      <a href="#await">なぜ await が必要か <span class="n">05</span></a>
-      <a href="#nonisolated">nonisolated <span class="n">06</span></a>
-      <a href="#mainactor">MainActor <span class="n">07</span></a>
-      <a href="#globalactor">GlobalActor <span class="n">08</span></a>
-      <a href="#sendable">Sendable <span class="n">09</span></a>
-      <a href="#reentrancy">Reentrancy <span class="n">10</span></a>
-      <a href="#perf">パフォーマンス <span class="n">11</span></a>
-      <a href="#pitfalls">落とし穴 <span class="n">12</span></a>
-    </nav>
   </header>
 
   <!-- ============================== 01 ============================== -->
-  <section id="what">
-    <div class="sec-head"><span class="idx">01</span><h2>Actor とは何か</h2><span class="count">overview</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="what" data-title="Actor とは">
+    <h2>Actor とは何か</h2>
+    <p class="lede">
       Actor は <strong>"状態を持つ + 状態への並行アクセスを自動でシリアライズする"</strong> 参照型。
       class とほぼ同じ書き心地でありながら、複数のスレッド（タスク）から同時に状態を弄っても
       壊れないことが <strong>コンパイル時に保証</strong>される。背景にあるのは Erlang や Elixir で
       古典的に使われている「アクターモデル」の考え方です。
     </p>
-    <div class="demos">
-      <div class="svg-frame">
-        <svg viewBox="0 0 720 220" aria-label="Actor の概念図">
-          <!-- タスク群 -->
-          <circle class="wh" cx="80" cy="60" r="22"/>
-          <text x="80" y="65" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#141413">T1</text>
-          <circle class="wh" cx="80" cy="110" r="22"/>
-          <text x="80" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#141413">T2</text>
-          <circle class="wh" cx="80" cy="160" r="22"/>
-          <text x="80" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#141413">T3</text>
+    <div class="frame">
+      <svg viewBox="0 0 720 220" aria-label="Actor の概念図">
+        <!-- タスク群 -->
+        <circle class="sv-node" cx="80" cy="60" r="22"/>
+        <text x="80" y="65" text-anchor="middle" font-size="11" class="sv-t1">T1</text>
+        <circle class="sv-node" cx="80" cy="110" r="22"/>
+        <text x="80" y="115" text-anchor="middle" font-size="11" class="sv-t1">T2</text>
+        <circle class="sv-node" cx="80" cy="160" r="22"/>
+        <text x="80" y="165" text-anchor="middle" font-size="11" class="sv-t1">T3</text>
 
-          <!-- 矢印 -->
-          <line class="lc" x1="105" y1="60"  x2="240" y2="100"/>
-          <line class="lc" x1="105" y1="110" x2="240" y2="105"/>
-          <line class="lc" x1="105" y1="160" x2="240" y2="115"/>
+        <!-- 矢印 -->
+        <line class="sv-line-accent" x1="105" y1="60"  x2="240" y2="100"/>
+        <line class="sv-line-accent" x1="105" y1="110" x2="240" y2="105"/>
+        <line class="sv-line-accent" x1="105" y1="160" x2="240" y2="115"/>
 
-          <!-- メッセージキュー -->
-          <rect class="oa" x="240" y="80" width="140" height="60" rx="8"/>
-          <text x="310" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Message Queue</text>
-          <text x="310" y="125" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">FIFO · serial</text>
+        <!-- メッセージキュー -->
+        <rect class="sv-box" x="240" y="80" width="140" height="60" rx="8"/>
+        <text x="310" y="105" text-anchor="middle" font-size="13" class="sv-t1">Message Queue</text>
+        <text x="310" y="125" text-anchor="middle" font-size="10" class="sv-t3">FIFO · serial</text>
 
-          <!-- 単一実行 -->
-          <line class="lc" x1="380" y1="110" x2="440" y2="110"/>
-          <polygon class="cl" points="435,105 445,110 435,115"/>
+        <!-- 単一実行 -->
+        <line class="sv-line-accent" x1="380" y1="110" x2="440" y2="110"/>
+        <polygon class="sv-accent-fill" points="435,105 445,110 435,115"/>
 
-          <!-- Actor 本体 -->
-          <rect class="wh" x="450" y="40" width="220" height="140" rx="12" stroke="#D97757" stroke-width="3"/>
-          <text x="560" y="68" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="16" fill="#141413">actor</text>
-          <line x1="470" y1="80" x2="650" y2="80" stroke="#E6E3DA" stroke-width="1"/>
-          <text x="560" y="105" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">var balance: Int</text>
-          <text x="560" y="125" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">var history: [...]</text>
-          <text x="560" y="155" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">同時に 1 つだけ実行</text>
-        </svg>
-      </div>
+        <!-- Actor 本体 -->
+        <rect class="sv-node-accent" x="450" y="40" width="220" height="140" rx="12"/>
+        <text x="560" y="68" text-anchor="middle" font-size="16" class="sv-t1">actor</text>
+        <line class="sv-hair" x1="470" y1="80" x2="650" y2="80"/>
+        <text x="560" y="105" text-anchor="middle" font-size="11" class="sv-t2">var balance: Int</text>
+        <text x="560" y="125" text-anchor="middle" font-size="11" class="sv-t2">var history: [...]</text>
+        <text x="560" y="155" text-anchor="middle" font-size="11" class="sv-note sv-t3">同時に 1 つだけ実行</text>
+      </svg>
+    </div>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>核心の一文</h4>
-          <p>
-            <strong>「Actor とは、内部状態へのアクセスが自動的に直列化される class」</strong>
-            と理解するのが最短ルート。あとはこの "自動的に直列化" がどうコンパイラと
-            ランタイムで実現されているかを掘っていきます。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">核心の一文</p>
+      <p>
+        <strong>「Actor とは、内部状態へのアクセスが自動的に直列化される class」</strong>
+        と理解するのが最短ルート。あとはこの "自動的に直列化" がどうコンパイラと
+        ランタイムで実現されているかを掘っていきます。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 02 ============================== -->
-  <section id="why">
-    <div class="sec-head"><span class="idx">02</span><h2>なぜ Actor が必要だったか</h2><span class="count">data race の問題</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="why" data-title="なぜ必要か">
+    <h2>なぜ Actor が必要だったか</h2>
+    <p class="lede">
       class の参照を複数のスレッドから同時に触ると、容易に壊れます。これが
       <strong>data race（データ競合）</strong>。Swift 6 以前では、これを防ぐのは開発者の責任で、
       DispatchQueue やロックを手動で書く必要がありました。
     </p>
-    <div class="demos">
-      <div class="compare">
-        <div>
-          <h4 class="bad">❌ 危険な class</h4>
-<pre class="code"><span class="k">final class</span> <span class="v">Counter</span> {
+    <div class="compare">
+      <div>
+        <h4 class="bad">❌ 危険な class</h4>
+<pre class="listing"><span class="k">final class</span> Counter {
   <span class="k">var</span> count = 0
-  <span class="k">func</span> <span class="v">increment</span>() {
+  <span class="k">func</span> increment() {
     count += 1   <span class="c">// data race 候補</span>
   }
 }
 
 <span class="k">let</span> c = Counter()
 <span class="c">// 別々のスレッドから:</span>
-DispatchQueue.global().<span class="v">async</span> { c.increment() }
-DispatchQueue.global().<span class="v">async</span> { c.increment() }
+DispatchQueue.global().async { c.increment() }
+DispatchQueue.global().async { c.increment() }
 <span class="c">// → count が 1 になることもある（壊れる）</span></pre>
-        </div>
-        <div>
-          <h4 class="good">✅ 安全な actor</h4>
-<pre class="code"><span class="k">actor</span> <span class="v">Counter</span> {
+      </div>
+      <div>
+        <h4 class="good">✅ 安全な actor</h4>
+<pre class="listing"><span class="k">actor</span> Counter {
   <span class="k">var</span> count = 0
-  <span class="k">func</span> <span class="v">increment</span>() {
+  <span class="k">func</span> increment() {
     count += 1   <span class="c">// 自動でシリアライズ</span>
   }
 }
 
 <span class="k">let</span> c = Counter()
-<span class="k">await</span> withTaskGroup(of: <span class="v">Void</span>.<span class="k">self</span>) { g <span class="k">in</span>
+<span class="k">await</span> withTaskGroup(of: Void.<span class="k">self</span>) { g <span class="k">in</span>
   g.addTask { <span class="k">await</span> c.increment() }
   g.addTask { <span class="k">await</span> c.increment() }
 }
 <span class="c">// → count は必ず 2 になる</span></pre>
-        </div>
       </div>
+    </div>
 
-      <p class="demo-label" style="margin-top: 24px;">手動排他制御との比較</p>
-      <table class="t">
-        <thead>
-          <tr><th>方式</th><th>記述量</th><th>デッドロック耐性</th><th>コンパイル時保証</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>手動 NSLock</td><td>多い</td><td>低（簡単に発生）</td><td>無し</td></tr>
-          <tr><td>DispatchQueue (serial)</td><td>中</td><td>中</td><td>無し</td></tr>
-          <tr><td>os_unfair_lock</td><td>少（だが落とし穴多）</td><td>低</td><td>無し</td></tr>
-          <tr><td><strong>actor</strong></td><td><strong>最少</strong></td><td><strong>高</strong></td><td><strong>あり</strong></td></tr>
-        </tbody>
-      </table>
+    <p class="demo-label">手動排他制御との比較</p>
+    <table class="params">
+      <thead>
+        <tr><th>方式</th><th>記述量</th><th>デッドロック耐性</th><th>コンパイル時保証</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>手動 NSLock</td><td>多い</td><td>低（簡単に発生）</td><td>無し</td></tr>
+        <tr><td>DispatchQueue (serial)</td><td>中</td><td>中</td><td>無し</td></tr>
+        <tr><td>os_unfair_lock</td><td>少（だが落とし穴多）</td><td>低</td><td>無し</td></tr>
+        <tr><td><strong>actor</strong></td><td><strong>最少</strong></td><td><strong>高</strong></td><td><strong>あり</strong></td></tr>
+      </tbody>
+    </table>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>actor の最大の価値はコンパイル時保証</h4>
-          <p>
-            DispatchQueue やロックは「ちゃんと使えば」安全ですが、間違いはコンパイラに見えません。
-            actor は <strong>data race の可能性をコンパイル時に検出</strong>する仕組みなので、
-            「コードレビューで見落とした並行性バグ」が原理的に減ります。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">actor の最大の価値はコンパイル時保証</p>
+      <p>
+        DispatchQueue やロックは「ちゃんと使えば」安全ですが、間違いはコンパイラに見えません。
+        actor は <strong>data race の可能性をコンパイル時に検出</strong>する仕組みなので、
+        「コードレビューで見落とした並行性バグ」が原理的に減ります。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 03 ============================== -->
-  <section id="syntax">
-    <div class="sec-head"><span class="idx">03</span><h2>基本構文</h2><span class="count">declare · use</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="syntax" data-title="基本構文">
+    <h2>基本構文</h2>
+    <p class="lede">
       宣言は <code class="inline">class</code> を <code class="inline">actor</code> に
       置き換えるだけ。プロパティ・メソッド・イニシャライザの書き方は class と同じ。
       違いは「外から状態にアクセスするには <code class="inline">await</code> が必要になる」ことだけ。
     </p>
-    <div class="demos">
-<pre class="code"><span class="k">actor</span> <span class="v">BankAccount</span> {
-  <span class="k">private(set) var</span> balance: <span class="v">Int</span>
-  <span class="k">private var</span> transactions: [<span class="v">Transaction</span>] = []
+<pre class="listing"><span class="k">actor</span> BankAccount {
+  <span class="k">private(set) var</span> balance: Int
+  <span class="k">private var</span> transactions: [Transaction] = []
 
-  <span class="k">init</span>(initialBalance: <span class="v">Int</span>) {
+  <span class="k">init</span>(initialBalance: Int) {
     <span class="k">self</span>.balance = initialBalance
   }
 
-  <span class="k">func</span> <span class="v">deposit</span>(_ amount: <span class="v">Int</span>) {
+  <span class="k">func</span> deposit(_ amount: Int) {
     balance += amount
     transactions.append(.deposit(amount))
   }
 
-  <span class="k">func</span> <span class="v">withdraw</span>(_ amount: <span class="v">Int</span>) <span class="k">throws</span> -&gt; <span class="v">Int</span> {
+  <span class="k">func</span> withdraw(_ amount: Int) <span class="k">throws</span> -&gt; Int {
     <span class="k">guard</span> balance &gt;= amount <span class="k">else</span> { <span class="k">throw</span> AccountError.insufficient }
     balance -= amount
     transactions.append(.withdraw(amount))
@@ -647,150 +696,138 @@ DispatchQueue.global().<span class="v">async</span> { c.increment() }
 <span class="k">await</span> account.deposit(500)
 <span class="k">let</span> newBalance = <span class="k">try await</span> account.withdraw(300)</pre>
 
-      <table class="t">
-        <thead>
-          <tr><th>要素</th><th>class との違い</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>継承</td><td><strong>不可</strong>（<code class="inline">final</code> 相当。継承元として利用できない）</td></tr>
-          <tr><td>イニシャライザ</td><td>同じ。<code class="inline">init</code> 内は <code class="inline">await</code> なしで状態を初期化できる</td></tr>
-          <tr><td>外部からのプロパティアクセス</td><td><code class="inline">await</code> 必須。<code class="inline">private</code> でなくても外から書き込み不可（読み取り専用扱い）</td></tr>
-          <tr><td>外部からのメソッド呼び出し</td><td><code class="inline">await</code> 必須（<code class="inline">nonisolated</code> なら不要）</td></tr>
-          <tr><td>内部からの自身へのアクセス</td><td><code class="inline">await</code> 不要（同一アクター context 内）</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="params">
+      <thead>
+        <tr><th>要素</th><th>class との違い</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>継承</td><td><strong>不可</strong>（<code class="inline">final</code> 相当。継承元として利用できない）</td></tr>
+        <tr><td>イニシャライザ</td><td>同じ。<code class="inline">init</code> 内は <code class="inline">await</code> なしで状態を初期化できる</td></tr>
+        <tr><td>外部からのプロパティアクセス</td><td><code class="inline">await</code> 必須。<code class="inline">private</code> でなくても外から書き込み不可（読み取り専用扱い）</td></tr>
+        <tr><td>外部からのメソッド呼び出し</td><td><code class="inline">await</code> 必須（<code class="inline">nonisolated</code> なら不要）</td></tr>
+        <tr><td>内部からの自身へのアクセス</td><td><code class="inline">await</code> 不要（同一アクター context 内）</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <!-- ============================== 04 ============================== -->
-  <section id="isolation">
-    <div class="sec-head"><span class="idx">04</span><h2>Actor Isolation</h2><span class="count">状態の保護メカニズム</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="isolation" data-title="Isolation">
+    <h2>Actor Isolation</h2>
+    <p class="lede">
       Swift Concurrency の中核概念。各 actor は <strong>独自の "isolation domain"</strong>
       を持ち、その内部状態にアクセスできるのは「その actor のメソッドの実行 context」だけ。
       コンパイラはこのドメイン境界を静的に追跡し、違反をエラーにします。
     </p>
-    <div class="demos">
-<pre class="code"><span class="k">actor</span> <span class="v">Library</span> {
-  <span class="k">var</span> books: [<span class="v">String</span>] = []
+<pre class="listing"><span class="k">actor</span> Library {
+  <span class="k">var</span> books: [String] = []
 
   <span class="c">// このメソッドは Library の isolation 内で実行される</span>
-  <span class="k">func</span> <span class="v">addBook</span>(_ title: <span class="v">String</span>) {
+  <span class="k">func</span> addBook(_ title: String) {
     books.append(title)            <span class="c">// ✅ 同じ isolation</span>
     <span class="k">let</span> count = books.count       <span class="c">// ✅ 同じ isolation</span>
   }
 
   <span class="c">// 別の actor を呼ぶには await が必要</span>
-  <span class="k">func</span> <span class="v">syncWith</span>(_ other: <span class="v">Library</span>) <span class="k">async</span> {
+  <span class="k">func</span> syncWith(_ other: Library) <span class="k">async</span> {
     <span class="k">let</span> theirBooks = <span class="k">await</span> other.books   <span class="c">// ✅ 別 isolation</span>
     books.append(contentsOf: theirBooks)
   }
 }</pre>
 
-      <p class="demo-label" style="margin-top: 24px;">Isolation の 3 つのカテゴリ</p>
-      <table class="t">
-        <thead>
-          <tr><th>分類</th><th>意味</th><th>例</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><strong>Actor-isolated</strong></td><td>特定の actor のメソッド/プロパティ</td><td><code class="inline">actor.someMethod()</code></td></tr>
-          <tr><td><strong>Globally isolated</strong></td><td>GlobalActor で守られた宣言</td><td><code class="inline">@MainActor func updateUI()</code></td></tr>
-          <tr><td><strong>Nonisolated</strong></td><td>どの isolation domain にも属さない</td><td>普通の <code class="inline">struct</code> や <code class="inline">func</code></td></tr>
-        </tbody>
-      </table>
+    <p class="demo-label">Isolation の 3 つのカテゴリ</p>
+    <table class="params">
+      <thead>
+        <tr><th>分類</th><th>意味</th><th>例</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Actor-isolated</strong></td><td>特定の actor のメソッド/プロパティ</td><td><code class="inline">actor.someMethod()</code></td></tr>
+        <tr><td><strong>Globally isolated</strong></td><td>GlobalActor で守られた宣言</td><td><code class="inline">@MainActor func updateUI()</code></td></tr>
+        <tr><td><strong>Nonisolated</strong></td><td>どの isolation domain にも属さない</td><td>普通の <code class="inline">struct</code> や <code class="inline">func</code></td></tr>
+      </tbody>
+    </table>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>Isolation = "プログラム内の島"</h4>
-          <p>
-            Actor isolation は「あの島の住人だけがあの島の物に触れる」というルール。島から島へ
-            荷物（データ）を渡すには <code class="inline">await</code> という"船"が必要で、
-            荷物自体は壊れずに運べる型（Sendable）でなければなりません。これを基本イメージにしてください。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">Isolation = "プログラム内の島"</p>
+      <p>
+        Actor isolation は「あの島の住人だけがあの島の物に触れる」というルール。島から島へ
+        荷物（データ）を渡すには <code class="inline">await</code> という"船"が必要で、
+        荷物自体は壊れずに運べる型（Sendable）でなければなりません。これを基本イメージにしてください。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 05 ============================== -->
-  <section id="await">
-    <div class="sec-head"><span class="idx">05</span><h2>なぜ await が必要なのか</h2><span class="count">実行モデル</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="await" data-title="なぜ await が必要か">
+    <h2>なぜ await が必要なのか</h2>
+    <p class="lede">
       初学者が必ず抱く疑問:「<strong>Int を 1 つ読むだけなのに、なんで await？</strong>」。
       答えは「actor のメソッド呼び出しは "その actor のキューに並んで順番待ちする" 操作だから」。
       キューに並んだ瞬間、自分のタスクは中断（suspend）され、他のタスクに CPU を譲ります。
       これが <code class="inline">await</code> の意味です。
     </p>
-    <div class="demos">
-      <div class="svg-frame">
-        <svg viewBox="0 0 720 240" aria-label="actor 呼び出しの実行モデル">
-          <!-- 自分のタスク -->
-          <text x="20" y="40" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">caller task</text>
-          <line class="ln" x1="20" y1="60" x2="280" y2="60"/>
+    <div class="frame">
+      <svg viewBox="0 0 720 240" aria-label="actor 呼び出しの実行モデル">
+        <!-- 自分のタスク -->
+        <text x="20" y="40" font-size="11" class="sv-t3">caller task</text>
+        <line class="sv-line" x1="20" y1="60" x2="280" y2="60"/>
 
-          <!-- await の中断点 -->
-          <line class="ln da" x1="280" y1="60" x2="280" y2="170"/>
-          <text x="290" y="80" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#D97757">await account.balance</text>
-          <text x="290" y="98" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">↓ ここで suspend</text>
+        <!-- await の中断点 -->
+        <line class="sv-line sv-dash" x1="280" y1="60" x2="280" y2="170"/>
+        <text x="290" y="80" font-size="11" class="sv-accent">await account.balance</text>
+        <text x="290" y="98" font-size="11" class="sv-note sv-t3">↓ ここで suspend</text>
 
-          <!-- actor のキュー -->
-          <text x="320" y="135" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">actor (BankAccount)</text>
-          <rect class="oa" x="320" y="145" width="60" height="30" rx="4"/>
-          <rect class="wh" x="385" y="145" width="60" height="30" rx="4"/>
-          <rect class="wh" x="450" y="145" width="60" height="30" rx="4"/>
-          <text x="350" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#141413">running</text>
-          <text x="415" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">queued</text>
-          <text x="480" y="165" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">queued</text>
+        <!-- actor のキュー -->
+        <text x="320" y="135" font-size="11" class="sv-t3">actor (BankAccount)</text>
+        <rect class="sv-box" x="320" y="145" width="60" height="30" rx="4"/>
+        <rect class="sv-node" x="385" y="145" width="60" height="30" rx="4"/>
+        <rect class="sv-node" x="450" y="145" width="60" height="30" rx="4"/>
+        <text x="350" y="165" text-anchor="middle" font-size="10" class="sv-t1">running</text>
+        <text x="415" y="165" text-anchor="middle" font-size="10" class="sv-t2">queued</text>
+        <text x="480" y="165" text-anchor="middle" font-size="10" class="sv-t2">queued</text>
 
-          <!-- 自分の番が回って再開 -->
-          <line class="ln da" x1="540" y1="170" x2="540" y2="200"/>
-          <text x="540" y="190" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">↓ 順番が来て resume</text>
+        <!-- 自分の番が回って再開 -->
+        <line class="sv-line sv-dash" x1="540" y1="170" x2="540" y2="200"/>
+        <text x="540" y="190" text-anchor="middle" font-size="11" class="sv-note sv-t3">↓ 順番が来て resume</text>
 
-          <line class="ln" x1="540" y1="200" x2="700" y2="200"/>
-          <text x="550" y="220" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#D97757">→ Int 取得後、続行</text>
-        </svg>
-      </div>
+        <line class="sv-line" x1="540" y1="200" x2="700" y2="200"/>
+        <text x="550" y="220" font-size="11" class="sv-accent">→ Int 取得後、続行</text>
+      </svg>
+    </div>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>await = "今の actor を抜けて、相手の actor のキューに並ぶ" マーカー</h4>
-          <p>
-            キューに並ぶということは、すぐに実行できるとは限らないということ。だから他のタスクに
-            CPU を譲るために <code class="inline">await</code> が必要。逆に「同じ actor 内のメソッド呼び出し」は
-            キューに並ぶ必要がないので await 不要、という対称性があります。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">await = "今の actor を抜けて、相手の actor のキューに並ぶ" マーカー</p>
+      <p>
+        キューに並ぶということは、すぐに実行できるとは限らないということ。だから他のタスクに
+        CPU を譲るために <code class="inline">await</code> が必要。逆に「同じ actor 内のメソッド呼び出し」は
+        キューに並ぶ必要がないので await 不要、という対称性があります。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 06 ============================== -->
-  <section id="nonisolated">
-    <div class="sec-head"><span class="idx">06</span><h2>nonisolated</h2><span class="count">同期アクセスの抜け穴</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="nonisolated" data-title="nonisolated">
+    <h2>nonisolated</h2>
+    <p class="lede">
       actor のメソッドのうち「<strong>状態を読み書きしない</strong>」ものは
       <code class="inline">nonisolated</code> マークで isolation から外せます。
       こうすると外から <code class="inline">await</code> なしで同期的に呼べるようになります。
     </p>
-    <div class="demos">
-<pre class="code"><span class="k">actor</span> <span class="v">User</span> {
-  <span class="k">let</span> id: <span class="v">UUID</span>            <span class="c">// 不変なので nonisolated でも安全</span>
-  <span class="k">var</span> name: <span class="v">String</span>
+<pre class="listing"><span class="k">actor</span> User {
+  <span class="k">let</span> id: UUID            <span class="c">// 不変なので nonisolated でも安全</span>
+  <span class="k">var</span> name: String
 
-  <span class="k">init</span>(id: <span class="v">UUID</span>, name: <span class="v">String</span>) {
+  <span class="k">init</span>(id: UUID, name: String) {
     <span class="k">self</span>.id = id
     <span class="k">self</span>.name = name
   }
 
   <span class="c">// id は immutable なので nonisolated にできる</span>
-  <span class="k">nonisolated var</span> identifier: <span class="v">String</span> {
+  <span class="k">nonisolated var</span> identifier: String {
     <span class="s">"user-\(id.uuidString)"</span>
   }
 
   <span class="c">// CustomStringConvertible 適合のため nonisolated 必須</span>
-  <span class="k">nonisolated var</span> description: <span class="v">String</span> {
+  <span class="k">nonisolated var</span> description: String {
     <span class="s">"User(\(id))"</span>     <span class="c">// id は OK</span>
     <span class="c">// "User(\(name))"  ← name はエラー（actor-isolated）</span>
   }
@@ -799,52 +836,47 @@ DispatchQueue.global().<span class="v">async</span> { c.increment() }
 <span class="k">let</span> user = User(id: .init(), name: <span class="s">"Alice"</span>)
 print(user.identifier)   <span class="c">// ✅ await 不要</span></pre>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>nonisolated の中では mutable 状態に触れない</h4>
-          <p>
-            <code class="inline">nonisolated</code> なメソッドの中で <code class="inline">var</code> プロパティを
-            読み書きしようとするとコンパイルエラー。コンパイラは「isolation を抜け出した瞬間に
-            可変状態へ触れたら data race の温床」と判断します。<code class="inline">let</code> 定数か、
-            別の actor へ <code class="inline">await</code> 経由でアクセスするなら OK。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">nonisolated の中では mutable 状態に触れない</p>
+      <p>
+        <code class="inline">nonisolated</code> なメソッドの中で <code class="inline">var</code> プロパティを
+        読み書きしようとするとコンパイルエラー。コンパイラは「isolation を抜け出した瞬間に
+        可変状態へ触れたら data race の温床」と判断します。<code class="inline">let</code> 定数か、
+        別の actor へ <code class="inline">await</code> 経由でアクセスするなら OK。
+      </p>
+    </div>
 
-      <p class="demo-label" style="margin-top: 12px;">Protocol 適合での典型用途</p>
-<pre class="code"><span class="k">extension</span> <span class="v">User</span>: <span class="v">Hashable</span> {
-  <span class="k">nonisolated func</span> <span class="v">hash</span>(into hasher: <span class="k">inout</span> <span class="v">Hasher</span>) {
+    <p class="demo-label">Protocol 適合での典型用途</p>
+<pre class="listing"><span class="k">extension</span> User: Hashable {
+  <span class="k">nonisolated func</span> hash(into hasher: <span class="k">inout</span> Hasher) {
     hasher.combine(id)   <span class="c">// id は let なので OK</span>
   }
-  <span class="k">nonisolated static func</span> == (lhs: <span class="v">User</span>, rhs: <span class="v">User</span>) -&gt; <span class="v">Bool</span> {
+  <span class="k">nonisolated static func</span> == (lhs: User, rhs: User) -&gt; Bool {
     lhs.id == rhs.id
   }
 }</pre>
 
-      <p style="font-size: 13.5px; color: var(--g700); margin: 0;">
-        Hashable / Equatable / CustomStringConvertible のような同期的プロトコルに
-        actor を適合させるとき、<code class="inline">nonisolated</code> はほぼ必須のテクニックです。
-      </p>
-    </div>
+    <p>
+      Hashable / Equatable / CustomStringConvertible のような同期的プロトコルに
+      actor を適合させるとき、<code class="inline">nonisolated</code> はほぼ必須のテクニックです。
+    </p>
   </section>
 
   <!-- ============================== 07 ============================== -->
-  <section id="mainactor">
-    <div class="sec-head"><span class="idx">07</span><h2>MainActor</h2><span class="count">UI スレッド専用 actor</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="mainactor" data-title="MainActor">
+    <h2>MainActor</h2>
+    <p class="lede">
       <code class="inline">@MainActor</code> は Swift 標準で用意されている "メインスレッド専用の actor"。
       UIKit / AppKit / SwiftUI の UI 操作は必ずメインスレッドで行う必要があるため、
       これらの API は標準で <code class="inline">@MainActor</code> でマークされています。
     </p>
-    <div class="demos">
-<pre class="code"><span class="c">// クラス全体をメインアクター isolation に</span>
+<pre class="listing"><span class="c">// クラス全体をメインアクター isolation に</span>
 <span class="k">@MainActor</span>
-<span class="k">final class</span> <span class="v">SettingsViewModel</span>: <span class="v">ObservableObject</span> {
-  <span class="k">@Published var</span> theme: <span class="v">Theme</span> = .light
-  <span class="k">@Published var</span> notificationsEnabled = <span class="v">true</span>
+<span class="k">final class</span> SettingsViewModel: ObservableObject {
+  <span class="k">@Published var</span> theme: Theme = .light
+  <span class="k">@Published var</span> notificationsEnabled = true
 
-  <span class="k">func</span> <span class="v">loadSettings</span>() <span class="k">async</span> {
+  <span class="k">func</span> loadSettings() <span class="k">async</span> {
     <span class="c">// ここはメインスレッド</span>
     <span class="k">let</span> data = <span class="k">try</span>? <span class="k">await</span> SettingsAPI.fetch()
     <span class="c">// プロパティ更新もメインスレッドのまま → @Published 安全</span>
@@ -853,167 +885,152 @@ print(user.identifier)   <span class="c">// ✅ await 不要</span></pre>
 }
 
 <span class="c">// 個別のメソッドだけメインアクターに</span>
-<span class="k">final class</span> <span class="v">DataLoader</span> {
-  <span class="k">func</span> <span class="v">load</span>() <span class="k">async</span> -&gt; [<span class="v">Item</span>] {
+<span class="k">final class</span> DataLoader {
+  <span class="k">func</span> load() <span class="k">async</span> -&gt; [Item] {
     <span class="k">let</span> items = <span class="k">await</span> APIClient.fetchItems()
     <span class="k">await</span> updateUI(with: items)
     <span class="k">return</span> items
   }
 
   <span class="k">@MainActor</span>
-  <span class="k">private func</span> <span class="v">updateUI</span>(with items: [<span class="v">Item</span>]) {
+  <span class="k">private func</span> updateUI(with items: [Item]) {
     <span class="c">// ここは確実にメインスレッド</span>
     NotificationCenter.default.post(name: .itemsLoaded, object: items)
   }
 }</pre>
 
-      <table class="t">
-        <thead>
-          <tr><th>使い所</th><th>記述例</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>UI 全体</td><td><code class="inline">@MainActor class ViewModel</code></td></tr>
-          <tr><td>特定メソッドだけ</td><td><code class="inline">@MainActor func updateUI()</code></td></tr>
-          <tr><td>クロージャ内だけ</td><td><code class="inline">await MainActor.run { ... }</code></td></tr>
-          <tr><td>SwiftUI View</td><td><code class="inline">struct MyView: View</code> は暗黙的に <code class="inline">@MainActor</code></td></tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>使い所</th><th>記述例</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>UI 全体</td><td><code class="inline">@MainActor class ViewModel</code></td></tr>
+        <tr><td>特定メソッドだけ</td><td><code class="inline">@MainActor func updateUI()</code></td></tr>
+        <tr><td>クロージャ内だけ</td><td><code class="inline">await MainActor.run { ... }</code></td></tr>
+        <tr><td>SwiftUI View</td><td><code class="inline">struct MyView: View</code> は暗黙的に <code class="inline">@MainActor</code></td></tr>
+      </tbody>
+    </table>
 
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>SwiftUI ViewModel は @MainActor が定石</h4>
-          <p>
-            <code class="inline">ObservableObject</code> + <code class="inline">@Published</code> を使うとき、
-            プロパティ更新は <strong>メインスレッドからでなければなりません</strong>（さもないと UI 警告）。
-            class 全体に <code class="inline">@MainActor</code> を付けておけば、その心配が消えます。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-tip">
+      <p class="aside-label">SwiftUI ViewModel は @MainActor が定石</p>
+      <p>
+        <code class="inline">ObservableObject</code> + <code class="inline">@Published</code> を使うとき、
+        プロパティ更新は <strong>メインスレッドからでなければなりません</strong>（さもないと UI 警告）。
+        class 全体に <code class="inline">@MainActor</code> を付けておけば、その心配が消えます。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 08 ============================== -->
-  <section id="globalactor">
-    <div class="sec-head"><span class="idx">08</span><h2>GlobalActor</h2><span class="count">独自のグローバル isolation</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="globalactor" data-title="GlobalActor">
+    <h2>GlobalActor</h2>
+    <p class="lede">
       <code class="inline">@MainActor</code> は <code class="inline">@globalActor</code> 属性で実装された
       "メインスレッド版" にすぎません。同じ仕組みで「データベース専用 actor」「ログ書き込み専用 actor」
       といった<strong>カスタムグローバル isolation</strong>が作れます。
     </p>
-    <div class="demos">
-<pre class="code"><span class="c">// Database アクセス用のグローバル actor を定義</span>
+<pre class="listing"><span class="c">// Database アクセス用のグローバル actor を定義</span>
 <span class="k">@globalActor</span>
-<span class="k">actor</span> <span class="v">DatabaseActor</span> {
+<span class="k">actor</span> DatabaseActor {
   <span class="k">static let</span> shared = DatabaseActor()
 }
 
 <span class="c">// 使う</span>
 <span class="k">@DatabaseActor</span>
-<span class="k">final class</span> <span class="v">UserRepository</span> {
-  <span class="k">private var</span> connection: <span class="v">DBConnection</span>
+<span class="k">final class</span> UserRepository {
+  <span class="k">private var</span> connection: DBConnection
 
-  <span class="k">func</span> <span class="v">findUser</span>(id: <span class="v">UUID</span>) -&gt; <span class="v">User</span>? {
+  <span class="k">func</span> findUser(id: UUID) -&gt; User? {
     connection.query(...)
   }
 }
 
 <span class="c">// 別ファイルでも DatabaseActor 経由で同じ isolation に乗せられる</span>
 <span class="k">@DatabaseActor</span>
-<span class="k">func</span> <span class="v">cleanupOldRecords</span>() <span class="k">async throws</span> {
+<span class="k">func</span> cleanupOldRecords() <span class="k">async throws</span> {
   <span class="c">// このグローバル actor 内のすべてが直列化される</span>
 }</pre>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>レイヤー全体に "isolation の屋根" をかける</h4>
-          <p>
-            「永続化レイヤーは全部 DatabaseActor 上で動かす」「ログ書き込みは全部 LogActor で」
-            といった <strong>レイヤー単位の isolation 設計</strong>ができるのが GlobalActor の強み。
-            個別 actor を作るより、関心事をまとめやすい場合があります。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">レイヤー全体に "isolation の屋根" をかける</p>
+      <p>
+        「永続化レイヤーは全部 DatabaseActor 上で動かす」「ログ書き込みは全部 LogActor で」
+        といった <strong>レイヤー単位の isolation 設計</strong>ができるのが GlobalActor の強み。
+        個別 actor を作るより、関心事をまとめやすい場合があります。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 09 ============================== -->
-  <section id="sendable">
-    <div class="sec-head"><span class="idx">09</span><h2>Sendable プロトコル</h2><span class="count">isolation 境界を渡れる型</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="sendable" data-title="Sendable">
+    <h2>Sendable プロトコル</h2>
+    <p class="lede">
       Actor の境界（isolation domain）を越えて受け渡せる型は <code class="inline">Sendable</code>
       プロトコルに準拠していなければなりません。コンパイラは isolation を越える代入や引数渡しを
       検査し、<strong>Sendable でない型を渡そうとするとエラー</strong>にします。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>型</th><th>Sendable か</th><th>理由</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code class="inline">Int</code> / <code class="inline">String</code> / <code class="inline">Date</code></td><td><span class="pill pill-olive">✓ 自動</span></td><td>値型で immutable</td></tr>
-          <tr><td>普通の <code class="inline">struct</code> (全プロパティ Sendable)</td><td><span class="pill pill-olive">✓ 自動</span></td><td>値型で深くコピーされる</td></tr>
-          <tr><td><code class="inline">enum</code> (associated value も Sendable)</td><td><span class="pill pill-olive">✓ 自動</span></td><td>値型</td></tr>
-          <tr><td><code class="inline">final class</code> + 全 <code class="inline">let</code></td><td><span class="pill pill-oat">明示</span></td><td>不変なので明示すれば OK</td></tr>
-          <tr><td>普通の <code class="inline">class</code></td><td><span class="pill pill-clay">✗</span></td><td>共有可変状態の温床</td></tr>
-          <tr><td><code class="inline">actor</code></td><td><span class="pill pill-olive">✓ 自動</span></td><td>actor は本質的に Sendable</td></tr>
-          <tr><td>関数型 / クロージャ</td><td>条件付き</td><td><code class="inline">@Sendable</code> 注釈が必要</td></tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>型</th><th>Sendable か</th><th>理由</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code class="inline">Int</code> / <code class="inline">String</code> / <code class="inline">Date</code></td><td><span class="pill pill-green">✓ 自動</span></td><td>値型で immutable</td></tr>
+        <tr><td>普通の <code class="inline">struct</code> (全プロパティ Sendable)</td><td><span class="pill pill-green">✓ 自動</span></td><td>値型で深くコピーされる</td></tr>
+        <tr><td><code class="inline">enum</code> (associated value も Sendable)</td><td><span class="pill pill-green">✓ 自動</span></td><td>値型</td></tr>
+        <tr><td><code class="inline">final class</code> + 全 <code class="inline">let</code></td><td><span class="pill pill-neutral">明示</span></td><td>不変なので明示すれば OK</td></tr>
+        <tr><td>普通の <code class="inline">class</code></td><td><span class="pill pill-red">✗</span></td><td>共有可変状態の温床</td></tr>
+        <tr><td><code class="inline">actor</code></td><td><span class="pill pill-green">✓ 自動</span></td><td>actor は本質的に Sendable</td></tr>
+        <tr><td>関数型 / クロージャ</td><td>条件付き</td><td><code class="inline">@Sendable</code> 注釈が必要</td></tr>
+      </tbody>
+    </table>
 
-<pre class="code"><span class="c">// ✅ struct は自動 Sendable</span>
-<span class="k">struct</span> <span class="v">Money</span>: <span class="v">Sendable</span> {
-  <span class="k">let</span> amount: <span class="v">Int</span>
-  <span class="k">let</span> currency: <span class="v">String</span>
+<pre class="listing"><span class="c">// ✅ struct は自動 Sendable</span>
+<span class="k">struct</span> Money: Sendable {
+  <span class="k">let</span> amount: Int
+  <span class="k">let</span> currency: String
 }
 
 <span class="c">// ✅ final class + let で明示</span>
-<span class="k">final class</span> <span class="v">Logger</span>: <span class="v">Sendable</span> {
-  <span class="k">let</span> destination: <span class="v">URL</span>
+<span class="k">final class</span> Logger: Sendable {
+  <span class="k">let</span> destination: URL
   <span class="c">// var は不可</span>
 }
 
 <span class="c">// ⚠️ 共有可変 class — Sendable 不可</span>
-<span class="k">final class</span> <span class="v">Cache</span> {
-  <span class="k">var</span> entries: [<span class="v">String</span>: <span class="v">Data</span>] = [:]   <span class="c">// 可変</span>
+<span class="k">final class</span> Cache {
+  <span class="k">var</span> entries: [String: Data] = [:]   <span class="c">// 可変</span>
 }
 <span class="c">// → actor で包むか、@unchecked Sendable + 内部ロックを書く</span>
 
 <span class="c">// クロージャの @Sendable</span>
-<span class="k">func</span> <span class="v">runLater</span>(_ work: <span class="k">@Sendable</span> @escaping () -&gt; <span class="v">Void</span>) {
+<span class="k">func</span> runLater(_ work: <span class="k">@Sendable</span> @escaping () -&gt; Void) {
   Task { work() }
 }</pre>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>@unchecked Sendable は最終手段</h4>
-          <p>
-            「コンパイラには見えないが、自分で排他制御するから安全」と宣言する逃げ口が
-            <code class="inline">@unchecked Sendable</code>。手動ロックや
-            <code class="inline">DispatchQueue</code> で守った class などで使われますが、<strong>正しさは
-            完全に開発者責任</strong>になります。可能なら actor に置き換える方が安全です。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">@unchecked Sendable は最終手段</p>
+      <p>
+        「コンパイラには見えないが、自分で排他制御するから安全」と宣言する逃げ口が
+        <code class="inline">@unchecked Sendable</code>。手動ロックや
+        <code class="inline">DispatchQueue</code> で守った class などで使われますが、<strong>正しさは
+        完全に開発者責任</strong>になります。可能なら actor に置き換える方が安全です。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 10 ============================== -->
-  <section id="reentrancy">
-    <div class="sec-head"><span class="idx">10</span><h2>Actor Reentrancy（再入可能性）</h2><span class="count">最大の落とし穴</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="reentrancy" data-title="Reentrancy">
+    <h2>Actor Reentrancy（再入可能性）</h2>
+    <p class="lede">
       Swift の actor は <strong>再入可能 (reentrant)</strong>。つまり「あるメソッドが
       <code class="inline">await</code> で中断している間に、<strong>同じ actor の別メソッドが実行される</strong>」
       ことが起きます。これを知らないと、<code class="inline">await</code> の前後で見ていた状態が
       変わっていて、不変条件（invariant）を破壊するバグを生みます。
     </p>
-    <div class="demos">
-<pre class="code"><span class="k">actor</span> <span class="v">ImageCache</span> {
-  <span class="k">var</span> cache: [<span class="v">URL</span>: <span class="v">Image</span>] = [:]
+<pre class="listing"><span class="k">actor</span> ImageCache {
+  <span class="k">var</span> cache: [URL: Image] = [:]
 
-  <span class="k">func</span> <span class="v">image</span>(for url: <span class="v">URL</span>) <span class="k">async throws</span> -&gt; <span class="v">Image</span> {
+  <span class="k">func</span> image(for url: URL) <span class="k">async throws</span> -&gt; Image {
     <span class="c">// ① キャッシュをチェック</span>
     <span class="k">if let</span> cached = cache[url] { <span class="k">return</span> cached }
 
@@ -1027,39 +1044,39 @@ print(user.identifier)   <span class="c">// ✅ await 不要</span></pre>
   }
 }</pre>
 
-      <div class="svg-frame">
-        <svg viewBox="0 0 720 200" aria-label="Actor Reentrancy のタイムライン">
-          <text x="20" y="30" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">Task A</text>
-          <text x="20" y="100" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">Task B</text>
+    <div class="frame">
+      <svg viewBox="0 0 720 200" aria-label="Actor Reentrancy のタイムライン">
+        <text x="20" y="30" font-size="11" class="sv-t3">Task A</text>
+        <text x="20" y="100" font-size="11" class="sv-t3">Task B</text>
 
-          <!-- A: 開始 → await → 再開 -->
-          <line class="lc" x1="60" y1="30" x2="200" y2="30"/>
-          <text x="80" y="20" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#D97757">cache miss</text>
-          <line class="ln da" x1="200" y1="30" x2="500" y2="30"/>
-          <text x="290" y="22" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="10" fill="#87867F">↓ await fetch (suspended)</text>
-          <line class="lc" x1="500" y1="30" x2="660" y2="30"/>
-          <text x="510" y="22" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#D97757">cache[url] = image</text>
+        <!-- A: 開始 → await → 再開 -->
+        <line class="sv-line-accent" x1="60" y1="30" x2="200" y2="30"/>
+        <text x="80" y="20" font-size="10" class="sv-accent">cache miss</text>
+        <line class="sv-line sv-dash" x1="200" y1="30" x2="500" y2="30"/>
+        <text x="290" y="22" font-size="10" class="sv-note sv-t3">↓ await fetch (suspended)</text>
+        <line class="sv-line-accent" x1="500" y1="30" x2="660" y2="30"/>
+        <text x="510" y="22" font-size="10" class="sv-accent">cache[url] = image</text>
 
-          <!-- B: A 中断中に入ってくる -->
-          <line class="ln" x1="60" y1="100" x2="220" y2="100" stroke="#87867F"/>
-          <text x="80" y="120" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">同じ url 要求</text>
-          <line class="lc" x1="220" y1="100" x2="380" y2="100"/>
-          <text x="240" y="92" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#D97757">cache miss (!)</text>
-          <line class="ln da" x1="380" y1="100" x2="600" y2="100"/>
-          <text x="430" y="92" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="10" fill="#87867F">↓ await fetch (重複)</text>
-          <line class="lc" x1="600" y1="100" x2="700" y2="100"/>
-          <text x="610" y="92" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#D97757">cache[url] = image</text>
+        <!-- B: A 中断中に入ってくる -->
+        <line class="sv-line" x1="60" y1="100" x2="220" y2="100"/>
+        <text x="80" y="120" font-size="10" class="sv-t3">同じ url 要求</text>
+        <line class="sv-line-accent" x1="220" y1="100" x2="380" y2="100"/>
+        <text x="240" y="92" font-size="10" class="sv-accent">cache miss (!)</text>
+        <line class="sv-line sv-dash" x1="380" y1="100" x2="600" y2="100"/>
+        <text x="430" y="92" font-size="10" class="sv-note sv-t3">↓ await fetch (重複)</text>
+        <line class="sv-line-accent" x1="600" y1="100" x2="700" y2="100"/>
+        <text x="610" y="92" font-size="10" class="sv-accent">cache[url] = image</text>
 
-          <text x="360" y="170" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#B85C3E">同じ画像を 2 回ダウンロードしてしまう</text>
-        </svg>
-      </div>
+        <text x="360" y="170" text-anchor="middle" font-size="12" class="sv-note sv-warn">同じ画像を 2 回ダウンロードしてしまう</text>
+      </svg>
+    </div>
 
-      <p class="demo-label" style="margin-top: 24px;">対策パターン: 進行中タスクを記憶する</p>
-<pre class="code"><span class="k">actor</span> <span class="v">ImageCache</span> {
-  <span class="k">var</span> cache: [<span class="v">URL</span>: <span class="v">Image</span>] = [:]
-  <span class="k">var</span> inFlight: [<span class="v">URL</span>: <span class="v">Task</span>&lt;<span class="v">Image</span>, <span class="v">Error</span>&gt;] = [:]
+    <p class="demo-label">対策パターン: 進行中タスクを記憶する</p>
+<pre class="listing"><span class="k">actor</span> ImageCache {
+  <span class="k">var</span> cache: [URL: Image] = [:]
+  <span class="k">var</span> inFlight: [URL: Task&lt;Image, Error&gt;] = [:]
 
-  <span class="k">func</span> <span class="v">image</span>(for url: <span class="v">URL</span>) <span class="k">async throws</span> -&gt; <span class="v">Image</span> {
+  <span class="k">func</span> image(for url: URL) <span class="k">async throws</span> -&gt; Image {
     <span class="k">if let</span> cached = cache[url] { <span class="k">return</span> cached }
 
     <span class="c">// 既に進行中なら、その Task の結果を待つ</span>
@@ -1076,93 +1093,219 @@ print(user.identifier)   <span class="c">// ✅ await 不要</span></pre>
   }
 }</pre>
 
-      <div class="callout callout-error">
-        <div class="ico">!</div>
-        <div>
-          <h4>「await を挟んだら状態を読み直せ」が鉄則</h4>
-          <p>
-            <code class="inline">await</code> の前に確認した条件は、await の後では<strong>変わっている可能性がある</strong>。
-            これは Swift Concurrency の最重要ルールです。慣習的に「<strong>await の前後で必ず invariant を確認し直す</strong>」
-            と覚えておくと、Reentrancy バグの大半は防げます。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">「await を挟んだら状態を読み直せ」が鉄則</p>
+      <p>
+        <code class="inline">await</code> の前に確認した条件は、await の後では<strong>変わっている可能性がある</strong>。
+        これは Swift Concurrency の最重要ルールです。慣習的に「<strong>await の前後で必ず invariant を確認し直す</strong>」
+        と覚えておくと、Reentrancy バグの大半は防げます。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 11 ============================== -->
-  <section id="perf">
-    <div class="sec-head"><span class="idx">11</span><h2>パフォーマンスと使い分け</h2><span class="count">いつ actor を使うか</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="perf" data-title="パフォーマンス">
+    <h2>パフォーマンスと使い分け</h2>
+    <p class="lede">
       actor は無料ではありません。メソッド呼び出しごとに「キューに enqueue → スケジューリング」のコストがかかり、
       頻繁に呼ぶホットパスでは無視できないオーバーヘッドになることがあります。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>用途</th><th>適切な選択</th><th>理由</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>共有される可変状態（キャッシュ、状態管理）</td><td><strong>actor</strong></td><td>並行アクセスが起きうる</td></tr>
-          <tr><td>UI 状態管理 (ViewModel)</td><td><strong>@MainActor class</strong></td><td>UI 更新は main thread 必須</td></tr>
-          <tr><td>不変データ (DTO, モデル)</td><td><strong>struct + Sendable</strong></td><td>コピーで十分</td></tr>
-          <tr><td>計算メソッドのみ (純粋関数)</td><td><strong>普通の func</strong></td><td>状態がない</td></tr>
-          <tr><td>1 タスク内の局所状態</td><td><strong>普通の class / struct</strong></td><td>並行アクセスがない</td></tr>
-          <tr><td>頻繁に呼ばれるホットループ</td><td>actor 化を再考</td><td>キューイングコスト</td></tr>
-        </tbody>
-      </table>
+    <table class="params">
+      <thead>
+        <tr><th>用途</th><th>適切な選択</th><th>理由</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>共有される可変状態（キャッシュ、状態管理）</td><td><strong>actor</strong></td><td>並行アクセスが起きうる</td></tr>
+        <tr><td>UI 状態管理 (ViewModel)</td><td><strong>@MainActor class</strong></td><td>UI 更新は main thread 必須</td></tr>
+        <tr><td>不変データ (DTO, モデル)</td><td><strong>struct + Sendable</strong></td><td>コピーで十分</td></tr>
+        <tr><td>計算メソッドのみ (純粋関数)</td><td><strong>普通の func</strong></td><td>状態がない</td></tr>
+        <tr><td>1 タスク内の局所状態</td><td><strong>普通の class / struct</strong></td><td>並行アクセスがない</td></tr>
+        <tr><td>頻繁に呼ばれるホットループ</td><td>actor 化を再考</td><td>キューイングコスト</td></tr>
+      </tbody>
+    </table>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>「複数タスクから触られる可能性があるか」だけを基準にする</h4>
-          <p>
-            「並行アクセスが起きないなら actor 化は不要」が原則。1 つのタスクからしか触られない一時的な
-            状態（例: 1 リクエストのスコープ内だけで使うデータ）に actor を使うのは、安全性のためでなく
-            機械的に書いてしまっているだけ、ということがよくあります。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">「複数タスクから触られる可能性があるか」だけを基準にする</p>
+      <p>
+        「並行アクセスが起きないなら actor 化は不要」が原則。1 つのタスクからしか触られない一時的な
+        状態（例: 1 リクエストのスコープ内だけで使うデータ）に actor を使うのは、安全性のためでなく
+        機械的に書いてしまっているだけ、ということがよくあります。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 12 ============================== -->
-  <section id="pitfalls">
-    <div class="sec-head"><span class="idx">12</span><h2>よくある落とし穴</h2><span class="count">checklist</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="pitfalls" data-title="落とし穴">
+    <h2>よくある落とし穴</h2>
+    <p class="lede">
       実装でハマりやすいポイントを箇条書きで。レビューチェックリストとして使えます。
     </p>
-    <div class="demos">
-      <ol class="serif-list">
-        <li><div><strong>await の前後で状態を読み直さない</strong>: Reentrancy で状態が変わっている可能性。条件分岐は await の後に再評価する。</div></li>
-        <li><div><strong>actor のメソッドを頻繁に呼びすぎる</strong>: ループで毎回 await すると遅い。バッチ化して 1 回の actor 呼び出しでまとめて処理する設計に。</div></li>
-        <li><div><strong>actor 内で長時間ブロッキング処理</strong>: 同じ actor の他のメソッドが全部待たされる。重い同期処理は <code class="inline">Task.detached</code> で別スレッドへ逃がす。</div></li>
-        <li><div><strong>nonisolated で var を触ろうとする</strong>: コンパイルエラー。本当に必要なら actor を分割するか、設計を見直す。</div></li>
-        <li><div><strong>@MainActor を class 全体に付けっぱなし</strong>: 計算メソッドまで全部 main thread になり UI が固まる。重い処理は別 actor / detached task に。</div></li>
-        <li><div><strong>循環 await でデッドロックっぽい挙動</strong>: 厳密にはデッドロックしないが「actor A が actor B を await している間に B が A を await」で進行不能に近い状態に。設計レベルで避ける。</div></li>
-        <li><div><strong>@unchecked Sendable の濫用</strong>: 「とりあえず通す」ために使うと並行性バグの温床。actor で囲み直すのが本来。</div></li>
-        <li><div><strong>非同期初期化が必要なケース</strong>: <code class="inline">init</code> は async にできない（Swift 5.5）→ Swift 5.7+ で可能だが、原則 factory メソッドにする方が見通しが良い。</div></li>
-        <li><div><strong>Swift 6 の strict concurrency</strong>: Swift 6 では Sendable / isolation 違反は全部エラー。Swift 5 系で <code class="inline">-strict-concurrency=complete</code> を有効にして段階的に移行。</div></li>
-      </ol>
+    <ol class="steps">
+      <li><div><strong>await の前後で状態を読み直さない</strong>: Reentrancy で状態が変わっている可能性。条件分岐は await の後に再評価する。</div></li>
+      <li><div><strong>actor のメソッドを頻繁に呼びすぎる</strong>: ループで毎回 await すると遅い。バッチ化して 1 回の actor 呼び出しでまとめて処理する設計に。</div></li>
+      <li><div><strong>actor 内で長時間ブロッキング処理</strong>: 同じ actor の他のメソッドが全部待たされる。重い同期処理は <code class="inline">Task.detached</code> で別スレッドへ逃がす。</div></li>
+      <li><div><strong>nonisolated で var を触ろうとする</strong>: コンパイルエラー。本当に必要なら actor を分割するか、設計を見直す。</div></li>
+      <li><div><strong>@MainActor を class 全体に付けっぱなし</strong>: 計算メソッドまで全部 main thread になり UI が固まる。重い処理は別 actor / detached task に。</div></li>
+      <li><div><strong>循環 await でデッドロックっぽい挙動</strong>: 厳密にはデッドロックしないが「actor A が actor B を await している間に B が A を await」で進行不能に近い状態に。設計レベルで避ける。</div></li>
+      <li><div><strong>@unchecked Sendable の濫用</strong>: 「とりあえず通す」ために使うと並行性バグの温床。actor で囲み直すのが本来。</div></li>
+      <li><div><strong>非同期初期化が必要なケース</strong>: <code class="inline">init</code> は async にできない（Swift 5.5）→ Swift 5.7+ で可能だが、原則 factory メソッドにする方が見通しが良い。</div></li>
+      <li><div><strong>Swift 6 の strict concurrency</strong>: Swift 6 では Sendable / isolation 違反は全部エラー。Swift 5 系で <code class="inline">-strict-concurrency=complete</code> を有効にして段階的に移行。</div></li>
+    </ol>
 
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>覚えておく 1 行</h4>
-          <p>
-            <strong>「Actor の中の await は、外の世界に時間が流れることを許す境界」</strong>。
-            この一行を念頭に置くと、Reentrancy も Sendable も MainActor も、全部一貫して理解できます。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-tip">
+      <p class="aside-label">覚えておく 1 行</p>
+      <p>
+        <strong>「Actor の中の await は、外の世界に時間が流れることを許す境界」</strong>。
+        この一行を念頭に置くと、Reentrancy も Sendable も MainActor も、全部一貫して理解できます。
+      </p>
     </div>
   </section>
 
-  <footer>
-    <span class="k">"Quiet but exact."</span>
+  <footer class="pagefooter">
+    <span>"Quiet but exact."</span>
     <span>SE-0306 Concurrency · <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md">swift-evolution/0306</a></span>
   </footer>
 
 </div>
+
+<!-- ============================ Floating in-page menu ============================ -->
+<aside class="otp" aria-label="このページ内">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="otp"></nav>
+</aside>
+<button class="fab" id="fab" aria-label="ページ内メニューを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="13" y2="17"/>
+  </svg>
+</button>
+<div class="fab-panel" id="fabPanel">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="fab"></nav>
+</div>
+
+<script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Floating menu — .doc-section[id][data-title] から自動生成
+   ============================================================ */
+const sections = document.querySelectorAll('.doc-section[id][data-title]');
+const links = [...sections].map(s =>
+  `<a href="#${s.id}" data-spy="${s.id}">${s.dataset.title}</a>`).join('');
+document.querySelector('[data-rail="otp"]').innerHTML = links;
+document.querySelector('[data-rail="fab"]').innerHTML = links;
+
+/* Scrollspy — 現在のセクションをハイライト */
+const visible = new Set();
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) visible.add(e.target.id);
+    else visible.delete(e.target.id);
+  });
+  let current = null;
+  for (const s of sections) {                  // DOM 順で最初に見えているもの
+    if (visible.has(s.id)) { current = s.id; break; }
+  }
+  if (current) {
+    document.querySelectorAll('[data-spy]').forEach(a => {
+      a.classList.toggle('is-current', a.dataset.spy === current);
+    });
+  }
+}, { rootMargin: '-20px 0px -55% 0px' });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   Floating button（狭い画面のポップオーバー）
+   ============================================================ */
+(function () {
+  const fab = document.getElementById('fab');
+  const panel = document.getElementById('fabPanel');
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+  panel.addEventListener('click', e => {
+    if (e.target.closest('a')) panel.classList.remove('is-open');
+  });
+})();
+
+/* ============================================================
+   Copy button — 全 pre.listing に自動付与
+   ============================================================ */
+(function () {
+  const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2.5"/>
+    <path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>`;
+  const ICON_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+  document.querySelectorAll('pre.listing').forEach(pre => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.setAttribute('aria-label', 'コードをコピー');
+    btn.innerHTML = ICON_COPY;
+    let timer = null;
+    const reset = () => {
+      clearTimeout(timer); timer = null;
+      btn.innerHTML = ICON_COPY;
+      btn.classList.remove('is-copied');
+    };
+    btn.addEventListener('click', async () => {
+      const code = pre.textContent.replace(/\s+$/, '');
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      clearTimeout(timer);
+      btn.innerHTML = ICON_DONE;
+      btn.classList.add('is-copied');
+      timer = setTimeout(reset, 1600);
+    });
+    // ホバーが外れたらフェードアウト完了後にアイコンを差し戻す
+    wrap.addEventListener('mouseleave', () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = setTimeout(reset, 220);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>

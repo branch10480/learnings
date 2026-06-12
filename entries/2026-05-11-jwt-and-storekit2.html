@@ -15,459 +15,508 @@
 <!-- =============================================================== -->
 
 <style>
-  :root {
-    --ivory:   #FAF9F5;
-    --paper:   #FFFFFF;
-    --slate:   #141413;
-    --clay:    #D97757;
-    --clay-d:  #B85C3E;
-    --oat:     #E3DACC;
-    --olive:   #788C5D;
-    --olive-d: #5C6E45;
-    --mustard: #C78E3F;
-    --ruby:    #B04A3F;
-    --g100:    #F0EEE6;
-    --g200:    #E6E3DA;
-    --g300:    #D1CFC5;
-    --g500:    #87867F;
-    --g700:    #3D3D3A;
+/* ============================================================
+   Toshi Design System — Single Page パターン
+   ============================================================ */
 
-    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
-             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
-    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
-             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
 
-    --r-pill:  999px;
-    --r-card:  14px;
-    --r-panel: 12px;
-    --r-row:   8px;
-    --r-chip:  6px;
+/* ============================================================
+   :root tokens
+   ============================================================ */
+:root {
+  color-scheme: light dark;
 
-    --b-hair: 1px solid var(--g200);
-    --b-rule: 1.5px solid var(--g300);
-    --b-strong: 1.5px solid var(--slate);
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
 
-    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
-    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
 
-    /* semantic aliases — dark で値だけ再マップ。コンポーネントは var() 参照なので
-       CSS のソース順に依存せず dark が効く（旧テンプレの直値 + @media セレクタ
-       上書きは同詳細度でソース順負けし、dark callout が light 背景のまま浮いた）。 */
-    --callout-warn-bg:  #FFF8EB;
-    --callout-warn-fg:  #8C6A1F;
-    --callout-error-bg: #FBF0EE;
-    --callout-error-fg: var(--ruby);
-    --svg-frame-bg:     var(--paper);
-    --chip-bg:          var(--g100);
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
+
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
+
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
+
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
+
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
   }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
-  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
-     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
-     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。markdownobserver の
-     user.css と同じ dark トークンを採用。SVG 図解は inline fill 属性で色を
-     持つため Dark でも light "paper insert" として残す (Apple Notes reader 方式)。 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ivory:   #1a1916;
-      --paper:   #26241f;
-      --slate:   #d4cfc1;
-      --clay:    #D97757;
-      --clay-d:  #e08576;
-      --oat:     #4a463d;
-      --olive:   #a8c97f;
-      --olive-d: #b8df96;
-      --mustard: #e0bb7a;
-      --ruby:    #d97766;
-      --g100:    #26241f;
-      --g200:    #36332d;
-      --g300:    #3a3833;
-      --g500:    #9a958a;
-      --g700:    #c8c2b3;
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
 
-      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
-      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+/* ============================================================
+   Article — 1 カラムのコンテンツ
+   ============================================================ */
+.article { max-width: 760px; margin: 0 auto; padding: 64px 22px 120px; }
 
-      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
-      --callout-warn-fg:  #e0bb7a;
-      --callout-error-bg: rgba(217, 119, 102, 0.10);
-      --callout-error-fg: #d97766;
-      --svg-frame-bg:     #FAF9F5;
-      --chip-bg:          #36332d;
-    }
-  }
+.doc-header { padding-bottom: 28px; border-bottom: 1px solid var(--hairline); }
+a.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 28px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  transition: color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  a.back-link:hover { color: var(--text); border-color: var(--separator); }
+}
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 44px);
+  font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
+  /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
+  word-break: keep-all;
+  line-break: strict;
+}
+.doc-header h1 em { font-style: normal; color: var(--tint); }
+.doc-header .abstract { margin: 14px 0 0; font-size: 19px; color: var(--text-2); line-height: 1.45; }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--ivory);
-    color: var(--slate);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+.doc-section { padding: 44px 0 8px; scroll-margin-top: 24px; }
+.doc-section + .doc-section { border-top: 1px solid var(--hairline); margin-top: 36px; }
+.doc-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.012em; margin: 0 0 8px; }
+.doc-section h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+.doc-section p { color: var(--text); font-size: 15px; line-height: 1.6; }
+.doc-section p.lede { color: var(--text-2); font-size: 16px; margin-top: 0; }
 
-  header.masthead {
-    padding: 80px 0 56px;
-    border-bottom: var(--b-rule);
-    margin-bottom: 12px;
-  }
-  a.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    text-decoration: none;
-    margin-bottom: 28px;
-    padding: 6px 12px;
-    border-radius: var(--r-pill);
-    border: var(--b-rule);
-    background: var(--paper);
-    transition: color 120ms, border-color 120ms;
-  }
-  @media (hover: hover) {
-    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-bottom: 18px;
+.demos { display: flex; flex-direction: column; gap: 24px; margin-top: 20px; }
+.demo-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin: 0 0 -16px;
+}
+
+/* ============================================================
+   Theme toggle — 右上にフローティング配置
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Floating in-page menu
+   ============================================================ */
+.otp {
+  position: fixed;
+  right: 24px; top: 64px;
+  width: 210px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+  z-index: 40;
+}
+.otp .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 0 12px 8px;
+}
+.otp a {
+  display: block;
+  font-size: 12.5px; color: var(--text-2);
+  padding: 5px 12px; border-radius: var(--r-sm);
+  transition: color 120ms, background 120ms;
+}
+.otp a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+.otp a.is-current { color: var(--tint); font-weight: 600; }
+
+/* 狭い画面: 右下のフローティングボタン + ポップオーバー */
+.fab { display: none; }
+@media (max-width: 1239px) {
+  .otp { display: none; }
+  .fab {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    position: fixed; right: 20px; bottom: 24px; z-index: 60;
+    width: 50px; height: 50px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: var(--tint-fill); color: var(--on-tint);
+    border: none; cursor: pointer;
+    box-shadow: var(--sh-menu);
   }
-  .eyebrow::before {
-    content: "";
-    width: 24px; height: 1.5px;
-    background: var(--clay);
-  }
-  h1.display {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(38px, 5.4vw, 62px);
-    line-height: 1.06;
-    letter-spacing: -0.018em;
-    margin: 0 0 8px;
-    max-width: 18ch;
-    /* 和文熟語が単語途中で改行されるのを防ぐ（CJK のみに効く） */
-    word-break: keep-all;
-    line-break: strict;
-  }
-  h1.display em { font-style: italic; color: var(--clay); }
-  .lead {
-    font-size: 16.5px;
-    color: var(--g700);
-    margin: 22px 0 0;
-    max-width: 680px;
-  }
-  .meta {
-    margin-top: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--g500);
-  }
-  .meta span strong { color: var(--g700); font-weight: 500; }
+  .fab svg { width: 22px; height: 22px; }
+}
+.fab-panel {
+  display: none;
+  position: fixed; right: 20px; bottom: 86px; z-index: 60;
+  width: min(260px, calc(100vw - 40px));
+  max-height: 55vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+}
+.fab-panel.is-open { display: block; }
+.fab-panel .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); padding: 0 12px 8px;
+}
+.fab-panel a {
+  display: block; font-size: 14px; color: var(--text-2);
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.fab-panel a:hover { background: var(--bg-alt); color: var(--text); text-decoration: none; }
+.fab-panel a.is-current { color: var(--tint); font-weight: 600; }
 
-  nav.toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 26px 0 0;
-  }
-  nav.toc a {
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border: var(--b-rule);
-    border-radius: var(--r-pill);
-    text-decoration: none;
-    color: var(--g700);
-    background: var(--paper);
-    transition: border-color 120ms, color 120ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
-  @media (hover: hover) {
-    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
-    nav.toc a:hover .n { color: var(--clay); }
-  }
+/* ============================================================
+   Components
+   ============================================================ */
 
-  section { margin-top: 72px; scroll-margin-top: 28px; }
-  .sec-head {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    margin-bottom: 10px;
-  }
-  .sec-head .idx {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--clay);
-    font-weight: 600;
-    width: 34px;
-    flex-shrink: 0;
-  }
-  .sec-head h2 {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 27px;
-    margin: 0;
-    letter-spacing: -0.012em;
-  }
-  .sec-head .count {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--g500);
-    background: var(--g100);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-  }
-  .sec-intro {
-    font-size: 14.5px;
-    color: var(--g700);
-    max-width: 760px;
-    margin: 0 0 24px 50px;
-  }
-  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
-  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
-  .demo-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-    margin: 0 0 8px;
-  }
+/* --- Asides --- */
+.aside {
+  border: 1px solid var(--hairline);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 14px 0;
+  background: var(--bg-alt);
+}
+.aside .aside-label { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+.aside p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.aside-note      { border-left-color: var(--text-3); }
+.aside-note      .aside-label { color: var(--text-2); }
+.aside-important { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 6%, var(--bg-elev)); }
+.aside-important .aside-label { color: var(--purple); }
+.aside-tip       { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 6%, var(--bg-elev)); }
+.aside-tip       .aside-label { color: var(--green); }
+.aside-warning   { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 6%, var(--bg-elev)); }
+.aside-warning   .aside-label { color: var(--red); }
 
-  pre.code {
-    margin: 0;
-    background: var(--g100);
-    border: var(--b-hair);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--g700);
-    overflow-x: auto;
-  }
-  pre.code .k { color: var(--olive-d); }
-  pre.code .s { color: var(--clay-d); }
-  pre.code .c { color: var(--g500); font-style: italic; }
-  pre.code .v { color: var(--slate); }
-  pre.code .t { color: var(--clay-d); }
-  pre.code .n { color: var(--clay); }
-  code.inline {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--chip-bg);
-    padding: 1px 6px;
-    border-radius: var(--r-chip);
-    color: var(--g700);
-  }
+/* --- Code --- */
+pre.listing {
+  background: var(--bg-code);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 14px 0;
+}
+pre.listing .k { color: var(--syn-k); font-weight: 500; }
+pre.listing .t { color: var(--syn-t); }
+pre.listing .s { color: var(--syn-s); }
+pre.listing .n { color: var(--syn-n); }
+pre.listing .c { color: var(--syn-c); }
+pre.listing .f { color: var(--syn-f); }
+pre.listing .d { color: var(--syn-d); }
+code.inline {
+  font-size: 0.88em;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* コピーボタン — JS が全 pre.listing を .code-wrap で包んで自動付与 */
+.code-wrap { position: relative; margin: 14px 0; }
+.code-wrap pre.listing { margin: 0; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 120ms, border-color 120ms;
+}
+.code-wrap:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copy-btn:hover { color: var(--text); border-color: var(--separator); }
+.copy-btn.is-copied { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.copy-btn svg { width: 15px; height: 15px; }
 
-  .callout {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    gap: 14px;
-    padding: 16px 18px;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-left: 4px solid var(--clay);
-    border-radius: var(--r-panel);
-  }
-  .callout .ico {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--clay);
-  }
-  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
-  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
-  .callout-note    { border-left-color: var(--clay); }
-  .callout-success { border-left-color: var(--olive); }
-  .callout-success .ico { color: var(--olive-d); }
-  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
-  .callout-warn .ico { color: var(--callout-warn-fg); }
-  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
-  .callout-error .ico { color: var(--callout-error-fg); }
+/* --- Tables --- */
+table.params {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+  margin: 14px 0;
+}
+table.params th, table.params td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+table.params thead th {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  border-bottom: 1px solid var(--separator);
+}
+table.params td.param { font-family: var(--font-mono); font-size: 13px; color: var(--syn-d); }
+table.params td.type  { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+table.params tbody tr:hover { background: var(--bg-alt); }
 
-  table.t {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    overflow: hidden;
-    font-size: 13.5px;
-  }
-  table.t th, table.t td {
-    text-align: left;
-    padding: 12px 16px;
-    border-bottom: var(--b-hair);
-  }
-  table.t thead th {
-    font: 500 12px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    background: var(--g100);
-  }
-  table.t tbody tr:last-child td { border-bottom: none; }
-  @media (hover: hover) {
-    table.t tbody tr:hover { background: var(--g100); }
-  }
-  table.t td.mono { font-family: var(--mono); color: var(--g700); }
+/* --- Lists --- */
+ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 14px 0; }
+ol.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 15px;
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--text-2);
+  font: 600 12px var(--font-text);
+  display: flex; align-items: center; justify-content: center;
+}
+ul.plain { padding-left: 1.3em; margin: 14px 0; }
+ul.plain li { margin: 6px 0; font-size: 15px; line-height: 1.6; }
 
-  ol.serif-list {
-    list-style: none;
-    counter-reset: serif;
-    padding: 0;
-    margin: 0;
-  }
-  ol.serif-list li {
-    counter-increment: serif;
-    display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: var(--b-hair);
-  }
-  ol.serif-list li:last-child { border-bottom: none; }
-  ol.serif-list li::before {
-    content: counter(serif, decimal-leading-zero);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--clay);
-    padding-top: 3px;
-  }
-  ul.dot-list { list-style: none; padding: 0; margin: 0; }
-  ul.dot-list li {
-    padding: 8px 0 8px 22px;
-    position: relative;
-    font-size: 14px;
-  }
-  ul.dot-list li::before {
-    content: "";
-    position: absolute; left: 4px; top: 16px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--clay);
-  }
+/* --- 図解フレーム --- */
+.frame {
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: var(--bg-elev);
+}
+.frame svg { width: 100%; height: auto; display: block; }
 
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 11px;
-    border-radius: var(--r-pill);
-    font: 500 12px var(--sans);
-    border: var(--b-rule);
-    background: var(--paper);
-    color: var(--g700);
-  }
-  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
-  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
-  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
-  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+/* --- JWT 三分割の特殊スタイル --- */
+.jwt-split {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  word-break: break-all;
+}
+.jwt-split .h { color: var(--orange); }
+.jwt-split .p { color: var(--green); }
+.jwt-split .s { color: var(--purple); }
+.jwt-split .dot { color: var(--text-3); }
 
-  .svg-frame {
-    background: var(--svg-frame-bg);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 24px;
-  }
-  .svg-frame svg { width: 100%; height: auto; display: block; }
-  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
-  .fl { fill: var(--g300); }
-  .cl { fill: var(--clay); }
-  .ol { fill: var(--olive); }
-  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
-  .sl { fill: var(--slate); }
-  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
-  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .da { stroke-dasharray: 4 4; }
+/* --- 比較 2 カラム --- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare > div {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font: 500 13px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.compare h4.bad  { color: var(--red); }
+.compare h4.good { color: var(--green); }
+.compare h4.old  { color: var(--text-3); }
+.compare h4.new  { color: var(--tint); }
 
-  /* JWT 三分割の特殊スタイル */
-  .jwt-split {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 18px 20px;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.7;
-    word-break: break-all;
-  }
-  .jwt-split .h { color: var(--clay-d); }
-  .jwt-split .p { color: var(--olive-d); }
-  .jwt-split .s { color: #6B5BD9; }
-  .jwt-split .dot { color: var(--g500); }
-
-  .compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-  }
-  .compare h4 {
-    margin: 0 0 10px;
-    font: 500 13px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-  }
-  .compare h4.bad  { color: var(--ruby); }
-  .compare h4.good { color: var(--olive-d); }
-  .compare h4.old  { color: var(--g500); }
-  .compare h4.new  { color: var(--clay-d); }
-
-  footer {
-    margin-top: 120px;
-    border-top: var(--b-rule);
-    padding-top: 36px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: var(--g500);
-  }
-  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
-  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
+.pagefooter .quote { font-style: italic; color: var(--text-2); font-size: 13px; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="masthead">
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<div class="article">
+
+  <header class="doc-header">
     <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
-    <div class="eyebrow">Auth deep-dive · iOS · 2026</div>
-    <h1 class="display">JWT は <em>3 つの Base64</em> をドットで繋いだ署名つきトークン。</h1>
-    <p class="lead">
+    <p class="eyebrow">Auth deep-dive · iOS · 2026</p>
+    <h1>JWT は <em>3 つの Base64</em> をドットで繋いだ署名つきトークン。</h1>
+    <p class="abstract">
       JWT (JSON Web Token, RFC 7519) は <code class="inline">header.payload.signature</code> という
       たった 3 ピースの自己完結トークン。StoreKit 2 はこの仕組みを丸ごと採用し、
       旧来の「不透明なレシート文字列」を JWS 署名済みトランザクションへ置き換えた。
@@ -479,74 +528,56 @@
       <span><strong>関連</strong> OAuth 2 · OIDC · ES256</span>
       <span><strong>Apple API</strong> App Store Server API / V2 Notifications</span>
     </div>
-    <nav class="toc">
-      <a href="#what">JWT とは <span class="n">01</span></a>
-      <a href="#anatomy">構造の解剖 <span class="n">02</span></a>
-      <a href="#alg">署名アルゴリズム <span class="n">03</span></a>
-      <a href="#jwsjwe">JWS / JWE / JWT <span class="n">04</span></a>
-      <a href="#claims">Claims <span class="n">05</span></a>
-      <a href="#pitfalls">落とし穴 <span class="n">06</span></a>
-      <a href="#why-storekit">なぜ StoreKit 2 が JWT を <span class="n">07</span></a>
-      <a href="#signed-tx">JWS Signed Transaction <span class="n">08</span></a>
-      <a href="#x5c">x5c と Apple Root CA <span class="n">09</span></a>
-      <a href="#server-api">App Store Server API <span class="n">10</span></a>
-      <a href="#notifications">Notifications V2 <span class="n">11</span></a>
-      <a href="#verify">Swift で検証する <span class="n">12</span></a>
-      <a href="#summary">まとめ <span class="n">13</span></a>
-    </nav>
   </header>
 
   <!-- ============================== 01 ============================== -->
-  <section id="what">
-    <div class="sec-head"><span class="idx">01</span><h2>JWT とは何か</h2><span class="count">overview</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="what" data-title="JWT とは">
+    <h2>JWT とは何か</h2>
+    <p class="lede">
       JWT は <strong>「JSON で書かれた主張（claims）に、暗号署名をつけて Base64URL で 3 つ並べたもの」</strong>。
       暗号化ではなく「改竄検知」が主目的で、ペイロードは誰でも復号せずに読める。これを混同すると
       パスワードを payload に入れるなどの致命的な誤用に繋がる。
     </p>
     <div class="demos">
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>核心の一文</h4>
-          <p>
-            <strong>「JWT は秘密ではなく、改竄されていない事実」</strong>を運ぶ封筒。
-            内容は誰でも読める（payload は Base64URL のまま）が、
-            <em>署名を持っている発行者の意志でのみ作れる</em>ことが暗号的に保証される。
-          </p>
-        </div>
+      <div class="aside aside-note">
+        <p class="aside-label">核心の一文</p>
+        <p>
+          <strong>「JWT は秘密ではなく、改竄されていない事実」</strong>を運ぶ封筒。
+          内容は誰でも読める（payload は Base64URL のまま）が、
+          <em>署名を持っている発行者の意志でのみ作れる</em>ことが暗号的に保証される。
+        </p>
       </div>
 
-      <div class="svg-frame">
+      <div class="frame">
         <svg viewBox="0 0 720 200" aria-label="JWT の概念図">
           <!-- 発行者 -->
-          <rect class="wh" x="20" y="70" width="120" height="60" rx="8"/>
-          <text x="80" y="95" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">発行者</text>
-          <text x="80" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">private key</text>
+          <rect x="20" y="70" width="120" height="60" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="80" y="95" text-anchor="middle" font-family="var(--font-text)" font-size="14" fill="var(--text)">発行者</text>
+          <text x="80" y="115" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">private key</text>
 
           <!-- JWT -->
-          <line class="lc" x1="140" y1="100" x2="220" y2="100"/>
-          <polygon class="cl" points="215,95 225,100 215,105"/>
-          <rect class="oa" x="230" y="60" width="260" height="80" rx="8"/>
-          <text x="360" y="88" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">JWT</text>
-          <text x="360" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">header.payload.signature</text>
-          <text x="360" y="125" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">公開可・改竄不能</text>
+          <line x1="140" y1="100" x2="220" y2="100" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="215,95 225,100 215,105" fill="var(--tint)"/>
+          <rect x="230" y="60" width="260" height="80" rx="8" fill="var(--bg-alt)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="360" y="88" text-anchor="middle" font-family="var(--font-text)" font-size="14" fill="var(--text)">JWT</text>
+          <text x="360" y="108" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-2)">header.payload.signature</text>
+          <text x="360" y="125" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--text-3)">公開可・改竄不能</text>
 
           <!-- 検証者 -->
-          <line class="lc" x1="490" y1="100" x2="570" y2="100"/>
-          <polygon class="cl" points="565,95 575,100 565,105"/>
-          <rect class="wh" x="580" y="70" width="120" height="60" rx="8"/>
-          <text x="640" y="95" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="14" fill="#141413">検証者</text>
-          <text x="640" y="115" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">public key</text>
+          <line x1="490" y1="100" x2="570" y2="100" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="565,95 575,100 565,105" fill="var(--tint)"/>
+          <rect x="580" y="70" width="120" height="60" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="640" y="95" text-anchor="middle" font-family="var(--font-text)" font-size="14" fill="var(--text)">検証者</text>
+          <text x="640" y="115" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">public key</text>
         </svg>
       </div>
     </div>
   </section>
 
   <!-- ============================== 02 ============================== -->
-  <section id="anatomy">
-    <div class="sec-head"><span class="idx">02</span><h2>構造の解剖</h2><span class="count">3 segments</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="anatomy" data-title="構造の解剖">
+    <h2>構造の解剖</h2>
+    <p class="lede">
       JWT は ASCII 文字列 1 本だが、ドットで 3 つに分かれる。それぞれ Base64URL（パディング無し）で
       エンコードされた JSON（あるいはバイト列）。実物を切り分けて、何が入っているか具体的に見る。
     </p>
@@ -557,7 +588,7 @@
       </div>
 
       <p class="demo-label" style="margin-top: 24px;">分解して JSON にすると</p>
-<pre class="code"><span class="c">// 1. header — 署名アルゴリズム + 鍵 ID</span>
+<pre class="listing"><span class="c">// 1. header — 署名アルゴリズム + 鍵 ID</span>
 {
   <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
   <span class="s">"kid"</span>: <span class="s">"0X76AB"</span>
@@ -574,7 +605,7 @@
 <span class="c">//    バイト列に対する暗号署名（バイナリ → Base64URL）</span>
 sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payload))</pre>
 
-      <table class="t">
+      <table class="params">
         <thead>
           <tr><th>セグメント</th><th>内容</th><th>暗号化？</th><th>改竄検知？</th></tr>
         </thead>
@@ -585,100 +616,94 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
         </tbody>
       </table>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>誤解しやすい点</h4>
-          <p>
-            JWT 単体では <strong>暗号化されていない</strong>。Base64URL は変換であって暗号化ではない。
-            payload を秘匿したければ JWE（後述）を使うか、JWT を HTTPS 上でしか流さない設計にする。
-          </p>
-        </div>
+      <div class="aside aside-warning">
+        <p class="aside-label">誤解しやすい点</p>
+        <p>
+          JWT 単体では <strong>暗号化されていない</strong>。Base64URL は変換であって暗号化ではない。
+          payload を秘匿したければ JWE（後述）を使うか、JWT を HTTPS 上でしか流さない設計にする。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 03 ============================== -->
-  <section id="alg">
-    <div class="sec-head"><span class="idx">03</span><h2>署名アルゴリズム</h2><span class="count">RFC 7518 (JWA)</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="alg" data-title="署名アルゴリズム">
+    <h2>署名アルゴリズム</h2>
+    <p class="lede">
       署名は対称鍵（HMAC 系）と非対称鍵（RSA, ECDSA, EdDSA）に大別される。Apple の世界では
       ECDSA の <code class="inline">ES256</code>（P-256 + SHA-256）がほぼ統一的に使われる。
       理由は鍵が短く、署名も短く、CPU コストが低いため。
     </p>
     <div class="demos">
-      <table class="t">
+      <table class="params">
         <thead>
           <tr><th>alg</th><th>正式名</th><th>鍵の種類</th><th>典型用途</th></tr>
         </thead>
         <tbody>
-          <tr><td class="mono">HS256</td><td>HMAC-SHA-256</td><td>対称（共有秘密）</td><td>サーバー内部の短命トークン</td></tr>
-          <tr><td class="mono">RS256</td><td>RSASSA-PKCS1-v1_5 + SHA-256</td><td>非対称 RSA 2048+</td><td>OIDC ID トークン（多くの IdP）</td></tr>
-          <tr><td class="mono">PS256</td><td>RSASSA-PSS + SHA-256</td><td>非対称 RSA</td><td>新しい OIDC 実装</td></tr>
-          <tr><td class="mono">ES256</td><td>ECDSA P-256 + SHA-256</td><td>非対称 EC</td><td><strong>Apple StoreKit 2 / Sign in with Apple</strong></td></tr>
-          <tr><td class="mono">ES384</td><td>ECDSA P-384 + SHA-384</td><td>非対称 EC</td><td>より強い保証が必要なとき</td></tr>
-          <tr><td class="mono">EdDSA</td><td>Ed25519 / Ed448</td><td>非対称 EC</td><td>新しい設計（Apple は未採用）</td></tr>
-          <tr><td class="mono">none</td><td>署名なし</td><td>—</td><td><strong>絶対に受け入れない</strong>（後述）</td></tr>
+          <tr><td class="param">HS256</td><td>HMAC-SHA-256</td><td>対称（共有秘密）</td><td>サーバー内部の短命トークン</td></tr>
+          <tr><td class="param">RS256</td><td>RSASSA-PKCS1-v1_5 + SHA-256</td><td>非対称 RSA 2048+</td><td>OIDC ID トークン（多くの IdP）</td></tr>
+          <tr><td class="param">PS256</td><td>RSASSA-PSS + SHA-256</td><td>非対称 RSA</td><td>新しい OIDC 実装</td></tr>
+          <tr><td class="param">ES256</td><td>ECDSA P-256 + SHA-256</td><td>非対称 EC</td><td><strong>Apple StoreKit 2 / Sign in with Apple</strong></td></tr>
+          <tr><td class="param">ES384</td><td>ECDSA P-384 + SHA-384</td><td>非対称 EC</td><td>より強い保証が必要なとき</td></tr>
+          <tr><td class="param">EdDSA</td><td>Ed25519 / Ed448</td><td>非対称 EC</td><td>新しい設計（Apple は未採用）</td></tr>
+          <tr><td class="param">none</td><td>署名なし</td><td>—</td><td><strong>絶対に受け入れない</strong>（後述）</td></tr>
         </tbody>
       </table>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>なぜ Apple は ES256 なのか</h4>
-          <p>
-            P-256 公開鍵は 64 byte、署名は 64 byte（DER 形式だと約 70 byte）。
-            RSA 2048 は鍵 256 byte / 署名 256 byte。スマホ間でやり取りするトランザクションの
-            JWT には、サイズと CPU コストの両面で EC が圧倒的に有利。
-            Sign in with Apple, APNs Auth Token, App Store Connect API も同じ ES256。
-          </p>
-        </div>
+      <div class="aside aside-note">
+        <p class="aside-label">なぜ Apple は ES256 なのか</p>
+        <p>
+          P-256 公開鍵は 64 byte、署名は 64 byte（DER 形式だと約 70 byte）。
+          RSA 2048 は鍵 256 byte / 署名 256 byte。スマホ間でやり取りするトランザクションの
+          JWT には、サイズと CPU コストの両面で EC が圧倒的に有利。
+          Sign in with Apple, APNs Auth Token, App Store Connect API も同じ ES256。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 04 ============================== -->
-  <section id="jwsjwe">
-    <div class="sec-head"><span class="idx">04</span><h2>JWS / JWE と JWT の関係</h2><span class="count">用語整理</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="jwsjwe" data-title="JWS / JWE / JWT">
+    <h2>JWS / JWE と JWT の関係</h2>
+    <p class="lede">
       ここがよく混乱する箇所。JWT は「中身（claims セット）の規格」、JWS は「署名形式の規格」、
       JWE は「暗号化形式の規格」。<strong>普段「JWT」と呼んでいるのはほぼ常に「JWS で署名された JWT」</strong>。
       StoreKit 2 のドキュメントが「JWS Compact Serialization」と書いているのも、結局は同じもの。
     </p>
     <div class="demos">
-      <div class="svg-frame">
+      <div class="frame">
         <svg viewBox="0 0 720 230" aria-label="JOSE スタック">
           <!-- 全体 JOSE -->
-          <rect class="oa" x="20" y="20" width="680" height="190" rx="10"/>
-          <text x="40" y="48" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JOSE (JSON Object Signing and Encryption)</text>
+          <rect x="20" y="20" width="680" height="190" rx="10" fill="var(--bg-alt)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="40" y="48" font-family="var(--font-text)" font-size="15" fill="var(--text)">JOSE (JSON Object Signing and Encryption)</text>
 
           <!-- JWS -->
-          <rect class="wh" x="40" y="65" width="200" height="130" rx="8"/>
-          <text x="140" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWS</text>
-          <text x="140" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7515</text>
-          <text x="140" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">署名形式</text>
-          <text x="140" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">h.p.sig</text>
-          <text x="140" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#D97757">StoreKit 2 はここ</text>
+          <rect x="40" y="65" width="200" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="140" y="90" text-anchor="middle" font-family="var(--font-text)" font-size="15" fill="var(--text)">JWS</text>
+          <text x="140" y="108" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">RFC 7515</text>
+          <text x="140" y="135" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="12" fill="var(--text-2)">署名形式</text>
+          <text x="140" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">h.p.sig</text>
+          <text x="140" y="175" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--tint)">StoreKit 2 はここ</text>
 
           <!-- JWE -->
-          <rect class="wh" x="260" y="65" width="200" height="130" rx="8"/>
-          <text x="360" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWE</text>
-          <text x="360" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7516</text>
-          <text x="360" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">暗号化形式</text>
-          <text x="360" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">h.k.iv.ct.tag</text>
-          <text x="360" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">Apple は使わない</text>
+          <rect x="260" y="65" width="200" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="360" y="90" text-anchor="middle" font-family="var(--font-text)" font-size="15" fill="var(--text)">JWE</text>
+          <text x="360" y="108" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">RFC 7516</text>
+          <text x="360" y="135" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="12" fill="var(--text-2)">暗号化形式</text>
+          <text x="360" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">h.k.iv.ct.tag</text>
+          <text x="360" y="175" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--text-3)">Apple は使わない</text>
 
           <!-- JWT -->
-          <rect class="wh" x="480" y="65" width="200" height="130" rx="8"/>
-          <text x="580" y="90" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="15" fill="#141413">JWT</text>
-          <text x="580" y="108" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">RFC 7519</text>
-          <text x="580" y="135" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">claims の集合</text>
-          <text x="580" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">{ iss, sub, exp ... }</text>
-          <text x="580" y="175" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#87867F">JWS or JWE に乗る</text>
+          <rect x="480" y="65" width="200" height="130" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="580" y="90" text-anchor="middle" font-family="var(--font-text)" font-size="15" fill="var(--text)">JWT</text>
+          <text x="580" y="108" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">RFC 7519</text>
+          <text x="580" y="135" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="12" fill="var(--text-2)">claims の集合</text>
+          <text x="580" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">{ iss, sub, exp ... }</text>
+          <text x="580" y="175" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--text-3)">JWS or JWE に乗る</text>
         </svg>
       </div>
 
-      <ul class="dot-list">
+      <ul class="plain">
         <li><strong>JWT</strong> は中身（claims）。普通は JWS でラップして送る。</li>
         <li><strong>JWS</strong> は署名形式。<code class="inline">header.payload.signature</code> の Compact Serialization が一般的。</li>
         <li><strong>JWE</strong> は暗号化形式。<code class="inline">header.encrypted_key.iv.ciphertext.tag</code> の 5 ピース。</li>
@@ -688,30 +713,30 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   </section>
 
   <!-- ============================== 05 ============================== -->
-  <section id="claims">
-    <div class="sec-head"><span class="idx">05</span><h2>標準 Claims と独自 Claims</h2><span class="count">RFC 7519 §4</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="claims" data-title="Claims">
+    <h2>標準 Claims と独自 Claims</h2>
+    <p class="lede">
       payload に入れるキーは何でも好きにできるが、相互運用のために <strong>登録済み（Registered）Claims</strong>
       が決まっている。短い 3 文字キーが使われるのは「ヘッダの上で送られる前提でサイズを切り詰めたい」から。
     </p>
     <div class="demos">
-      <table class="t">
+      <table class="params">
         <thead>
           <tr><th>Claim</th><th>意味</th><th>Apple での例</th></tr>
         </thead>
         <tbody>
-          <tr><td class="mono">iss</td><td>Issuer（発行者）</td><td>App Store Server API では Issuer ID（UUID）</td></tr>
-          <tr><td class="mono">sub</td><td>Subject（対象）</td><td>StoreKit 2 では Bundle ID（<code class="inline">com.example.app</code>）</td></tr>
-          <tr><td class="mono">aud</td><td>Audience</td><td>Server API では <code class="inline">"appstoreconnect-v1"</code></td></tr>
-          <tr><td class="mono">exp</td><td>Expiration（epoch 秒）</td><td>必須。検証側はこれを過ぎたら拒否</td></tr>
-          <tr><td class="mono">iat</td><td>Issued At</td><td>発行時刻</td></tr>
-          <tr><td class="mono">nbf</td><td>Not Before</td><td>これ以前は無効</td></tr>
-          <tr><td class="mono">jti</td><td>JWT ID</td><td>再利用検知用のユニーク ID</td></tr>
+          <tr><td class="param">iss</td><td>Issuer（発行者）</td><td>App Store Server API では Issuer ID（UUID）</td></tr>
+          <tr><td class="param">sub</td><td>Subject（対象）</td><td>StoreKit 2 では Bundle ID（<code class="inline">com.example.app</code>）</td></tr>
+          <tr><td class="param">aud</td><td>Audience</td><td>Server API では <code class="inline">"appstoreconnect-v1"</code></td></tr>
+          <tr><td class="param">exp</td><td>Expiration（epoch 秒）</td><td>必須。検証側はこれを過ぎたら拒否</td></tr>
+          <tr><td class="param">iat</td><td>Issued At</td><td>発行時刻</td></tr>
+          <tr><td class="param">nbf</td><td>Not Before</td><td>これ以前は無効</td></tr>
+          <tr><td class="param">jti</td><td>JWT ID</td><td>再利用検知用のユニーク ID</td></tr>
         </tbody>
       </table>
 
       <p class="demo-label" style="margin-top: 24px;">独自 claim も自由に追加できる</p>
-<pre class="code"><span class="c">// StoreKit 2 の SignedTransaction の payload より抜粋（簡略）</span>
+<pre class="listing"><span class="c">// StoreKit 2 の SignedTransaction の payload より抜粋（簡略）</span>
 {
   <span class="s">"transactionId"</span>: <span class="s">"2000000123456789"</span>,
   <span class="s">"originalTransactionId"</span>: <span class="s">"2000000123456789"</span>,
@@ -723,28 +748,25 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   <span class="s">"environment"</span>: <span class="s">"Production"</span>
 }</pre>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>命名衝突に注意</h4>
-          <p>
-            Public Claim を新たに登録するか、URI 形式（<code class="inline">"https://example.com/role"</code>）で
-            Private Claim を使う。短い英単語をそのまま claim キーにするのは、将来の標準と衝突する地雷。
-          </p>
-        </div>
+      <div class="aside aside-warning">
+        <p class="aside-label">命名衝突に注意</p>
+        <p>
+          Public Claim を新たに登録するか、URI 形式（<code class="inline">"https://example.com/role"</code>）で
+          Private Claim を使う。短い英単語をそのまま claim キーにするのは、将来の標準と衝突する地雷。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 06 ============================== -->
-  <section id="pitfalls">
-    <div class="sec-head"><span class="idx">06</span><h2>JWT の有名な落とし穴</h2><span class="count">security</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="pitfalls" data-title="落とし穴">
+    <h2>JWT の有名な落とし穴</h2>
+    <p class="lede">
       JWT のセキュリティ問題はほとんど「実装の手抜き」由来。標準仕様に沿って検証していれば普通は安全だが、
       以下は <strong>実際に CVE になった事例</strong>のあるパターン。検証ライブラリを書く・選ぶときに見るべき。
     </p>
     <div class="demos">
-      <ol class="serif-list">
+      <ol class="steps">
         <li><div>
           <strong>alg: none を受け入れる</strong>。RFC 上は許されているが、攻撃者が任意の payload を作れる。
           検証側は <em>受け入れる alg を allowlist で固定</em>する（例：ES256 のみ）。
@@ -775,25 +797,22 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
         </div></li>
       </ol>
 
-      <div class="callout callout-error">
-        <div class="ico">×</div>
-        <div>
-          <h4>Apple の検証で具体的に守るもの</h4>
-          <p>
-            StoreKit 2 の <code class="inline">VerificationResult</code> は OS が以下を全部チェック済みで返す：
-            (1) ヘッダ alg = ES256、(2) <code class="inline">x5c</code> の証明書チェーンが Apple Root CA に至る、
-            (3) 署名検証、(4) bundleId が自アプリと一致、(5) <code class="inline">exp</code> 検証。
-            ただし <em>environment と originalTransactionId のリプレイ検知</em>はアプリ側責任。
-          </p>
-        </div>
+      <div class="aside aside-warning">
+        <p class="aside-label">Apple の検証で具体的に守るもの</p>
+        <p>
+          StoreKit 2 の <code class="inline">VerificationResult</code> は OS が以下を全部チェック済みで返す：
+          (1) ヘッダ alg = ES256、(2) <code class="inline">x5c</code> の証明書チェーンが Apple Root CA に至る、
+          (3) 署名検証、(4) bundleId が自アプリと一致、(5) <code class="inline">exp</code> 検証。
+          ただし <em>environment と originalTransactionId のリプレイ検知</em>はアプリ側責任。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 07 ============================== -->
-  <section id="why-storekit">
-    <div class="sec-head"><span class="idx">07</span><h2>なぜ StoreKit 2 が JWT に乗り換えたか</h2><span class="count">2021 → now</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="why-storekit" data-title="なぜ StoreKit 2 が JWT を">
+    <h2>なぜ StoreKit 2 が JWT に乗り換えたか</h2>
+    <p class="lede">
       この移行は単なる「フォーマット変更」ではなく、<strong>「検証アーキテクチャ自体の作り直し」</strong>。
       旧方式が抱えていた往復コスト（latency / 可用性 / 実装複雑度）を一行ずつ潰していくと、
       なぜ JWS が選ばれたかが自然に見えてくる。ここでは旧フローと新フローを並べて具体的に比較する。
@@ -801,83 +820,83 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
     <div class="demos">
 
       <p class="demo-label">▍旧フロー: PKCS#7 レシート + verifyReceipt 往復</p>
-      <div class="svg-frame">
+      <div class="frame">
         <svg viewBox="0 0 760 320" aria-label="旧 StoreKit のレシート検証フロー">
           <!-- 列ヘッダ -->
-          <text x="80"  y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">App</text>
-          <text x="320" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">自社サーバー</text>
-          <text x="600" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Apple verifyReceipt</text>
+          <text x="80"  y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">App</text>
+          <text x="320" y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">自社サーバー</text>
+          <text x="600" y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">Apple verifyReceipt</text>
 
           <!-- 縦線 -->
-          <line x1="80"  y1="34" x2="80"  y2="300" class="ln da"/>
-          <line x1="320" y1="34" x2="320" y2="300" class="ln da"/>
-          <line x1="600" y1="34" x2="600" y2="300" class="ln da"/>
+          <line x1="80"  y1="34" x2="80"  y2="300" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
+          <line x1="320" y1="34" x2="320" y2="300" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
+          <line x1="600" y1="34" x2="600" y2="300" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
 
           <!-- step 1 -->
-          <line class="lc" x1="80"  y1="60"  x2="320" y2="60"/>
-          <polygon class="cl" points="315,55 325,60 315,65"/>
-          <text x="200" y="54" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">① receipt 文字列 (4–60 KB) を POST</text>
+          <line x1="80"  y1="60"  x2="320" y2="60" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="315,55 325,60 315,65" fill="var(--tint)"/>
+          <text x="200" y="54" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-2)">① receipt 文字列 (4–60 KB) を POST</text>
 
           <!-- step 2 -->
-          <line class="lc" x1="320" y1="100" x2="600" y2="100"/>
-          <polygon class="cl" points="595,95 605,100 595,105"/>
-          <text x="460" y="94" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">② receipt + shared-secret を POST</text>
+          <line x1="320" y1="100" x2="600" y2="100" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="595,95 605,100 595,105" fill="var(--tint)"/>
+          <text x="460" y="94" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-2)">② receipt + shared-secret を POST</text>
 
           <!-- step 3 -->
-          <line class="ln" x1="600" y1="140" x2="320" y2="140"/>
-          <polygon class="fl" points="325,135 315,140 325,145"/>
-          <text x="460" y="134" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">③ status: 21007 → Sandbox に振り直し</text>
+          <line x1="600" y1="140" x2="320" y2="140" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="325,135 315,140 325,145" fill="var(--text-3)"/>
+          <text x="460" y="134" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">③ status: 21007 → Sandbox に振り直し</text>
 
           <!-- step 4 -->
-          <line class="lc" x1="320" y1="180" x2="600" y2="180"/>
-          <polygon class="cl" points="595,175 605,180 595,185"/>
-          <text x="460" y="174" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">④ Sandbox エンドポイントへ再 POST</text>
+          <line x1="320" y1="180" x2="600" y2="180" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="595,175 605,180 595,185" fill="var(--tint)"/>
+          <text x="460" y="174" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-2)">④ Sandbox エンドポイントへ再 POST</text>
 
           <!-- step 5 -->
-          <line class="ln" x1="600" y1="220" x2="320" y2="220"/>
-          <polygon class="fl" points="325,215 315,220 325,225"/>
-          <text x="460" y="214" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">⑤ JSON: latest_receipt_info[] (全購入)</text>
+          <line x1="600" y1="220" x2="320" y2="220" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="325,215 315,220 325,225" fill="var(--text-3)"/>
+          <text x="460" y="214" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">⑤ JSON: latest_receipt_info[] (全購入)</text>
 
           <!-- step 6 -->
-          <line class="ln" x1="320" y1="260" x2="80"  y2="260"/>
-          <polygon class="fl" points="85,255 75,260 85,265"/>
-          <text x="200" y="254" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#87867F">⑥ entitlement OK / NG をクライアントへ</text>
+          <line x1="320" y1="260" x2="80"  y2="260" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="85,255 75,260 85,265" fill="var(--text-3)"/>
+          <text x="200" y="254" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-3)">⑥ entitlement OK / NG をクライアントへ</text>
 
-          <text x="380" y="298" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#B04A3F">合計 4 ホップ・最悪 6 ホップ（21007 リトライ含む）</text>
+          <text x="380" y="298" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--red)">合計 4 ホップ・最悪 6 ホップ（21007 リトライ含む）</text>
         </svg>
       </div>
 
       <p class="demo-label" style="margin-top: 24px;">▍新フロー: JWS をローカル検証（往復ゼロ）</p>
-      <div class="svg-frame">
+      <div class="frame">
         <svg viewBox="0 0 760 220" aria-label="StoreKit 2 の JWS 検証フロー">
-          <text x="80"  y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">App (StoreKit 2)</text>
-          <text x="380" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">自社サーバー</text>
-          <text x="680" y="22" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#87867F">Apple (任意)</text>
+          <text x="80"  y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">App (StoreKit 2)</text>
+          <text x="380" y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">自社サーバー</text>
+          <text x="680" y="22" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text-3)">Apple (任意)</text>
 
-          <line x1="80"  y1="34" x2="80"  y2="200" class="ln da"/>
-          <line x1="380" y1="34" x2="380" y2="200" class="ln da"/>
-          <line x1="680" y1="34" x2="680" y2="200" class="ln da" stroke-opacity="0.3"/>
+          <line x1="80"  y1="34" x2="80"  y2="200" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
+          <line x1="380" y1="34" x2="380" y2="200" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
+          <line x1="680" y1="34" x2="680" y2="200" stroke="var(--text-3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4" stroke-opacity="0.3"/>
 
           <!-- 自己検証 -->
-          <rect class="oa" x="40" y="58" width="80" height="44" rx="6"/>
-          <text x="80" y="84" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">verify JWS</text>
-          <text x="80" y="98" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#87867F">x5c → Root</text>
+          <rect x="40" y="58" width="80" height="44" rx="6" fill="var(--bg-alt)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="80" y="84" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-2)">verify JWS</text>
+          <text x="80" y="98" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-3)">x5c → Root</text>
 
-          <line class="lc" x1="80"  y1="135" x2="380" y2="135"/>
-          <polygon class="cl" points="375,130 385,135 375,140"/>
-          <text x="230" y="129" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#3D3D3A">jwsRepresentation 文字列を転送 (~2 KB)</text>
+          <line x1="80"  y1="135" x2="380" y2="135" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="375,130 385,135 375,140" fill="var(--tint)"/>
+          <text x="230" y="129" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--text-2)">jwsRepresentation 文字列を転送 (~2 KB)</text>
 
-          <rect class="oa" x="340" y="155" width="80" height="36" rx="6"/>
-          <text x="380" y="178" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#3D3D3A">verify JWS</text>
+          <rect x="340" y="155" width="80" height="36" rx="6" fill="var(--bg-alt)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="380" y="178" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-2)">verify JWS</text>
 
-          <text x="380" y="50" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="11" fill="#5C6E45">Apple サーバーへの問い合わせは不要</text>
+          <text x="380" y="50" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="11" fill="var(--green)">Apple サーバーへの問い合わせは不要</text>
         </svg>
       </div>
 
       <div class="compare">
         <div>
           <h4 class="old">▍旧 StoreKit (legacy receipt)</h4>
-          <ul class="dot-list">
+          <ul class="plain">
             <li>レシートは PKCS#7 署名された不透明バイナリ → Base64（4–60 KB）</li>
             <li>中身を確認するには Apple の <code class="inline">/verifyReceipt</code> を毎回叩く必要</li>
             <li>レシートには <strong>累積で全購入</strong>が入る → サブスク履歴が長いほど巨大化</li>
@@ -888,7 +907,7 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
         </div>
         <div>
           <h4 class="new">▍StoreKit 2 (JWS Signed Transaction)</h4>
-          <ul class="dot-list">
+          <ul class="plain">
             <li>各トランザクションが <strong>独立した JWS</strong>（典型 1.5–3 KB）で返る</li>
             <li><code class="inline">x5c</code> ヘッダに証明書チェーンが内蔵 → 単独で検証完結</li>
             <li>Apple Root CA G3 はあらかじめ持っているだけで足りる（再ダウンロード不要）</li>
@@ -900,7 +919,7 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
       </div>
 
       <p class="demo-label" style="margin-top: 24px;">▍往復コストの定量比較</p>
-      <table class="t">
+      <table class="params">
         <thead>
           <tr><th>観点</th><th>旧（verifyReceipt）</th><th>新（JWS ローカル）</th></tr>
         </thead>
@@ -916,63 +935,54 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
         </tbody>
       </table>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>旧方式が痛かった現場の典型</h4>
-          <p>
-            <strong>(1) Apple の verifyReceipt が混雑していて 30 秒返ってこない</strong> →
-            ユーザーから見ると「課金は通ったのに有料機能が解放されない」となる。
-            <strong>(2) 検証直後に Sandbox/Production の判定を間違えて 21007 ループ</strong> →
-            審査時とリリース時で挙動が違うバグの温床。
-            <strong>(3) shared secret の取り扱い</strong> → これが漏れると他人が
-            勝手に verifyReceipt を叩けてしまう。鍵管理コストが純増する。
-            JWS はこれら全部を「公開鍵検証 + ローカル」で消した。
-          </p>
-        </div>
+      <div class="aside aside-warning">
+        <p class="aside-label">旧方式が痛かった現場の典型</p>
+        <p>
+          <strong>(1) Apple の verifyReceipt が混雑していて 30 秒返ってこない</strong> →
+          ユーザーから見ると「課金は通ったのに有料機能が解放されない」となる。
+          <strong>(2) 検証直後に Sandbox/Production の判定を間違えて 21007 ループ</strong> →
+          審査時とリリース時で挙動が違うバグの温床。
+          <strong>(3) shared secret の取り扱い</strong> → これが漏れると他人が
+          勝手に verifyReceipt を叩けてしまう。鍵管理コストが純増する。
+          JWS はこれら全部を「公開鍵検証 + ローカル」で消した。
+        </p>
       </div>
 
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>結局のところの設計利益</h4>
-          <p>
-            <strong>「Apple のオンラインエンドポイントに依存しない」</strong>ことが核心。
-            JWS は「Apple が秘密鍵で署名した事実」をバイト列に閉じ込めているので、
-            一度受け取ってしまえばインターネットが切れていても検証できる。
-            iOS デバイス・自社サーバー・社内バッチの 3 者が同じ検証ロジックを共有でき、
-            障害ドメインが「自社 + Apple Root CA を信用する」だけに縮む。
-          </p>
-        </div>
+      <div class="aside aside-tip">
+        <p class="aside-label">結局のところの設計利益</p>
+        <p>
+          <strong>「Apple のオンラインエンドポイントに依存しない」</strong>ことが核心。
+          JWS は「Apple が秘密鍵で署名した事実」をバイト列に閉じ込めているので、
+          一度受け取ってしまえばインターネットが切れていても検証できる。
+          iOS デバイス・自社サーバー・社内バッチの 3 者が同じ検証ロジックを共有でき、
+          障害ドメインが「自社 + Apple Root CA を信用する」だけに縮む。
+        </p>
       </div>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>補足: App Store Server API は今も生きている</h4>
-          <p>
-            <em>「往復が消えた」</em>と言ったが、それは <strong>検証の往復</strong>の話。
-            購入履歴の検索・返金検知・サブスク状態の確認などは今でも
-            <code class="inline">api.storekit.itunes.apple.com</code> を叩く。
-            ただしレスポンスは JWS なので、受信したら <em>その場でローカル検証</em>でき、
-            返ってきたデータの真正性を Apple との追加往復なしで確認できる。
-          </p>
-        </div>
+      <div class="aside aside-note">
+        <p class="aside-label">補足: App Store Server API は今も生きている</p>
+        <p>
+          <em>「往復が消えた」</em>と言ったが、それは <strong>検証の往復</strong>の話。
+          購入履歴の検索・返金検知・サブスク状態の確認などは今でも
+          <code class="inline">api.storekit.itunes.apple.com</code> を叩く。
+          ただしレスポンスは JWS なので、受信したら <em>その場でローカル検証</em>でき、
+          返ってきたデータの真正性を Apple との追加往復なしで確認できる。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 08 ============================== -->
-  <section id="signed-tx">
-    <div class="sec-head"><span class="idx">08</span><h2>JWS Signed Transaction の中身</h2><span class="count">Apple → app</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="signed-tx" data-title="JWS Signed Transaction">
+    <h2>JWS Signed Transaction の中身</h2>
+    <p class="lede">
       <code class="inline">Transaction.currentEntitlements</code> や <code class="inline">Product.purchase()</code> から
       返ってくる <code class="inline">VerificationResult&lt;Transaction&gt;</code> は、内部に
       <code class="inline">jwsRepresentation: String</code> を持つ。これがまさに JWS 形式の JWT。
     </p>
     <div class="demos">
       <p class="demo-label">jwsRepresentation を分解した header</p>
-<pre class="code">{
+<pre class="listing">{
   <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
   <span class="s">"x5c"</span>: [
     <span class="s">"MIIE...leaf cert..."</span>,           <span class="c">// (1) 末端: WWDR が署名</span>
@@ -982,7 +992,7 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
 }</pre>
 
       <p class="demo-label" style="margin-top: 24px;">payload（Transaction の主要フィールド）</p>
-<pre class="code">{
+<pre class="listing">{
   <span class="s">"transactionId"</span>:         <span class="s">"2000000400000001"</span>,
   <span class="s">"originalTransactionId"</span>: <span class="s">"2000000300000099"</span>,
   <span class="s">"webOrderLineItemId"</span>:   <span class="s">"2000000099999999"</span>,
@@ -997,61 +1007,58 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   <span class="s">"environment"</span>:           <span class="s">"Production"</span>
 }</pre>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>signedDate と nonce</h4>
-          <p>
-            payload には <code class="inline">signedDate</code> も入る。Apple が JWS に署名した時刻で、
-            <em>古いトランザクションがリプレイされていないか</em>を判定するヒントになる。
-            高セキュリティ用途では、payload の <code class="inline">appAccountToken</code> や
-            <code class="inline">deviceVerification</code> を使ったアンチリプレイも組む。
-          </p>
-        </div>
+      <div class="aside aside-note">
+        <p class="aside-label">signedDate と nonce</p>
+        <p>
+          payload には <code class="inline">signedDate</code> も入る。Apple が JWS に署名した時刻で、
+          <em>古いトランザクションがリプレイされていないか</em>を判定するヒントになる。
+          高セキュリティ用途では、payload の <code class="inline">appAccountToken</code> や
+          <code class="inline">deviceVerification</code> を使ったアンチリプレイも組む。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 09 ============================== -->
-  <section id="x5c">
-    <div class="sec-head"><span class="idx">09</span><h2>x5c と Apple Root CA</h2><span class="count">verification chain</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="x5c" data-title="x5c と Apple Root CA">
+    <h2>x5c と Apple Root CA</h2>
+    <p class="lede">
       JWS のヘッダにある <code class="inline">x5c</code>（X.509 Certificate Chain）は、
       <strong>「この署名を作った公開鍵が、信頼できる根まで辿れること」を証明する証明書チェーン</strong>。
       RFC 7515 §4.1.6 で定義された JOSE 標準ヘッダ。Apple は配列の末尾を Apple Root CA - G3 にしてくる。
     </p>
     <div class="demos">
-      <div class="svg-frame">
+      <div class="frame">
         <svg viewBox="0 0 720 220" aria-label="証明書チェーン">
           <!-- Root -->
-          <rect class="oa" x="20" y="80" width="180" height="60" rx="8"/>
-          <text x="110" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Apple Root CA - G3</text>
-          <text x="110" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">OS / app に焼き込み</text>
+          <rect x="20" y="80" width="180" height="60" rx="8" fill="var(--bg-alt)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="110" y="105" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">Apple Root CA - G3</text>
+          <text x="110" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">OS / app に焼き込み</text>
 
           <!-- 矢印 -->
-          <line class="lc" x1="200" y1="110" x2="260" y2="110"/>
-          <polygon class="cl" points="255,105 265,110 255,115"/>
+          <line x1="200" y1="110" x2="260" y2="110" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="255,105 265,110 255,115" fill="var(--tint)"/>
 
           <!-- Intermediate -->
-          <rect class="wh" x="270" y="80" width="180" height="60" rx="8"/>
-          <text x="360" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">WWDR G6 (中間)</text>
-          <text x="360" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">x5c[1]</text>
+          <rect x="270" y="80" width="180" height="60" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="360" y="105" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">WWDR G6 (中間)</text>
+          <text x="360" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">x5c[1]</text>
 
-          <line class="lc" x1="450" y1="110" x2="510" y2="110"/>
-          <polygon class="cl" points="505,105 515,110 505,115"/>
+          <line x1="450" y1="110" x2="510" y2="110" stroke="var(--tint)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="505,105 515,110 505,115" fill="var(--tint)"/>
 
           <!-- Leaf -->
-          <rect class="wh" x="520" y="80" width="180" height="60" rx="8"/>
-          <text x="610" y="105" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="#141413">Leaf (末端)</text>
-          <text x="610" y="124" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#87867F">x5c[0] · 署名鍵</text>
+          <rect x="520" y="80" width="180" height="60" rx="8" fill="var(--bg-elev)" stroke="var(--separator)" stroke-width="2"/>
+          <text x="610" y="105" text-anchor="middle" font-family="var(--font-text)" font-size="13" fill="var(--text)">Leaf (末端)</text>
+          <text x="610" y="124" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-3)">x5c[0] · 署名鍵</text>
 
           <!-- 説明 -->
-          <text x="360" y="180" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">JWS の署名は leaf の秘密鍵で作られる</text>
-          <text x="360" y="200" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-style="italic" font-size="12" fill="#3D3D3A">→ 検証は逆向きに辿って Apple Root に着けば OK</text>
+          <text x="360" y="180" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="12" fill="var(--text-2)">JWS の署名は leaf の秘密鍵で作られる</text>
+          <text x="360" y="200" text-anchor="middle" font-family="var(--font-text)" font-style="italic" font-size="12" fill="var(--text-2)">→ 検証は逆向きに辿って Apple Root に着けば OK</text>
         </svg>
       </div>
 
-      <ol class="serif-list">
+      <ol class="steps">
         <li><div><strong>x5c[0] の公開鍵で JWS の署名を検証</strong>（ペイロードが改竄されていないことを確認）。</div></li>
         <li><div><strong>x5c[0] が x5c[1] によって署名されているか確認</strong>（leaf → intermediate）。</div></li>
         <li><div><strong>x5c[1] が x5c[2] によって署名されているか確認</strong>（intermediate → root）。</div></li>
@@ -1064,9 +1071,9 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   </section>
 
   <!-- ============================== 10 ============================== -->
-  <section id="server-api">
-    <div class="sec-head"><span class="idx">10</span><h2>App Store Server API への JWT</h2><span class="count">app → Apple</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="server-api" data-title="App Store Server API">
+    <h2>App Store Server API への JWT</h2>
+    <p class="lede">
       ここまでの JWT は「Apple が発行 → アプリが受け取って検証」の流れ。
       逆に <strong>App Store Server API</strong> をサーバーから叩くときは、
       自分が ES256 の秘密鍵を使って JWT を作り、<code class="inline">Authorization: Bearer</code> として送る。
@@ -1074,7 +1081,7 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
     </p>
     <div class="demos">
       <p class="demo-label">App Store Server API への認証 JWT</p>
-<pre class="code"><span class="c">// header</span>
+<pre class="listing"><span class="c">// header</span>
 {
   <span class="s">"alg"</span>: <span class="s">"ES256"</span>,
   <span class="s">"kid"</span>: <span class="s">"ABC123DEFG"</span>,        <span class="c">// 鍵 ID（App Store Connect で発行）</span>
@@ -1093,10 +1100,10 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
 <span class="c">// 署名は App Store Connect でダウンロードした .p8（ES256 秘密鍵）で行う</span></pre>
 
       <p class="demo-label" style="margin-top: 24px;">curl で叩く例</p>
-<pre class="code">$ curl -H <span class="s">"Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Ik..."</span> \
-       https://api.storekit.itunes.apple.com/inApps/v1/transactions/<span class="v">2000000400000001</span></pre>
+<pre class="listing">$ curl -H <span class="s">"Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Ik..."</span> \
+       https://api.storekit.itunes.apple.com/inApps/v1/transactions/2000000400000001</pre>
 
-      <table class="t">
+      <table class="params">
         <thead>
           <tr><th>方向</th><th>誰が署名する</th><th>検証する側</th><th>JWT の用途</th></tr>
         </thead>
@@ -1110,15 +1117,15 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   </section>
 
   <!-- ============================== 11 ============================== -->
-  <section id="notifications">
-    <div class="sec-head"><span class="idx">11</span><h2>App Store Server Notifications V2</h2><span class="count">push from Apple</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="notifications" data-title="Notifications V2">
+    <h2>App Store Server Notifications V2</h2>
+    <p class="lede">
       課金状態が変化した（更新成功・解約・返金など）ときに、Apple は登録された URL に
       POST してくる。V1 は不透明な JSON だったが、V2 は <strong>signedPayload という単一の JWS 文字列</strong>のみ。
       サーバー側で StoreKit 2 と同じやり方で検証する。
     </p>
     <div class="demos">
-<pre class="code"><span class="c">// Apple から飛んでくる POST body（V2）</span>
+<pre class="listing"><span class="c">// Apple から飛んでくる POST body（V2）</span>
 {
   <span class="s">"signedPayload"</span>: <span class="s">"eyJhbGciOiJFUzI1NiIsIng1YyI6Wy..."</span>
 }
@@ -1139,20 +1146,17 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   }
 }</pre>
 
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>JWS が入れ子になっていることに注意</h4>
-          <p>
-            外側の <code class="inline">signedPayload</code> をまず検証して payload を取り出す。
-            すると中に <code class="inline">signedTransactionInfo</code> という別の JWS 文字列が入っており、
-            それも個別に検証する必要がある。<em>1 つの通知の検証は最低 2 回の JWS 検証</em>になる。
-          </p>
-        </div>
+      <div class="aside aside-warning">
+        <p class="aside-label">JWS が入れ子になっていることに注意</p>
+        <p>
+          外側の <code class="inline">signedPayload</code> をまず検証して payload を取り出す。
+          すると中に <code class="inline">signedTransactionInfo</code> という別の JWS 文字列が入っており、
+          それも個別に検証する必要がある。<em>1 つの通知の検証は最低 2 回の JWS 検証</em>になる。
+        </p>
       </div>
 
       <p class="demo-label" style="margin-top: 24px;">notificationType の主なバリエーション</p>
-      <ul class="dot-list">
+      <ul class="plain">
         <li><code class="inline">SUBSCRIBED</code> / <code class="inline">DID_RENEW</code> — 有効な状態が継続</li>
         <li><code class="inline">DID_FAIL_TO_RENEW</code> — 課金失敗（<code class="inline">subtype=GRACE_PERIOD</code> なら猶予期間）</li>
         <li><code class="inline">DID_CHANGE_RENEWAL_STATUS</code> — ユーザーが自動更新オフ/オン</li>
@@ -1165,16 +1169,16 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   </section>
 
   <!-- ============================== 12 ============================== -->
-  <section id="verify">
-    <div class="sec-head"><span class="idx">12</span><h2>Swift で検証する</h2><span class="count">クライアント / サーバー</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="verify" data-title="Swift で検証する">
+    <h2>Swift で検証する</h2>
+    <p class="lede">
       iOS / macOS 上では <code class="inline">VerificationResult</code> が OS 任せで楽。
       サーバー側 Swift では Apple が公開している <code class="inline">app-store-server-library-swift</code> か、
       汎用 JOSE ライブラリ（JWTKit 等）を使う。両方の最小例。
     </p>
     <div class="demos">
       <p class="demo-label">クライアント (StoreKit 2)</p>
-<pre class="code"><span class="k">for await</span> result <span class="k">in</span> Transaction.currentEntitlements {
+<pre class="listing"><span class="k">for await</span> result <span class="k">in</span> Transaction.currentEntitlements {
   <span class="k">switch</span> result {
   <span class="k">case</span> .verified(<span class="k">let</span> transaction):
     <span class="c">// OS が JWS の署名・x5c・bundleId・exp を検証済み</span>
@@ -1189,19 +1193,19 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
 }</pre>
 
       <p class="demo-label" style="margin-top: 24px;">サーバー (Vapor + JWTKit, ES256)</p>
-<pre class="code"><span class="k">import</span> JWTKit
+<pre class="listing"><span class="k">import</span> JWTKit
 
 <span class="c">// 1. signedPayload（外側）を検証</span>
-<span class="k">struct</span> <span class="v">NotificationPayload</span>: <span class="v">JWTPayload</span> {
+<span class="k">struct</span> NotificationPayload: JWTPayload {
   <span class="k">var</span> notificationType: <span class="t">String</span>
   <span class="k">var</span> signedDate: <span class="t">Int</span>
-  <span class="k">var</span> data: <span class="v">DataField</span>
-  <span class="k">struct</span> <span class="v">DataField</span>: <span class="v">Codable</span> {
+  <span class="k">var</span> data: DataField
+  <span class="k">struct</span> DataField: Codable {
     <span class="k">var</span> bundleId: <span class="t">String</span>
     <span class="k">var</span> environment: <span class="t">String</span>
     <span class="k">var</span> signedTransactionInfo: <span class="t">String</span>?
   }
-  <span class="k">func</span> <span class="v">verify</span>(using signer: <span class="v">JWTSigner</span>) <span class="k">throws</span> { <span class="c">/* 業務固有チェック */</span> }
+  <span class="k">func</span> verify(using signer: JWTSigner) <span class="k">throws</span> { <span class="c">/* 業務固有チェック */</span> }
 }
 
 <span class="k">let</span> jws = req.body.signedPayload
@@ -1212,8 +1216,8 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
 <span class="k">try</span> AppleCAValidator.shared.validate(chain: chain)
 
 <span class="c">// 3. leaf の公開鍵で JWS を検証</span>
-<span class="k">let</span> signer = <span class="v">JWTSigner</span>.es256(key: <span class="k">try</span> .public(pem: chain[0].publicKeyPEM))
-<span class="k">let</span> outer = <span class="k">try</span> signer.verify(jws, as: <span class="v">NotificationPayload</span>.<span class="k">self</span>)
+<span class="k">let</span> signer = JWTSigner.es256(key: <span class="k">try</span> .public(pem: chain[0].publicKeyPEM))
+<span class="k">let</span> outer = <span class="k">try</span> signer.verify(jws, as: NotificationPayload.<span class="k">self</span>)
 
 <span class="c">// 4. 入れ子の signedTransactionInfo も同じ手順で検証</span>
 <span class="k">if let</span> inner = outer.data.signedTransactionInfo {
@@ -1221,24 +1225,21 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
   applyEntitlement(tx)
 }</pre>
 
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>本番では公式ライブラリ</h4>
-          <p>
-            Apple の <code class="inline">app-store-server-library</code>（Swift / Java / Python / Node / Go）が
-            上記の x5c 検証 + 失効チェック + 環境判定を全部やってくれる。自前で書くのは学習目的でだけ。
-          </p>
-        </div>
+      <div class="aside aside-tip">
+        <p class="aside-label">本番では公式ライブラリ</p>
+        <p>
+          Apple の <code class="inline">app-store-server-library</code>（Swift / Java / Python / Node / Go）が
+          上記の x5c 検証 + 失効チェック + 環境判定を全部やってくれる。自前で書くのは学習目的でだけ。
+        </p>
       </div>
     </div>
   </section>
 
   <!-- ============================== 13 ============================== -->
-  <section id="summary">
-    <div class="sec-head"><span class="idx">13</span><h2>まとめ</h2><span class="count">3 行</span></div>
+  <section class="doc-section" id="summary" data-title="まとめ">
+    <h2>まとめ</h2>
     <div class="demos">
-      <ul class="dot-list">
+      <ul class="plain">
         <li>
           <strong>JWT</strong> = <code class="inline">Base64URL(header).Base64URL(payload).署名</code>。
           中身は読める、改竄はできない。Apple は ES256 一択。
@@ -1254,25 +1255,163 @@ sign(privateKey, base64url(header) + <span class="s">"."</span> + base64url(payl
         </li>
       </ul>
 
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>覚えておく一番大事なこと</h4>
-          <p>
-            <strong>「JWS Compact Serialization」「JWT」「signedPayload」「jwsRepresentation」「ID トークン」</strong>
-            これらは Apple / OAuth / OIDC ドキュメントに散らばる別名だが、
-            <em>骨格はすべて同じ</em>「<code class="inline">header.payload.signature</code>」。
-            ライブラリと検証アルゴリズムは共有できる。
-          </p>
-        </div>
+      <div class="aside aside-note">
+        <p class="aside-label">覚えておく一番大事なこと</p>
+        <p>
+          <strong>「JWS Compact Serialization」「JWT」「signedPayload」「jwsRepresentation」「ID トークン」</strong>
+          これらは Apple / OAuth / OIDC ドキュメントに散らばる別名だが、
+          <em>骨格はすべて同じ</em>「<code class="inline">header.payload.signature</code>」。
+          ライブラリと検証アルゴリズムは共有できる。
+        </p>
       </div>
     </div>
   </section>
 
-  <footer>
-    <span class="k">"署名された JSON は、丁寧に検証してこそ意味を持つ。"</span>
+  <footer class="pagefooter">
+    <span class="quote">"署名された JSON は、丁寧に検証してこそ意味を持つ。"</span>
     <span>RFC 7519 · 7515 · WWDC22 "Meet StoreKit 2" · App Store Server API Reference</span>
   </footer>
+
 </div>
+
+<!-- ============================ Floating in-page menu ============================ -->
+<aside class="otp" aria-label="このページ内">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="otp"></nav>
+</aside>
+<button class="fab" id="fab" aria-label="ページ内メニューを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="13" y2="17"/>
+  </svg>
+</button>
+<div class="fab-panel" id="fabPanel">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="fab"></nav>
+</div>
+
+<script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Floating menu — .doc-section[id][data-title] から自動生成
+   ============================================================ */
+const sections = document.querySelectorAll('.doc-section[id][data-title]');
+const links = [...sections].map(s =>
+  `<a href="#${s.id}" data-spy="${s.id}">${s.dataset.title}</a>`).join('');
+document.querySelector('[data-rail="otp"]').innerHTML = links;
+document.querySelector('[data-rail="fab"]').innerHTML = links;
+
+/* Scrollspy — 現在のセクションをハイライト */
+const visible = new Set();
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) visible.add(e.target.id);
+    else visible.delete(e.target.id);
+  });
+  let current = null;
+  for (const s of sections) {                  // DOM 順で最初に見えているもの
+    if (visible.has(s.id)) { current = s.id; break; }
+  }
+  if (current) {
+    document.querySelectorAll('[data-spy]').forEach(a => {
+      a.classList.toggle('is-current', a.dataset.spy === current);
+    });
+  }
+}, { rootMargin: '-20px 0px -55% 0px' });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   Floating button（狭い画面のポップオーバー）
+   ============================================================ */
+(function () {
+  const fab = document.getElementById('fab');
+  const panel = document.getElementById('fabPanel');
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+  panel.addEventListener('click', e => {
+    if (e.target.closest('a')) panel.classList.remove('is-open');
+  });
+})();
+
+/* ============================================================
+   Copy button — 全 pre.listing に自動付与（design-system と同実装）
+   ============================================================ */
+(function () {
+  const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2.5"/>
+    <path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>`;
+  const ICON_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+  document.querySelectorAll('pre.listing').forEach(pre => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.setAttribute('aria-label', 'コードをコピー');
+    btn.innerHTML = ICON_COPY;
+    let timer = null;
+    const reset = () => {
+      clearTimeout(timer); timer = null;
+      btn.innerHTML = ICON_COPY;
+      btn.classList.remove('is-copied');
+    };
+    btn.addEventListener('click', async () => {
+      const code = pre.textContent.replace(/\s+$/, '');
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      clearTimeout(timer);
+      btn.innerHTML = ICON_DONE;
+      btn.classList.add('is-copied');
+      timer = setTimeout(reset, 1600);
+    });
+    // ホバーが外れたらフェードアウト完了後にアイコンを差し戻す
+    wrap.addEventListener('mouseleave', () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = setTimeout(reset, 220);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>

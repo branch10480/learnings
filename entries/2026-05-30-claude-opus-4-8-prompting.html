@@ -15,445 +15,489 @@
 <!-- =============================================================== -->
 
 <style>
-  :root {
-    --ivory:   #FAF9F5;
-    --paper:   #FFFFFF;
-    --slate:   #141413;
-    --clay:    #D97757;
-    --clay-d:  #B85C3E;
-    --oat:     #E3DACC;
-    --olive:   #788C5D;
-    --olive-d: #5C6E45;
-    --mustard: #C78E3F;
-    --ruby:    #B04A3F;
-    --g100:    #F0EEE6;
-    --g200:    #E6E3DA;
-    --g300:    #D1CFC5;
-    --g500:    #87867F;
-    --g700:    #3D3D3A;
+/* ============================================================
+   Toshi Design System — Single Page パターン
+   ============================================================ */
 
-    --serif: ui-serif, Georgia, "Hiragino Mincho ProN", "Hiragino Mincho Pro",
-             "YuMincho", "Yu Mincho", "Times New Roman", Times, serif;
-    --sans:  system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "YuGothic", "Yu Gothic", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono:  "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
-             ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
 
-    --r-pill:  999px;
-    --r-card:  14px;
-    --r-panel: 12px;
-    --r-row:   8px;
-    --r-chip:  6px;
+/* ============================================================
+   :root tokens — design-system.html と同一（コピー元の真実は本体側）
+   ============================================================ */
+:root {
+  color-scheme: light dark;
 
-    --b-hair: 1px solid var(--g200);
-    --b-rule: 1.5px solid var(--g300);
-    --b-strong: 1.5px solid var(--slate);
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
 
-    --sh-card: 0 10px 30px rgba(20, 20, 19, 0.10);
-    --sh-soft: 0 4px 14px rgba(20, 20, 19, 0.06);
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
 
-    /* semantic aliases — dark で値だけ再マップする (SKILL.md 5.1 の罠回避方式) */
-    --callout-warn-bg:  #FFF8EB;
-    --callout-warn-fg:  #8C6A1F;
-    --callout-error-bg: #FBF0EE;
-    --callout-error-fg: var(--ruby);
-    --svg-frame-bg:     var(--paper);
-    --chip-bg:          var(--g100);
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
+
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
+
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
+
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
+
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
   }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
-  /* ===== Dark mode (OS preference) — castle "warm-lifted layered gray" vocab =====
-     tier 0 #1a1916 (page bg) / tier 1 #26241f (cards) / tier 3 #36332d (inline chip)
-     / border #3a3833 / fg-d #d4cfc1 / clay は L/D 共通。dark の見た目差分は
-     すべて :root 変数の再マップで表現し、セレクタ上書きはしない (ソース順依存で
-     light 直値が勝つ実バグを避けるため)。SVG 図解は light "paper insert" で残す。 */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ivory:   #1a1916;
-      --paper:   #26241f;
-      --slate:   #d4cfc1;
-      --clay:    #D97757;
-      --clay-d:  #e08576;
-      --oat:     #4a463d;
-      --olive:   #a8c97f;
-      --olive-d: #b8df96;
-      --mustard: #e0bb7a;
-      --ruby:    #d97766;
-      --g100:    #26241f;
-      --g200:    #36332d;
-      --g300:    #3a3833;
-      --g500:    #9a958a;
-      --g700:    #c8c2b3;
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
 
-      --sh-card: 0 10px 30px rgba(0, 0, 0, 0.45);
-      --sh-soft: 0 4px 14px rgba(0, 0, 0, 0.30);
+/* ============================================================
+   Article — 1 カラムのコンテンツ
+   ============================================================ */
+.article { max-width: 760px; margin: 0 auto; padding: 64px 22px 120px; }
 
-      --callout-warn-bg:  rgba(224, 187, 122, 0.10);
-      --callout-warn-fg:  #e0bb7a;
-      --callout-error-bg: rgba(217, 119, 102, 0.10);
-      --callout-error-fg: #d97766;
-      --svg-frame-bg:     #FAF9F5;  /* dark でも light paper insert を維持 */
-      --chip-bg:          #36332d;
-    }
-  }
+.doc-header { padding-bottom: 28px; border-bottom: 1px solid var(--hairline); }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 28px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  transition: color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  .back-link:hover { color: var(--text); border-color: var(--separator); text-decoration: none; }
+}
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 44px);
+  font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
+  word-break: keep-all; line-break: strict;
+}
+.doc-header h1 em { font-style: normal; color: var(--tint); }
+.doc-header .abstract { margin: 14px 0 0; font-size: 19px; color: var(--text-2); line-height: 1.45; }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
 
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    background: var(--ivory);
-    color: var(--slate);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px 140px; }
+.doc-section { padding: 44px 0 8px; scroll-margin-top: 24px; }
+.doc-section + .doc-section { border-top: 1px solid var(--hairline); margin-top: 36px; }
+.doc-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.012em; margin: 0 0 8px; word-break: keep-all; line-break: strict; }
+.doc-section h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+.doc-section p { color: var(--text); font-size: 15px; line-height: 1.6; }
+.doc-section p.lede { color: var(--text-2); font-size: 16px; margin-top: 0; }
+.demo-label {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin: 18px 0 8px;
+}
 
-  header.masthead {
-    padding: 80px 0 56px;
-    border-bottom: var(--b-rule);
-    margin-bottom: 12px;
-  }
-  a.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    text-decoration: none;
-    margin-bottom: 28px;
-    padding: 6px 12px;
-    border-radius: var(--r-pill);
-    border: var(--b-rule);
-    background: var(--paper);
-    transition: color 120ms, border-color 120ms;
-  }
-  @media (hover: hover) {
-    a.back-link:hover { color: var(--slate); border-color: var(--slate); }
-  }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--g500);
-    margin-bottom: 18px;
+/* ============================================================
+   Theme toggle — ナビがないので右上にフローティング配置
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Floating in-page menu
+   ============================================================ */
+.otp {
+  position: fixed;
+  right: 24px; top: 64px;
+  width: 210px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+  z-index: 40;
+}
+.otp .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 0 12px 8px;
+}
+.otp a {
+  display: block;
+  font-size: 12.5px; color: var(--text-2);
+  padding: 5px 12px; border-radius: var(--r-sm);
+  transition: color 120ms, background 120ms;
+}
+.otp a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+.otp a.is-current { color: var(--tint); font-weight: 600; }
+
+/* 狭い画面: 右下のフローティングボタン + ポップオーバー */
+.fab { display: none; }
+@media (max-width: 1239px) {
+  .otp { display: none; }
+  .fab {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    position: fixed; right: 20px; bottom: 24px; z-index: 60;
+    width: 50px; height: 50px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: var(--tint-fill); color: var(--on-tint);
+    border: none; cursor: pointer;
+    box-shadow: var(--sh-menu);
   }
-  .eyebrow::before {
-    content: "";
-    width: 24px; height: 1.5px;
-    background: var(--clay);
-  }
-  h1.display {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(38px, 5.4vw, 62px);
-    line-height: 1.06;
-    letter-spacing: -0.018em;
-    margin: 0 0 8px;
-    max-width: 18ch;
-    word-break: keep-all;
-    line-break: strict;
-  }
-  h1.display em { font-style: italic; color: var(--clay); }
-  .lead {
-    font-size: 16.5px;
-    color: var(--g700);
-    margin: 22px 0 0;
-    max-width: 680px;
-  }
-  .lead code { font-family: var(--mono); font-size: 0.88em; background: var(--chip-bg); padding: 1px 6px; border-radius: var(--r-chip); }
-  .meta {
-    margin-top: 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--g500);
-  }
-  .meta span strong { color: var(--g700); font-weight: 500; }
+  .fab svg { width: 22px; height: 22px; }
+}
+.fab-panel {
+  display: none;
+  position: fixed; right: 20px; bottom: 86px; z-index: 60;
+  width: min(260px, calc(100vw - 40px));
+  max-height: 55vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+}
+.fab-panel.is-open { display: block; }
+.fab-panel .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); padding: 0 12px 8px;
+}
+.fab-panel a {
+  display: block; font-size: 14px; color: var(--text-2);
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.fab-panel a:hover { background: var(--bg-alt); color: var(--text); text-decoration: none; }
+.fab-panel a.is-current { color: var(--tint); font-weight: 600; }
 
-  nav.toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 26px 0 0;
-  }
-  nav.toc a {
-    font-size: 12.5px;
-    padding: 7px 14px;
-    border: var(--b-rule);
-    border-radius: var(--r-pill);
-    text-decoration: none;
-    color: var(--g700);
-    background: var(--paper);
-    transition: border-color 120ms, color 120ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  nav.toc a .n { font-family: var(--mono); font-size: 10px; color: var(--g500); }
-  @media (hover: hover) {
-    nav.toc a:hover { border-color: var(--slate); color: var(--slate); }
-    nav.toc a:hover .n { color: var(--clay); }
-  }
+/* ============================================================
+   Components
+   ============================================================ */
 
-  section { margin-top: 72px; scroll-margin-top: 28px; }
-  .sec-head {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    margin-bottom: 10px;
-  }
-  .sec-head .idx {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--clay);
-    font-weight: 600;
-    width: 34px;
-    flex-shrink: 0;
-  }
-  .sec-head h2 {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 27px;
-    margin: 0;
-    letter-spacing: -0.012em;
-    word-break: keep-all;
-    line-break: strict;
-  }
-  .sec-head .count {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--g500);
-    background: var(--g100);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-  }
-  .sec-intro {
-    font-size: 14.5px;
-    color: var(--g700);
-    max-width: 760px;
-    margin: 0 0 24px 50px;
-  }
-  @media (max-width: 640px) { .sec-intro, .demos { margin-left: 0 !important; } }
-  .demos { margin-left: 50px; display: flex; flex-direction: column; gap: 28px; }
-  .demo-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-    margin: 0 0 8px;
-  }
+/* --- Asides --- */
+.aside {
+  border: 1px solid var(--hairline);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 14px 0;
+  background: var(--bg-alt);
+}
+.aside .aside-label { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+.aside p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.aside p + p { margin-top: 8px; }
+.aside-note      { border-left-color: var(--text-3); }
+.aside-note      .aside-label { color: var(--text-2); }
+.aside-important { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 6%, var(--bg-elev)); }
+.aside-important .aside-label { color: var(--purple); }
+.aside-tip       { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 6%, var(--bg-elev)); }
+.aside-tip       .aside-label { color: var(--green); }
+.aside-warning   { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 6%, var(--bg-elev)); }
+.aside-warning   .aside-label { color: var(--red); }
 
-  pre.code {
-    margin: 0;
-    background: var(--g100);
-    border: var(--b-hair);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--g700);
-    overflow-x: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  pre.code .k { color: var(--olive-d); }
-  pre.code .s { color: var(--clay-d); }
-  pre.code .c { color: var(--g500); font-style: italic; }
-  pre.code .v { color: var(--slate); }
-  code.inline {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--chip-bg);
-    padding: 1px 6px;
-    border-radius: var(--r-chip);
-    color: var(--g700);
-  }
+/* --- Code --- */
+pre.listing {
+  background: var(--bg-code);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 14px 0;
+}
+pre.listing .k { color: var(--syn-k); font-weight: 500; }
+pre.listing .t { color: var(--syn-t); }
+pre.listing .s { color: var(--syn-s); }
+pre.listing .n { color: var(--syn-n); }
+pre.listing .c { color: var(--syn-c); }
+pre.listing .f { color: var(--syn-f); }
+pre.listing .d { color: var(--syn-d); }
+code.inline {
+  font-size: 0.88em;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* コピーボタン — JS が全 pre.listing を .code-wrap で包んで自動付与 */
+.code-wrap { position: relative; margin: 14px 0; }
+.code-wrap pre.listing { margin: 0; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 120ms, border-color 120ms;
+}
+.code-wrap:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copy-btn:hover { color: var(--text); border-color: var(--separator); }
+.copy-btn.is-copied { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.copy-btn svg { width: 15px; height: 15px; }
 
-  .callout {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    gap: 14px;
-    padding: 16px 18px;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-left: 4px solid var(--clay);
-    border-radius: var(--r-panel);
-  }
-  .callout .ico {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1;
-    color: var(--clay);
-  }
-  .callout h4 { margin: 0 0 4px; font: 500 14px var(--sans); color: var(--slate); }
-  .callout p { margin: 0; font-size: 13.5px; color: var(--g700); }
-  .callout p + p { margin-top: 8px; }
-  .callout-note    { border-left-color: var(--clay); }
-  .callout-success { border-left-color: var(--olive); }
-  .callout-success .ico { color: var(--olive-d); }
-  .callout-warn    { border-left-color: var(--mustard); background: var(--callout-warn-bg); }
-  .callout-warn .ico { color: var(--callout-warn-fg); }
-  .callout-error   { border-left-color: var(--ruby); background: var(--callout-error-bg); }
-  .callout-error .ico { color: var(--callout-error-fg); }
+/* --- Tables --- */
+table.params {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+  margin: 14px 0;
+}
+table.params th, table.params td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+table.params thead th {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  border-bottom: 1px solid var(--separator);
+}
+table.params td.param { font-family: var(--font-mono); font-size: 13px; color: var(--syn-d); }
+table.params td.type  { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+table.params tbody tr:hover { background: var(--bg-alt); }
 
-  table.t {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    overflow: hidden;
-    font-size: 13.5px;
-  }
-  table.t th, table.t td {
-    text-align: left;
-    padding: 12px 16px;
-    border-bottom: var(--b-hair);
-    vertical-align: top;
-  }
-  table.t thead th {
-    font: 500 12px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--g500);
-    background: var(--g100);
-  }
-  table.t tbody tr:last-child td { border-bottom: none; }
-  @media (hover: hover) {
-    table.t tbody tr:hover { background: var(--g100); }
-  }
-  table.t td.mono { font-family: var(--mono); color: var(--g700); white-space: nowrap; }
+/* --- Lists --- */
+ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 14px 0; }
+ol.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 15px;
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--text-2);
+  font: 600 12px var(--font-text);
+  display: flex; align-items: center; justify-content: center;
+}
+ul.plain { padding-left: 1.3em; margin: 14px 0; }
+ul.plain li { margin: 6px 0; font-size: 15px; line-height: 1.6; }
 
-  ol.serif-list {
-    list-style: none;
-    counter-reset: serif;
-    padding: 0;
-    margin: 0;
-  }
-  ol.serif-list li {
-    counter-increment: serif;
-    display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: var(--b-hair);
-  }
-  ol.serif-list li:last-child { border-bottom: none; }
-  ol.serif-list li::before {
-    content: counter(serif, decimal-leading-zero);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--clay);
-    padding-top: 3px;
-  }
-  ul.dot-list { list-style: none; padding: 0; margin: 0; }
-  ul.dot-list li {
-    padding: 8px 0 8px 22px;
-    position: relative;
-    font-size: 14px;
-  }
-  ul.dot-list li::before {
-    content: "";
-    position: absolute; left: 4px; top: 16px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--clay);
-  }
+/* --- Compare（before / after 2 カラム） --- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare > div {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font: 600 12px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.compare h4.bad  { color: var(--red); }
+.compare h4.good { color: var(--green); }
+.compare p { margin: 0; font-size: 14px; color: var(--text); }
 
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 11px;
-    border-radius: var(--r-pill);
-    font: 500 12px var(--sans);
-    border: var(--b-rule);
-    background: var(--paper);
-    color: var(--g700);
-  }
-  .pill-clay  { background: rgba(217, 119, 87, 0.12); color: var(--clay-d); border-color: transparent; }
-  .pill-olive { background: rgba(120, 140, 93, 0.14); color: var(--olive-d); border-color: transparent; }
-  .pill-oat   { background: var(--oat); color: var(--g700); border-color: transparent; }
-  .pill-slate { background: var(--slate); color: var(--ivory); border-color: transparent; }
+/* --- Frame（SVG 図解） --- */
+.frame {
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: var(--bg-elev);
+  margin: 14px 0;
+}
+.frame svg { width: 100%; height: auto; display: block; }
 
-  .svg-frame {
-    background: var(--svg-frame-bg);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 24px;
-  }
-  .svg-frame svg { width: 100%; height: auto; display: block; }
-  .st { stroke: var(--g500); fill: none; stroke-width: 2.5; }
-  .fl { fill: var(--g300); }
-  .cl { fill: var(--clay); }
-  .ol { fill: var(--olive); }
-  .oa { fill: var(--oat); stroke: var(--g500); stroke-width: 2.5; }
-  .sl { fill: var(--slate); }
-  .wh { fill: var(--paper); stroke: var(--g500); stroke-width: 2.5; }
-  .ln { stroke: var(--g500); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .lc { stroke: var(--clay); stroke-width: 2.5; fill: none; stroke-linecap: round; }
-  .da { stroke-dasharray: 4 4; }
-
-  .compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
-  .compare > div {
-    background: var(--paper);
-    border: var(--b-rule);
-    border-radius: var(--r-panel);
-    padding: 16px 18px;
-  }
-  .compare h4 {
-    margin: 0 0 10px;
-    font: 500 13px var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--g500);
-  }
-  .compare h4.bad  { color: var(--ruby); }
-  .compare h4.good { color: var(--olive-d); }
-  .compare p { margin: 0; font-size: 13.5px; color: var(--g700); }
-
-  footer {
-    margin-top: 120px;
-    border-top: var(--b-rule);
-    padding-top: 36px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: var(--g500);
-  }
-  footer .k { font-family: var(--serif); font-style: italic; color: var(--g700); font-size: 15px; }
-  footer a { color: var(--clay); text-decoration-color: var(--oat); text-underline-offset: 3px; }
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="masthead">
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<div class="article">
+
+  <header class="doc-header">
     <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
-    <div class="eyebrow">Prompt engineering · Claude Opus 4.8</div>
-    <h1 class="display">Opus 4.8 は <em>文字通り</em>に読み、<em>自分で</em>加減する。</h1>
-    <p class="lead">
-      Claude Opus 4.8（model string <code>claude-opus-4-8</code>）は long-horizon な agentic 作業・
+    <p class="eyebrow">Prompt engineering · Claude Opus 4.8</p>
+    <h1>Opus 4.8 は <em>文字通り</em>に読み、<em>自分で</em>加減する。</h1>
+    <p class="abstract">
+      Claude Opus 4.8（model string <code class="inline">claude-opus-4-8</code>）は long-horizon な agentic 作業・
       knowledge work・vision・memory に強い最新 Opus。4.7 のプロンプトはそのまま動くが、
       <strong>応答の長さを自分でキャリブレートし、effort と adaptive thinking を厳密に尊重し、
       指示を文字通り解釈する</strong>という 3 つの癖が前モデルとの差を生む。公式 prompting docs の
@@ -465,201 +509,173 @@
       <span><strong>確認日</strong> 2026-05-30</span>
       <span><strong>前モデル</strong> Opus 4.7 / 4.6 からの差分込み</span>
     </div>
-    <nav class="toc">
-      <a href="#core">核心の一文 <span class="n">01</span></a>
-      <a href="#effort">effort を最初のレバーに <span class="n">02</span></a>
-      <a href="#literal">冗長さ &amp; 文字通りの追従 <span class="n">03</span></a>
-      <a href="#tools">ツール &amp; 並列呼び出し <span class="n">04</span></a>
-      <a href="#restraint">subagent &amp; 過剰さの制御 <span class="n">05</span></a>
-      <a href="#design">frontend デフォルト <span class="n">06</span></a>
-      <a href="#review">code review の罠 <span class="n">07</span></a>
-      <a href="#agentic">長時間 agentic &amp; 安全 <span class="n">08</span></a>
-      <a href="#general">一般原則 &amp; prefill 廃止 <span class="n">09</span></a>
-      <a href="#castle">手元への適用 <span class="n">10</span></a>
-    </nav>
   </header>
 
   <!-- ============================== 01 ============================== -->
-  <section id="core">
-    <div class="sec-head"><span class="idx">01</span><h2>核心の一文</h2><span class="count">tl;dr</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="core" data-title="核心の一文">
+    <h2>核心の一文</h2>
+    <p class="lede">
       Opus 4.8 を一言で表すと <strong>「賢くなったが、勝手に気を利かせなくなった」</strong>。
       前モデルでは曖昧な指示でも文脈から補完してくれたが、4.8 は<strong>書いてあることを書いてある通りに</strong>やる。
       これは精度と再現性の向上だが、旧プロンプトの「察してくれる前提」が外れる。
     </p>
-    <div class="demos">
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>4.8 の 3 つの癖（ここだけ覚える）</h4>
-          <p>
-            <strong>1. 長さを自己調整する</strong> ── 簡単な質問には短く、複雑な分析には長く。固定の冗長さを持たない。<br>
-            <strong>2. effort と thinking を厳密に尊重する</strong> ── 特に low/medium では「言われたこと」にスコープを絞る。<br>
-            <strong>3. 文字通り解釈する（literalism）</strong> ── 1 項目への指示を勝手に全項目へ一般化しない。やってない依頼を推測しない。
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        公式の表現では「4.7 のプロンプトでそのまま out of the box でよく動く」。つまり全書き換えは不要で、
-        <strong>挙動がズレた箇所だけピンポイントで調整する</strong>のが正しい付き合い方。以下のセクションは
-        その「ズレやすい箇所」を効く順に並べたもの。
+    <div class="aside aside-note">
+      <p class="aside-label">4.8 の 3 つの癖（ここだけ覚える）</p>
+      <p>
+        <strong>1. 長さを自己調整する</strong> ── 簡単な質問には短く、複雑な分析には長く。固定の冗長さを持たない。<br>
+        <strong>2. effort と thinking を厳密に尊重する</strong> ── 特に low/medium では「言われたこと」にスコープを絞る。<br>
+        <strong>3. 文字通り解釈する（literalism）</strong> ── 1 項目への指示を勝手に全項目へ一般化しない。やってない依頼を推測しない。
       </p>
     </div>
+    <p>
+      公式の表現では「4.7 のプロンプトでそのまま out of the box でよく動く」。つまり全書き換えは不要で、
+      <strong>挙動がズレた箇所だけピンポイントで調整する</strong>のが正しい付き合い方。以下のセクションは
+      その「ズレやすい箇所」を効く順に並べたもの。
+    </p>
   </section>
 
   <!-- ============================== 02 ============================== -->
-  <section id="effort">
-    <div class="sec-head"><span class="idx">02</span><h2>effort を最初のレバーにする</h2><span class="count">most important</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="effort" data-title="effort レバー">
+    <h2>effort を最初のレバーにする</h2>
+    <p class="lede">
       docs が繰り返し強調するのは <strong>「プロンプトでこねる前に、まず effort を上げ下げしろ」</strong>。
       effort は知能とトークン消費（=速度・コスト）のトレードオフを 5 段階で切るパラメータで、
       <strong>4.8 はこれを過去のどの Opus よりも厳密に尊重する</strong>。
     </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>effort</th><th>使いどころ</th><th>注意</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="mono">max</td><td>知能最優先のタスク</td><td>overthinking 気味・リターン逓減あり</td></tr>
-          <tr><td class="mono">xhigh</td><td><strong>コーディング / agentic のベスト</strong></td><td>出力トークン上限を大きく（64k〜）</td></tr>
-          <tr><td class="mono">high</td><td>知能が要る用途の最低ライン</td><td>知能とコストのバランス点</td></tr>
-          <tr><td class="mono">medium</td><td>コスト重視で知能を少し犠牲に</td><td>難タスクで under-thinking のリスク</td></tr>
-          <tr><td class="mono">low</td><td>短く scoped・低レイテンシ</td><td>「言われたこと」だけやる。複雑題で浅くなる</td></tr>
-        </tbody>
-      </table>
-      <div class="svg-frame">
-        <svg viewBox="0 0 600 210" aria-label="effort と 知能・トークンのトレードオフ">
-          <line class="ln" x1="60" y1="170" x2="560" y2="170"/>
-          <line class="ln" x1="60" y1="170" x2="60" y2="30"/>
-          <text x="300" y="200" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="currentColor" style="color: var(--g500);">token / latency  →</text>
-          <text x="40" y="100" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="13" fill="currentColor" style="color: var(--g500);" transform="rotate(-90 40 100)">intelligence  →</text>
-          <path class="lc" d="M 70 158 Q 250 150 360 95 Q 470 50 545 44" />
-          <circle class="ol" cx="110" cy="156" r="6"/><text x="110" y="148" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" style="color: var(--g700);">low</text>
-          <circle class="ol" cx="210" cy="150" r="6"/><text x="210" y="142" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" style="color: var(--g700);">medium</text>
-          <circle class="cl" cx="330" cy="108" r="6"/><text x="330" y="100" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" style="color: var(--g700);">high</text>
-          <circle class="cl" cx="440" cy="62" r="7"/><text x="440" y="54" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" style="color: var(--clay);">xhigh</text>
-          <circle class="sl" cx="535" cy="46" r="6"/><text x="535" y="38" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" style="color: var(--g700);">max</text>
-          <path class="ln da" d="M 460 60 Q 500 52 540 50" />
-          <text x="500" y="86" text-anchor="middle" font-family="ui-serif, Georgia, serif" font-size="11" font-style="italic" fill="currentColor" style="color: var(--g500);">逓減</text>
-        </svg>
-      </div>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        複雑題で推論が浅いと感じたら <strong>プロンプトで回避せず effort を <code class="inline">high</code> / <code class="inline">xhigh</code> に上げる</strong>。
-        どうしても low に固定したい（レイテンシ要件）ときだけ、ターゲットを絞った一文を足す:
-      </p>
-<pre class="code">This task involves multi-step reasoning. Think carefully through the problem before responding.</pre>
-      <p class="demo-label" style="margin-top: 4px;">thinking — 4.8 ではデフォルト OFF</p>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        Opus 4.8 では <code class="inline">thinking: {type: "adaptive"}</code> を明示しない限り thinking は OFF。
-        adaptive thinking は effort とクエリ複雑度から「いつ・どれだけ考えるか」をモデルが動的に決める方式で、
-        旧 <code class="inline">budget_tokens</code> 方式（deprecated）より評価上も優秀。逆に「考えすぎ」を抑えたいときはこう steer する:
-      </p>
-<pre class="code">Thinking adds latency and should only be used when it will meaningfully improve
+    <table class="params">
+      <thead>
+        <tr><th>effort</th><th>使いどころ</th><th>注意</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="type">max</td><td>知能最優先のタスク</td><td>overthinking 気味・リターン逓減あり</td></tr>
+        <tr><td class="type">xhigh</td><td><strong>コーディング / agentic のベスト</strong></td><td>出力トークン上限を大きく（64k〜）</td></tr>
+        <tr><td class="type">high</td><td>知能が要る用途の最低ライン</td><td>知能とコストのバランス点</td></tr>
+        <tr><td class="type">medium</td><td>コスト重視で知能を少し犠牲に</td><td>難タスクで under-thinking のリスク</td></tr>
+        <tr><td class="type">low</td><td>短く scoped・低レイテンシ</td><td>「言われたこと」だけやる。複雑題で浅くなる</td></tr>
+      </tbody>
+    </table>
+    <div class="frame">
+      <svg viewBox="0 0 600 210" aria-label="effort と 知能・トークンのトレードオフ">
+        <line x1="60" y1="170" x2="560" y2="170" stroke="var(--separator)" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="60" y1="170" x2="60" y2="30" stroke="var(--separator)" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="300" y="200" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" fill="var(--text-2)">token / latency  →</text>
+        <text x="40" y="100" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" fill="var(--text-2)" transform="rotate(-90 40 100)">intelligence  →</text>
+        <path d="M 70 158 Q 250 150 360 95 Q 470 50 545 44" stroke="var(--tint)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="110" cy="156" r="6" fill="var(--text-3)"/><text x="110" y="148" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="var(--text-2)">low</text>
+        <circle cx="210" cy="150" r="6" fill="var(--text-3)"/><text x="210" y="142" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="var(--text-2)">medium</text>
+        <circle cx="330" cy="108" r="6" fill="var(--tint)"/><text x="330" y="100" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="var(--text-2)">high</text>
+        <circle cx="440" cy="62" r="7" fill="var(--tint)"/><text x="440" y="54" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="var(--tint)">xhigh</text>
+        <circle cx="535" cy="46" r="6" fill="var(--text-2)"/><text x="535" y="38" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" fill="var(--text-2)">max</text>
+        <path d="M 460 60 Q 500 52 540 50" stroke="var(--separator)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
+        <text x="500" y="86" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" fill="var(--text-2)">逓減</text>
+      </svg>
+    </div>
+    <p>
+      複雑題で推論が浅いと感じたら <strong>プロンプトで回避せず effort を <code class="inline">high</code> / <code class="inline">xhigh</code> に上げる</strong>。
+      どうしても low に固定したい（レイテンシ要件）ときだけ、ターゲットを絞った一文を足す:
+    </p>
+<pre class="listing">This task involves multi-step reasoning. Think carefully through the problem before responding.</pre>
+    <p class="demo-label">thinking — 4.8 ではデフォルト OFF</p>
+    <p>
+      Opus 4.8 では <code class="inline">thinking: {type: "adaptive"}</code> を明示しない限り thinking は OFF。
+      adaptive thinking は effort とクエリ複雑度から「いつ・どれだけ考えるか」をモデルが動的に決める方式で、
+      旧 <code class="inline">budget_tokens</code> 方式（deprecated）より評価上も優秀。逆に「考えすぎ」を抑えたいときはこう steer する:
+    </p>
+<pre class="listing">Thinking adds latency and should only be used when it will meaningfully improve
 answer quality — typically for problems that require multi-step reasoning.
 When in doubt, respond directly.</pre>
-      <p class="demo-label" style="margin-top: 4px;">API での書き方（extended thinking からの移行）</p>
-<pre class="code"><span class="c"># Before（旧モデル: extended thinking + budget_tokens）</span>
+    <p class="demo-label">API での書き方（extended thinking からの移行）</p>
+<pre class="listing"><span class="c"># Before（旧モデル: extended thinking + budget_tokens）</span>
 client.messages.create(
     model=<span class="s">"claude-sonnet-4-5-20250929"</span>,
-    max_tokens=<span class="v">64000</span>,
-    thinking={<span class="s">"type"</span>: <span class="s">"enabled"</span>, <span class="s">"budget_tokens"</span>: <span class="v">32000</span>},
+    max_tokens=64000,
+    thinking={<span class="s">"type"</span>: <span class="s">"enabled"</span>, <span class="s">"budget_tokens"</span>: 32000},
 )
 
 <span class="c"># After（4.8: adaptive thinking + effort）</span>
 client.messages.create(
     model=<span class="s">"claude-opus-4-8"</span>,
-    max_tokens=<span class="v">64000</span>,
+    max_tokens=64000,
     thinking={<span class="s">"type"</span>: <span class="s">"adaptive"</span>},
     output_config={<span class="s">"effort"</span>: <span class="s">"high"</span>},  <span class="c"># max / xhigh / medium / low</span>
 )</pre>
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>max / xhigh では出力上限を大きく取る</h4>
-          <p>
-            effort を <code class="inline">max</code> / <code class="inline">xhigh</code> で回すなら、
-            subagent とツール呼び出しに跨って「考えて動く」余地を残すため
-            <strong>max output token を 64k 起点</strong>で設定する。小さいと途中で切れる。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-warning">
+      <p class="aside-label">max / xhigh では出力上限を大きく取る</p>
+      <p>
+        effort を <code class="inline">max</code> / <code class="inline">xhigh</code> で回すなら、
+        subagent とツール呼び出しに跨って「考えて動く」余地を残すため
+        <strong>max output token を 64k 起点</strong>で設定する。小さいと途中で切れる。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 03 ============================== -->
-  <section id="literal">
-    <div class="sec-head"><span class="idx">03</span><h2>冗長さの自己調整と「文字通りの追従」</h2><span class="count">behavior shift</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="literal" data-title="冗長さと literalism">
+    <h2>冗長さの自己調整と「文字通りの追従」</h2>
+    <p class="lede">
       4.8 は応答長を「タスクの複雑さ」で自分で決める。固定の verbosity を持たないので、
       <strong>プロダクトが特定のスタイル・長さに依存しているなら明示的にプロンプトで縛る</strong>必要がある。
       冗長さを減らすなら:
     </p>
-    <div class="demos">
-<pre class="code">Provide concise, focused responses. Skip non-essential context, and keep examples minimal.</pre>
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>否定形より肯定形・実例</h4>
-          <p>
-            「〜するな」より「適切な簡潔さでこう書く」という<strong>ポジティブな実例</strong>の方が効く。
-            これは 4.8 に限らない普遍則だが、literalism の強い 4.8 では特に差が出る。
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        <strong>literalism（文字通りの解釈）</strong>は 4.8 最大の挙動変化。1 つの項目への指示を黙って他項目へ
-        一般化せず、頼んでいない依頼を推測しない。利点は精度・再現性（構造化抽出やパイプライン向き）。
-        裏を返すと <strong>「全体に適用してほしい」ならスコープを明示的に書く</strong>必要がある。
+<pre class="listing">Provide concise, focused responses. Skip non-essential context, and keep examples minimal.</pre>
+    <div class="aside aside-tip">
+      <p class="aside-label">否定形より肯定形・実例</p>
+      <p>
+        「〜するな」より「適切な簡潔さでこう書く」という<strong>ポジティブな実例</strong>の方が効く。
+        これは 4.8 に限らない普遍則だが、literalism の強い 4.8 では特に差が出る。
       </p>
-      <div class="compare">
-        <div>
-          <h4 class="bad">察してくれる前提（4.7 までの癖）</h4>
-          <p>"Format the heading like this." と 1 例だけ示して全見出しに波及するのを期待する。4.8 は最初の 1 つだけ直すことがある。</p>
-        </div>
-        <div>
-          <h4 class="good">スコープを明示（4.8 向け）</h4>
-          <p>"Apply this formatting to every section, not just the first one." と<strong>範囲を言い切る</strong>。</p>
-        </div>
-      </div>
-      <p class="demo-label" style="margin-top: 4px;">トーンも再評価する</p>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        4.8 は direct で opinionated、追従的な前置き（validation-forward phrasing）と絵文字が控えめなのがデフォルト。
-        温かい・会話的な声が欲しいプロダクトは明示する:
-      </p>
-<pre class="code">Use a warm, collaborative tone. Acknowledge the user's framing before answering.</pre>
     </div>
+    <p>
+      <strong>literalism（文字通りの解釈）</strong>は 4.8 最大の挙動変化。1 つの項目への指示を黙って他項目へ
+      一般化せず、頼んでいない依頼を推測しない。利点は精度・再現性（構造化抽出やパイプライン向き）。
+      裏を返すと <strong>「全体に適用してほしい」ならスコープを明示的に書く</strong>必要がある。
+    </p>
+    <div class="compare">
+      <div>
+        <h4 class="bad">察してくれる前提（4.7 までの癖）</h4>
+        <p>"Format the heading like this." と 1 例だけ示して全見出しに波及するのを期待する。4.8 は最初の 1 つだけ直すことがある。</p>
+      </div>
+      <div>
+        <h4 class="good">スコープを明示（4.8 向け）</h4>
+        <p>"Apply this formatting to every section, not just the first one." と<strong>範囲を言い切る</strong>。</p>
+      </div>
+    </div>
+    <p class="demo-label">トーンも再評価する</p>
+    <p>
+      4.8 は direct で opinionated、追従的な前置き（validation-forward phrasing）と絵文字が控えめなのがデフォルト。
+      温かい・会話的な声が欲しいプロダクトは明示する:
+    </p>
+<pre class="listing">Use a warm, collaborative tone. Acknowledge the user's framing before answering.</pre>
   </section>
 
   <!-- ============================== 04 ============================== -->
-  <section id="tools">
-    <div class="sec-head"><span class="idx">04</span><h2>ツール起動と並列呼び出し</h2><span class="count">tool use</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="tools" data-title="ツール並列呼び出し">
+    <h2>ツール起動と並列呼び出し</h2>
+    <p class="lede">
       4.8 は <strong>ツール呼び出しより推論を好む</strong>傾向がある（多くの場合これで結果が良くなる）。
       もっとツールを使わせたいときの第一レバーも、やはり <strong>effort</strong>。
       <code class="inline">high</code> / <code class="inline">xhigh</code> は agentic search / coding で明確にツール使用が増える。
     </p>
-    <div class="demos">
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        加えて「行動させたい」なら指示を<strong>断定形</strong>に。
-        「can you suggest some changes（提案して）」だと提案だけで終わることがある。実際に編集させたいなら:
-      </p>
-      <div class="compare">
-        <div>
-          <h4 class="bad">提案で終わりがち</h4>
-          <p style="font-family: var(--mono); font-size: 12.5px;">Can you suggest some changes to improve this function?</p>
-        </div>
-        <div>
-          <h4 class="good">行動する</h4>
-          <p style="font-family: var(--mono); font-size: 12.5px;">Change this function to improve its performance.</p>
-        </div>
+    <p>
+      加えて「行動させたい」なら指示を<strong>断定形</strong>に。
+      「can you suggest some changes（提案して）」だと提案だけで終わることがある。実際に編集させたいなら:
+    </p>
+    <div class="compare">
+      <div>
+        <h4 class="bad">提案で終わりがち</h4>
+        <p style="font-family: var(--font-mono); font-size: 12.5px;">Can you suggest some changes to improve this function?</p>
       </div>
-      <p class="demo-label" style="margin-top: 4px;">並列ツール呼び出しを最大化する system prompt</p>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        4.8 は並列ツール実行が得意（複数検索・複数ファイル同時読み・bash 並列）。無指示でも成功率は高いが、
-        ほぼ 100% に寄せたいなら定番スニペット:
-      </p>
-<pre class="code">&lt;use_parallel_tool_calls&gt;
+      <div>
+        <h4 class="good">行動する</h4>
+        <p style="font-family: var(--font-mono); font-size: 12.5px;">Change this function to improve its performance.</p>
+      </div>
+    </div>
+    <p class="demo-label">並列ツール呼び出しを最大化する system prompt</p>
+    <p>
+      4.8 は並列ツール実行が得意（複数検索・複数ファイル同時読み・bash 並列）。無指示でも成功率は高いが、
+      ほぼ 100% に寄せたいなら定番スニペット:
+    </p>
+<pre class="listing">&lt;use_parallel_tool_calls&gt;
 If you intend to call multiple tools and there are no dependencies between the
 tool calls, make all of the independent tool calls in parallel. Prioritize calling
 tools simultaneously whenever the actions can be done in parallel rather than
@@ -668,274 +684,377 @@ However, if some tool calls depend on previous calls to inform dependent values,
 do NOT call these tools in parallel and instead call them sequentially.
 Never use placeholders or guess missing parameters in tool calls.
 &lt;/use_parallel_tool_calls&gt;</pre>
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>4.6/4.5 は「CRITICAL: MUST」を弱める</h4>
-          <p>
-            Opus 4.5 / 4.6 は system prompt への反応が強くなり、旧来の
-            <code class="inline">CRITICAL: You MUST use this tool when...</code> のような強語が
-            <strong>overtrigger（過剰起動）</strong>を招く。<code class="inline">Use this tool when...</code> 程度の普通の表現に落とす。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-note">
+      <p class="aside-label">4.6/4.5 は「CRITICAL: MUST」を弱める</p>
+      <p>
+        Opus 4.5 / 4.6 は system prompt への反応が強くなり、旧来の
+        <code class="inline">CRITICAL: You MUST use this tool when...</code> のような強語が
+        <strong>overtrigger（過剰起動）</strong>を招く。<code class="inline">Use this tool when...</code> 程度の普通の表現に落とす。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 05 ============================== -->
-  <section id="restraint">
-    <div class="sec-head"><span class="idx">05</span><h2>subagent と「過剰さ」の制御</h2><span class="count">steerable</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="restraint" data-title="subagent 制御">
+    <h2>subagent と「過剰さ」の制御</h2>
+    <p class="lede">
       ここは <strong>世代で向きが逆</strong>なので要注意。Opus 4.6 は subagent を<strong>使いすぎる</strong>傾向（grep で十分な
       コード探索にまで subagent を spawn）。一方 <strong>4.8 はデフォルトで subagent を控えめにする</strong>。
       どちらも prompting で steerable。
     </p>
-    <div class="demos">
-      <div class="compare">
-        <div>
-          <h4 class="bad">4.6: 使いすぎを抑える</h4>
-          <p>"For simple tasks, single-file edits, or tasks where you need to maintain context across steps, work directly rather than delegating."</p>
-        </div>
-        <div>
-          <h4 class="good">4.8: 使ってほしい時を明示</h4>
-          <p>"Spawn multiple subagents in the same turn when fanning out across items or reading multiple files. Do not spawn a subagent for work you can complete directly."</p>
-        </div>
+    <div class="compare">
+      <div>
+        <h4 class="bad">4.6: 使いすぎを抑える</h4>
+        <p>"For simple tasks, single-file edits, or tasks where you need to maintain context across steps, work directly rather than delegating."</p>
       </div>
-      <p class="demo-label" style="margin-top: 4px;">overengineering（過剰設計）を抑える定番</p>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        4.5 / 4.6 は余計なファイル・抽象・「将来用」の柔軟性を作り込みがち。これも明示で抑える:
-      </p>
-<pre class="code">Avoid over-engineering. Only make changes that are directly requested or clearly
+      <div>
+        <h4 class="good">4.8: 使ってほしい時を明示</h4>
+        <p>"Spawn multiple subagents in the same turn when fanning out across items or reading multiple files. Do not spawn a subagent for work you can complete directly."</p>
+      </div>
+    </div>
+    <p class="demo-label">overengineering（過剰設計）を抑える定番</p>
+    <p>
+      4.5 / 4.6 は余計なファイル・抽象・「将来用」の柔軟性を作り込みがち。これも明示で抑える:
+    </p>
+<pre class="listing">Avoid over-engineering. Only make changes that are directly requested or clearly
 necessary. Keep solutions simple and focused:
 - Scope: Don't add features or "improvements" beyond what was asked.
 - Documentation: Don't add docstrings/comments to code you didn't change.
 - Defensive coding: Only validate at system boundaries (user input, external APIs).
 - Abstractions: Don't create helpers for one-time operations. The right amount of
   complexity is the minimum needed for the current task.</pre>
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>テスト通過至上主義・ハードコードを禁じる</h4>
-          <p>
-            テストを通すことだけに最適化して一般解を諦める／test 入力専用のハードコードをする、を防ぐ一文も用意されている:
-            <em>"Implement a solution that works correctly for all valid inputs, not just the test cases. Tests are there to verify correctness, not to define the solution."</em>
-            一時ファイルを散らかすなら <em>"clean up these files at the end of the task."</em> も足す。
-          </p>
-        </div>
-      </div>
+    <div class="aside aside-tip">
+      <p class="aside-label">テスト通過至上主義・ハードコードを禁じる</p>
+      <p>
+        テストを通すことだけに最適化して一般解を諦める／test 入力専用のハードコードをする、を防ぐ一文も用意されている:
+        <em>"Implement a solution that works correctly for all valid inputs, not just the test cases. Tests are there to verify correctness, not to define the solution."</em>
+        一時ファイルを散らかすなら <em>"clean up these files at the end of the task."</em> も足す。
+      </p>
     </div>
   </section>
 
   <!-- ============================== 06 ============================== -->
-  <section id="design">
-    <div class="sec-head"><span class="idx">06</span><h2>frontend / design のデフォルト house style</h2><span class="count">gotcha</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="design" data-title="frontend デフォルト">
+    <h2>frontend / design のデフォルト house style</h2>
+    <p class="lede">
       4.8 には<strong>強い design の手癖</strong>がある:
       暖色のクリーム/オフホワイト背景（約 <code class="inline">#F4F1EA</code>）、serif の display フォント（Georgia / Fraunces / Playfair）、
       斜体の語アクセント、terracotta/amber のアクセント。editorial / hospitality / portfolio には映えるが、
       <strong>ダッシュボード・dev tools・fintech・医療・エンタープライズには合わない</strong>。スライドにも出る。
     </p>
-    <div class="demos">
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
+    <div class="aside aside-warning">
+      <p class="aside-label">「クリーム使うな」では直らない</p>
+      <p>
+        このデフォルトは粘り強い。<em>"don't use cream"</em> や <em>"make it clean and minimal"</em> のような
+        generic な否定は、<strong>別の固定パレットに移るだけで多様性は生まれない</strong>。効くのは次の 2 つ。
+      </p>
+    </div>
+    <ol class="steps">
+      <li>
         <div>
-          <h4>「クリーム使うな」では直らない</h4>
-          <p>
-            このデフォルトは粘り強い。<em>"don't use cream"</em> や <em>"make it clean and minimal"</em> のような
-            generic な否定は、<strong>別の固定パレットに移るだけで多様性は生まれない</strong>。効くのは次の 2 つ。
-          </p>
+          <strong>具体的な代替を指定する</strong>
+          ── 4.8 は明示スペックを正確に守る。背景・アクセントの hex、角丸の px、フォントの性格（square / angular sans）、
+          セクション構成まで言い切る。色は <code class="inline">#E9ECEC, #C9D2D4, #8C9A9E, #44545B, #11171B</code> のように<strong>パレットを列挙</strong>すると従う。
         </div>
-      </div>
-      <ol class="serif-list">
-        <li>
-          <div>
-            <strong>具体的な代替を指定する</strong>
-            ── 4.8 は明示スペックを正確に守る。背景・アクセントの hex、角丸の px、フォントの性格（square / angular sans）、
-            セクション構成まで言い切る。色は <code class="inline">#E9ECEC, #C9D2D4, #8C9A9E, #44545B, #11171B</code> のように<strong>パレットを列挙</strong>すると従う。
-          </div>
-        </li>
-        <li>
-          <div>
-            <strong>作る前に案を出させる</strong>
-            ── これがデフォルトを壊す。かつて temperature で多様性を出していたなら、これに置き換える:
-          </div>
-        </li>
-      </ol>
-<pre class="code">Before building, propose 4 distinct visual directions tailored to this brief
+      </li>
+      <li>
+        <div>
+          <strong>作る前に案を出させる</strong>
+          ── これがデフォルトを壊す。かつて temperature で多様性を出していたなら、これに置き換える:
+        </div>
+      </li>
+    </ol>
+<pre class="listing">Before building, propose 4 distinct visual directions tailored to this brief
 (each as: bg hex / accent hex / typeface — one-line rationale).
 Ask the user to pick one, then implement only that direction.</pre>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        なお 4.8 は前モデルより<strong>少ない指示で AI slop を回避できる</strong>。長い frontend-design スニペットは不要になり、
-        次の短いタグで十分機能する:
-      </p>
-<pre class="code">&lt;frontend_aesthetics&gt;
+    <p>
+      なお 4.8 は前モデルより<strong>少ない指示で AI slop を回避できる</strong>。長い frontend-design スニペットは不要になり、
+      次の短いタグで十分機能する:
+    </p>
+<pre class="listing">&lt;frontend_aesthetics&gt;
 NEVER use generic AI-generated aesthetics like overused font families (Inter,
 Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients
 on white or dark backgrounds), predictable layouts, and cookie-cutter design.
 Use unique fonts, cohesive colors and themes, and animations for micro-interactions.
 &lt;/frontend_aesthetics&gt;</pre>
-    </div>
   </section>
 
   <!-- ============================== 07 ============================== -->
-  <section id="review">
-    <div class="sec-head"><span class="idx">07</span><h2>code review harness の罠 — recall が下がって見える</h2><span class="count">counterintuitive</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="review" data-title="code review の罠">
+    <h2>code review harness の罠 — recall が下がって見える</h2>
+    <p class="lede">
       4.8 はバグ発見能力が実際に向上している（社内 eval で recall も precision も上）。
       なのに<strong>旧モデル向けに調整した harness では recall が下がって見える</strong>ことがある。
       これは能力後退ではなく <strong>harness effect</strong>。
     </p>
-    <div class="demos">
-      <div class="callout callout-error">
-        <div class="ico">!</div>
-        <div>
-          <h4>何が起きているか</h4>
-          <p>
-            プロンプトに <em>「high-severity だけ報告」「conservative に」「nitpick するな」</em>と書いてあると、
-            4.8 は<strong>その指示を旧モデルより忠実に守る</strong>。バグは同じ深さで調査し見つけてはいるが、
-            自分の基準で「報告ラインを下回る」と判断したものを<strong>報告しない</strong>。
-            結果、precision は上がるのに、計測上の recall は落ちる。
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 14px; color: var(--g700); max-width: 760px;">
-        対策は <strong>「発見」と「フィルタ」を分ける</strong>こと。発見段階の仕事は <em>coverage</em> だと明示する:
+    <div class="aside aside-warning">
+      <p class="aside-label">何が起きているか</p>
+      <p>
+        プロンプトに <em>「high-severity だけ報告」「conservative に」「nitpick するな」</em>と書いてあると、
+        4.8 は<strong>その指示を旧モデルより忠実に守る</strong>。バグは同じ深さで調査し見つけてはいるが、
+        自分の基準で「報告ラインを下回る」と判断したものを<strong>報告しない</strong>。
+        結果、precision は上がるのに、計測上の recall は落ちる。
       </p>
-<pre class="code">Report every issue you find, including ones you are uncertain about or consider
+    </div>
+    <p>
+      対策は <strong>「発見」と「フィルタ」を分ける</strong>こと。発見段階の仕事は <em>coverage</em> だと明示する:
+    </p>
+<pre class="listing">Report every issue you find, including ones you are uncertain about or consider
 low-severity. Do not filter for importance or confidence at this stage — a separate
 verification step will do that. Your goal here is coverage: it is better to surface
 a finding that later gets filtered out than to silently drop a real bug. For each
 finding, include your confidence level and an estimated severity so a downstream
 filter can rank them.</pre>
-      <div class="callout callout-note">
-        <div class="ico">i</div>
-        <div>
-          <h4>1 パスで self-filter させるなら基準を具体化</h4>
-          <p>
-            <code class="inline">important</code> のような定性語ではなく
-            「incorrect behavior / test failure / misleading result を起こしうるバグは報告、pure style や naming の nit だけ除外」
-            のように<strong>バーの位置を具体的に</strong>書く。eval のサブセットで recall / F1 を回して検証する。
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 13.5px; color: var(--g700); max-width: 760px;">
-        ※ これは CLAUDE.md のコードレビュー運用（汎用レビュアー + <code class="inline">security-reviewer</code> 並列起動）にも直結する。
-        各レビュアーの「発見」段階は coverage 重視で投げ、重み付け・棄却は呼び出し側で行うのが 4.8 に噛み合う。
+    <div class="aside aside-note">
+      <p class="aside-label">1 パスで self-filter させるなら基準を具体化</p>
+      <p>
+        <code class="inline">important</code> のような定性語ではなく
+        「incorrect behavior / test failure / misleading result を起こしうるバグは報告、pure style や naming の nit だけ除外」
+        のように<strong>バーの位置を具体的に</strong>書く。eval のサブセットで recall / F1 を回して検証する。
       </p>
     </div>
+    <p>
+      ※ これは CLAUDE.md のコードレビュー運用（汎用レビュアー + <code class="inline">security-reviewer</code> 並列起動）にも直結する。
+      各レビュアーの「発見」段階は coverage 重視で投げ、重み付け・棄却は呼び出し側で行うのが 4.8 に噛み合う。
+    </p>
   </section>
 
   <!-- ============================== 08 ============================== -->
-  <section id="agentic">
-    <div class="sec-head"><span class="idx">08</span><h2>長時間 agentic ワークと安全</h2><span class="count">long-horizon</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="agentic" data-title="長時間 agentic">
+    <h2>長時間 agentic ワークと安全</h2>
+    <p class="lede">
       4.8 は long-horizon の状態追跡が非常に強い。複数コンテキストウィンドウを跨いで
       「作業 → state 保存 → 新しい窓で再開」ができる。これを活かす定石と、autonomy が上がった分の安全ガードを置く。
     </p>
-    <div class="demos">
-      <ul class="dot-list">
-        <li><strong>context awareness</strong> ── 残りトークン予算を自覚できる。harness が compaction するなら「途中で勝手に切り上げるな、限界前に state を memory へ保存せよ」と伝える。</li>
-        <li><strong>state は構造化 + 自由記述の二段</strong> ── テスト結果やタスク状況は <code class="inline">tests.json</code> 等の JSON、進捗メモは <code class="inline">progress.txt</code> の自由テキスト。git も state 追跡に強い。</li>
-        <li><strong>マルチ窓では最初の窓を別扱い</strong> ── 1 窓目で枠組み（テスト・setup script）を作り、以降の窓で todo を回す。compaction より「新しい窓 + ファイルから state 復元」が有効なケースもある。</li>
-        <li><strong>検証ツールを与える</strong> ── 自律タスクが長くなるほど、人手フィードバック無しで正しさを確かめる手段（Playwright MCP / computer use）が要る。</li>
-      </ul>
-      <div class="callout callout-error">
-        <div class="ico">!</div>
-        <div>
-          <h4>autonomy が上がった分、破壊的操作にガードを</h4>
-          <p>
-            無指示だと 4.6 以降は「戻しにくい操作」「共有システムへの影響」（ファイル削除・force push・外部投稿）に
-            踏み込みうる。確認を挟ませたいなら明示する:
-          </p>
-          <p style="font-family: var(--mono); font-size: 12px;">
-            Consider the reversibility and potential impact of your actions. Take local,
-            reversible actions freely (editing files, running tests), but for hard-to-reverse,
-            shared-system, or destructive actions, ask the user first. Do not use destructive
-            actions as a shortcut (e.g. --no-verify, discarding unfamiliar in-progress files).
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 13.5px; color: var(--g700); max-width: 760px;">
-        リサーチ用途では「成功基準を定義」「複数ソースで裏取り」「競合する仮説を立て confidence を progress notes に記録し
-        self-critique しながら hypothesis tree を更新」という構造化アプローチが推奨されている。
+    <ul class="plain">
+      <li><strong>context awareness</strong> ── 残りトークン予算を自覚できる。harness が compaction するなら「途中で勝手に切り上げるな、限界前に state を memory へ保存せよ」と伝える。</li>
+      <li><strong>state は構造化 + 自由記述の二段</strong> ── テスト結果やタスク状況は <code class="inline">tests.json</code> 等の JSON、進捗メモは <code class="inline">progress.txt</code> の自由テキスト。git も state 追跡に強い。</li>
+      <li><strong>マルチ窓では最初の窓を別扱い</strong> ── 1 窓目で枠組み（テスト・setup script）を作り、以降の窓で todo を回す。compaction より「新しい窓 + ファイルから state 復元」が有効なケースもある。</li>
+      <li><strong>検証ツールを与える</strong> ── 自律タスクが長くなるほど、人手フィードバック無しで正しさを確かめる手段（Playwright MCP / computer use）が要る。</li>
+    </ul>
+    <div class="aside aside-warning">
+      <p class="aside-label">autonomy が上がった分、破壊的操作にガードを</p>
+      <p>
+        無指示だと 4.6 以降は「戻しにくい操作」「共有システムへの影響」（ファイル削除・force push・外部投稿）に
+        踏み込みうる。確認を挟ませたいなら明示する:
+      </p>
+      <p style="font-family: var(--font-mono); font-size: 12px;">
+        Consider the reversibility and potential impact of your actions. Take local,
+        reversible actions freely (editing files, running tests), but for hard-to-reverse,
+        shared-system, or destructive actions, ask the user first. Do not use destructive
+        actions as a shortcut (e.g. --no-verify, discarding unfamiliar in-progress files).
       </p>
     </div>
+    <p>
+      リサーチ用途では「成功基準を定義」「複数ソースで裏取り」「競合する仮説を立て confidence を progress notes に記録し
+      self-critique しながら hypothesis tree を更新」という構造化アプローチが推奨されている。
+    </p>
   </section>
 
   <!-- ============================== 09 ============================== -->
-  <section id="general">
-    <div class="sec-head"><span class="idx">09</span><h2>普遍の一般原則と prefill 廃止</h2><span class="count">foundations</span></div>
-    <p class="sec-intro">
+  <section class="doc-section" id="general" data-title="一般原則">
+    <h2>普遍の一般原則と prefill 廃止</h2>
+    <p class="lede">
       モデル固有の癖を抜きにしても効く土台。<strong>Claude を「優秀だが文脈を知らない新入社員」</strong>と捉えるのが基本姿勢。
       golden rule は「最小限の文脈しか持たない同僚にそのプロンプトを渡して、混乱するなら Claude も混乱する」。
     </p>
-    <div class="demos">
-      <ul class="dot-list">
-        <li><strong>明確・具体的に</strong> ── 「above and beyond」が欲しいなら明示的に頼む。<em>"Create an analytics dashboard. Include as many relevant features and interactions as possible."</em> のように modifier を足す。</li>
-        <li><strong>動機を添える</strong> ── 「なぜそうしてほしいか」を書くと汎化が効く。<em>"...read aloud by a text-to-speech engine, so never use ellipses..."</em> のように理由付きが強い。</li>
-        <li><strong>examples（few-shot）</strong> ── 出力の形・トーン・構造を steer する最も確実な手段。relevant / diverse に、<code class="inline">&lt;example&gt;</code> タグで囲む。3〜5 個が目安。</li>
-        <li><strong>XML タグで構造化</strong> ── instructions / context / input を別タグに分けると誤読が減る。</li>
-        <li><strong>role を与える</strong> ── system に一文 role を置くだけで挙動とトーンが絞れる。</li>
-        <li><strong>long context は「データを上、クエリを下」</strong> ── 20k+ トークンでは長文を先頭、指示と質問を末尾に。最大 30% 改善の計測も。引用を先に抽出させると noise を切れる。</li>
-      </ul>
-      <div class="callout callout-warn">
-        <div class="ico">!</div>
-        <div>
-          <h4>prefill は 4.6 以降サポート終了</h4>
-          <p>
-            最終 assistant ターンの prefill（応答の先頭を固定する手法）は Claude 4.6 以降で<strong>廃止</strong>（400 エラー）。
-            移行先は用途別に: 出力形式の固定 → <strong>Structured Outputs</strong> / 前置き除去 → system で
-            <em>"Respond directly without preamble."</em> / 継続 → 中断テキストを user ターンに移す / 不当な refusal 回避 → 今は素の user プロンプトで十分。
-          </p>
-        </div>
-      </div>
-      <p style="margin: 0; font-size: 13.5px; color: var(--g700); max-width: 760px;">
-        出力整形は「するなより、する形を指定」。<em>"Do not use markdown"</em> より
-        <em>"Your response should be composed of smoothly flowing prose paragraphs."</em>。
-        プロンプト自体の文体を出力したい文体に寄せる（markdown を減らしたいならプロンプトからも markdown を抜く）のも効く。
-        数式はデフォルト LaTeX なので、プレーンが欲しければ明示で止める。
+    <ul class="plain">
+      <li><strong>明確・具体的に</strong> ── 「above and beyond」が欲しいなら明示的に頼む。<em>"Create an analytics dashboard. Include as many relevant features and interactions as possible."</em> のように modifier を足す。</li>
+      <li><strong>動機を添える</strong> ── 「なぜそうしてほしいか」を書くと汎化が効く。<em>"...read aloud by a text-to-speech engine, so never use ellipses..."</em> のように理由付きが強い。</li>
+      <li><strong>examples（few-shot）</strong> ── 出力の形・トーン・構造を steer する最も確実な手段。relevant / diverse に、<code class="inline">&lt;example&gt;</code> タグで囲む。3〜5 個が目安。</li>
+      <li><strong>XML タグで構造化</strong> ── instructions / context / input を別タグに分けると誤読が減る。</li>
+      <li><strong>role を与える</strong> ── system に一文 role を置くだけで挙動とトーンが絞れる。</li>
+      <li><strong>long context は「データを上、クエリを下」</strong> ── 20k+ トークンでは長文を先頭、指示と質問を末尾に。最大 30% 改善の計測も。引用を先に抽出させると noise を切れる。</li>
+    </ul>
+    <div class="aside aside-warning">
+      <p class="aside-label">prefill は 4.6 以降サポート終了</p>
+      <p>
+        最終 assistant ターンの prefill（応答の先頭を固定する手法）は Claude 4.6 以降で<strong>廃止</strong>（400 エラー）。
+        移行先は用途別に: 出力形式の固定 → <strong>Structured Outputs</strong> / 前置き除去 → system で
+        <em>"Respond directly without preamble."</em> / 継続 → 中断テキストを user ターンに移す / 不当な refusal 回避 → 今は素の user プロンプトで十分。
+      </p>
+    </div>
+    <p>
+      出力整形は「するなより、する形を指定」。<em>"Do not use markdown"</em> より
+      <em>"Your response should be composed of smoothly flowing prose paragraphs."</em>。
+      プロンプト自体の文体を出力したい文体に寄せる（markdown を減らしたいならプロンプトからも markdown を抜く）のも効く。
+      数式はデフォルト LaTeX なので、プレーンが欲しければ明示で止める。
+    </p>
+  </section>
+
+  <!-- ============================== 10 ============================== -->
+  <section class="doc-section" id="castle" data-title="手元への適用">
+    <h2>手元（castle / Claude Code）への適用</h2>
+    <p class="lede">
+      この learnings を書いている環境そのものが Opus 4.8。docs の推奨と自分の設定がどう噛み合っているかを確認しておく。
+    </p>
+    <table class="params">
+      <thead>
+        <tr><th>docs の推奨</th><th>手元の状態</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>coding/agentic は <code class="inline">xhigh</code> が最適</td><td><code class="inline">CLAUDE_CODE_EFFORT_LEVEL=xhigh</code> を nix-darwin が <code class="inline">~/.claude/settings.json</code> に固定済み</td></tr>
+        <tr><td>long-horizon は窓跨ぎ + state 保存</td><td>1M context 有効 + <code class="inline">AUTO_COMPACT_WINDOW=280000</code> で compaction を制御</td></tr>
+        <tr><td>subagent は fan-out 時に明示で使う</td><td><code class="inline">EXPERIMENTAL_AGENT_TEAMS=1</code> で opt-in。レビューは security-reviewer 並列起動が運用ルール</td></tr>
+        <tr><td>autonomy が高い分の安全ガード</td><td>op-warm secret の読み出し deny hook / scan-secrets / 破壊的操作は確認、が CLAUDE.md に明文化</td></tr>
+        <tr><td>行動させたいなら断定形・proactive</td><td>このセッションは Proactive output style（自律実行・確認最小化）で稼働中</td></tr>
+      </tbody>
+    </table>
+    <div class="aside aside-tip">
+      <p class="aside-label">覚えておく 1 行</p>
+      <p>
+        <strong>4.8 で挙動がズレたら、まず effort を上げ下げ。プロンプトは「文字通り・スコープ明示・否定形より肯定実例」。</strong>
+        旧プロンプトの強語（CRITICAL/MUST）と「察してくれる前提」を外し、coverage とフィルタを分け、
+        autonomy には破壊的操作のガードを添える ── これだけで 4.7 以前の資産がそのまま 4.8 に乗る。
       </p>
     </div>
   </section>
 
-  <!-- ============================== 10 ============================== -->
-  <section id="castle">
-    <div class="sec-head"><span class="idx">10</span><h2>手元（castle / Claude Code）への適用</h2><span class="count">applied</span></div>
-    <p class="sec-intro">
-      この learnings を書いている環境そのものが Opus 4.8。docs の推奨と自分の設定がどう噛み合っているかを確認しておく。
-    </p>
-    <div class="demos">
-      <table class="t">
-        <thead>
-          <tr><th>docs の推奨</th><th>手元の状態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>coding/agentic は <code class="inline">xhigh</code> が最適</td><td><code class="inline">CLAUDE_CODE_EFFORT_LEVEL=xhigh</code> を nix-darwin が <code class="inline">~/.claude/settings.json</code> に固定済み</td></tr>
-          <tr><td>long-horizon は窓跨ぎ + state 保存</td><td>1M context 有効 + <code class="inline">AUTO_COMPACT_WINDOW=280000</code> で compaction を制御</td></tr>
-          <tr><td>subagent は fan-out 時に明示で使う</td><td><code class="inline">EXPERIMENTAL_AGENT_TEAMS=1</code> で opt-in。レビューは security-reviewer 並列起動が運用ルール</td></tr>
-          <tr><td>autonomy が高い分の安全ガード</td><td>op-warm secret の読み出し deny hook / scan-secrets / 破壊的操作は確認、が CLAUDE.md に明文化</td></tr>
-          <tr><td>行動させたいなら断定形・proactive</td><td>このセッションは Proactive output style（自律実行・確認最小化）で稼働中</td></tr>
-        </tbody>
-      </table>
-      <div class="callout callout-success">
-        <div class="ico">✓</div>
-        <div>
-          <h4>覚えておく 1 行</h4>
-          <p>
-            <strong>4.8 で挙動がズレたら、まず effort を上げ下げ。プロンプトは「文字通り・スコープ明示・否定形より肯定実例」。</strong>
-            旧プロンプトの強語（CRITICAL/MUST）と「察してくれる前提」を外し、coverage とフィルタを分け、
-            autonomy には破壊的操作のガードを添える ── これだけで 4.7 以前の資産がそのまま 4.8 に乗る。
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <span class="k">"Be specific. Add context. Show examples."</span>
+  <footer class="pagefooter">
+    <span>"Be specific. Add context. Show examples."</span>
     <span>出典 · <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices">platform.claude.com — prompting best practices</a></span>
   </footer>
 
 </div>
+
+<!-- ============================ Floating in-page menu ============================ -->
+<aside class="otp" aria-label="このページ内">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="otp"></nav>
+</aside>
+<button class="fab" id="fab" aria-label="ページ内メニューを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="13" y2="17"/>
+  </svg>
+</button>
+<div class="fab-panel" id="fabPanel">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="fab"></nav>
+</div>
+
+<script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Floating menu — .doc-section[id][data-title] から自動生成
+   ============================================================ */
+const sections = document.querySelectorAll('.doc-section[id][data-title]');
+const links = [...sections].map(s =>
+  `<a href="#${s.id}" data-spy="${s.id}">${s.dataset.title}</a>`).join('');
+document.querySelector('[data-rail="otp"]').innerHTML = links;
+document.querySelector('[data-rail="fab"]').innerHTML = links;
+
+/* Scrollspy — 現在のセクションをハイライト */
+const visible = new Set();
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) visible.add(e.target.id);
+    else visible.delete(e.target.id);
+  });
+  let current = null;
+  for (const s of sections) {                  // DOM 順で最初に見えているもの
+    if (visible.has(s.id)) { current = s.id; break; }
+  }
+  if (current) {
+    document.querySelectorAll('[data-spy]').forEach(a => {
+      a.classList.toggle('is-current', a.dataset.spy === current);
+    });
+  }
+}, { rootMargin: '-20px 0px -55% 0px' });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   Floating button（狭い画面のポップオーバー）
+   ============================================================ */
+(function () {
+  const fab = document.getElementById('fab');
+  const panel = document.getElementById('fabPanel');
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+  panel.addEventListener('click', e => {
+    if (e.target.closest('a')) panel.classList.remove('is-open');
+  });
+})();
+
+/* ============================================================
+   Copy button — 全 pre.listing に自動付与（design-system 本体と同実装）
+   ============================================================ */
+(function () {
+  const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2.5"/>
+    <path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>`;
+  const ICON_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+  document.querySelectorAll('pre.listing').forEach(pre => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.setAttribute('aria-label', 'コードをコピー');
+    btn.innerHTML = ICON_COPY;
+    let timer = null;
+    const reset = () => {
+      clearTimeout(timer); timer = null;
+      btn.innerHTML = ICON_COPY;
+      btn.classList.remove('is-copied');
+    };
+    btn.addEventListener('click', async () => {
+      const code = pre.textContent.replace(/\s+$/, '');
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      clearTimeout(timer);
+      btn.innerHTML = ICON_DONE;
+      btn.classList.add('is-copied');
+      timer = setTimeout(reset, 1600);
+    });
+    // ホバーが外れたらフェードアウト完了後にアイコンを差し戻す
+    wrap.addEventListener('mouseleave', () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = setTimeout(reset, 220);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>
