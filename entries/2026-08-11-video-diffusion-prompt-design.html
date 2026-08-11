@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>動画拡散モデルのプロンプト設計</title>
+
+<!-- ===== learnings metadata (index.html の自動生成に使われる) ===== -->
+<meta name="learning:title" content="動画拡散モデルのプロンプト設計">
+<meta name="learning:date" content="2026-08-11">
+<meta name="learning:tags" content="video-generation, diffusion, prompt-engineering, mlx, minimax-h3, local-inference">
+<meta name="learning:summary" content="テキストから動画を生成する拡散モデル（MiniMax-H3 など）で、意図した映像を出すためのプロンプトの体系的な書き方を整理する。プロンプト構造の5要素、motion の最重要性、カメラモーションの3次元、ショットブロック単位の構成、モデル別の違い（MiniMax-H3 の4モード・3コアフィールド・話者ID）、パラメータの実践（steps/CFG/seed/フレーム数/32倍数制約）、落とし穴（Negative prompt・fps ダウンサンプル・4-6秒生成）をまとめる。">
+<meta name="learning:reading-time" content="15">
+<!-- =============================================================== -->
+
+<style>
+/* ============================================================
+   Toshi Design System — Single Page パターン
+   ============================================================ */
+
+/* ============================================================
+   Fonts — JetBrains Mono（design-system リポジトリ同梱 / OFL）
+   ============================================================ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://branch10480.github.io/design-system/fonts/JetBrainsMono-Italic.woff2") format("woff2");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+
+/* ============================================================
+   :root tokens — design-system.html と同一（コピー元の真実は本体側）
+   ============================================================ */
+:root {
+  color-scheme: light dark;
+
+  /* surfaces */
+  --bg:        #FFFFFF;
+  --bg-alt:    #F5F5F7;
+  --bg-elev:   #FFFFFF;
+  --bg-code:   #F7F7F7;
+  --separator: #D2D2D7;
+  --hairline:  rgba(0, 0, 0, 0.10);
+
+  /* text */
+  --text:   #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
+
+  /* tint = リンク・アクセント (Apple blue) */
+  --tint:            #0066CC;
+  --tint-fill:       #0071E3;
+  --tint-fill-hover: #0077ED;
+  --on-tint:         #FFFFFF;
+
+  /* status */
+  --green:  #008009;
+  --orange: #B25000;
+  --red:    #E30000;
+  --purple: #6846C7;
+
+  /* syntax — Xcode default light */
+  --syn-k: #AD3DA4;
+  --syn-t: #703DAA;
+  --syn-s: #D12F1B;
+  --syn-n: #272AD8;
+  --syn-c: #707F8C;
+  --syn-f: #4B21B0;
+  --syn-d: #03638C;
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrainsMono Nerd Font Mono",
+               ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* radius */
+  --r-pill: 980px;
+  --r-xl:   18px;
+  --r-lg:   14px;
+  --r-md:   10px;
+  --r-sm:   6px;
+
+  /* elevation */
+  --sh-1:    0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+  --sh-2:    0 11px 34px rgba(0,0,0,.14);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.18);
+}
+
+/* ---- dark values（auto: OS 追従。手動 light 指定時は無効） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #000000;
+    --bg-alt:    #161617;
+    --bg-elev:   #1D1D1F;
+    --bg-code:   #161617;
+    --separator: #424245;
+    --hairline:  rgba(255, 255, 255, 0.14);
+    --text:   #F5F5F7;
+    --text-2: #A1A1A6;
+    --text-3: #86868B;
+    --tint:   #2997FF;
+    --green:  #30D158;
+    --orange: #FF9F0A;
+    --red:    #FF453A;
+    --purple: #BF5AF2;
+    --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+    --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+    --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+    --sh-2:    0 11px 34px rgba(0,0,0,.6);
+    --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+  }
+}
+/* ---- dark values（手動指定）。上のブロックと同値を維持すること ---- */
+:root[data-theme="dark"] {
+  --bg:        #000000;
+  --bg-alt:    #161617;
+  --bg-elev:   #1D1D1F;
+  --bg-code:   #161617;
+  --separator: #424245;
+  --hairline:  rgba(255, 255, 255, 0.14);
+  --text:   #F5F5F7;
+  --text-2: #A1A1A6;
+  --text-3: #86868B;
+  --tint:   #2997FF;
+  --green:  #30D158;
+  --orange: #FF9F0A;
+  --red:    #FF453A;
+  --purple: #BF5AF2;
+  --syn-k: #FF7AB2; --syn-t: #DABAFF; --syn-s: #FF8170; --syn-n: #D9C97C;
+  --syn-c: #7F8C98; --syn-f: #B281EB; --syn-d: #6BDFFF;
+  --sh-1:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.5);
+  --sh-2:    0 11px 34px rgba(0,0,0,.6);
+  --sh-menu: 0 10px 40px rgba(0,0,0,.7);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--tint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text); }
+code, pre { font-family: var(--font-mono); letter-spacing: 0; }
+
+/* ============================================================
+   Article — 1 カラムのコンテンツ
+   ============================================================ */
+.article { max-width: 760px; margin: 0 auto; padding: 64px 22px 120px; }
+
+.doc-header { padding-bottom: 28px; border-bottom: 1px solid var(--hairline); }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 28px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--bg-elev);
+  transition: color 120ms, border-color 120ms;
+}
+@media (hover: hover) {
+  .back-link:hover { color: var(--text); border-color: var(--separator); text-decoration: none; }
+}
+.eyebrow { font-size: 14px; color: var(--text-2); margin: 0 0 10px; font-weight: 500; }
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 44px);
+  font-weight: 700; letter-spacing: -0.015em; line-height: 1.1;
+  word-break: keep-all; line-break: strict;
+}
+.doc-header h1 em { font-style: normal; color: var(--tint); }
+.doc-header .abstract { margin: 14px 0 0; font-size: 19px; color: var(--text-2); line-height: 1.45; }
+.meta {
+  display: flex; gap: 8px 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-3);
+}
+.meta strong { color: var(--text-2); font-weight: 500; }
+
+.doc-section { padding: 44px 0 8px; scroll-margin-top: 24px; }
+.doc-section + .doc-section { border-top: 1px solid var(--hairline); margin-top: 36px; }
+.doc-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.012em; margin: 0 0 8px; word-break: keep-all; line-break: strict; }
+.doc-section h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+.doc-section p { color: var(--text); font-size: 15px; line-height: 1.6; }
+.doc-section p.lede { color: var(--text-2); font-size: 16px; margin-top: 0; }
+.demo-label {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin: 18px 0 8px;
+}
+
+/* ============================================================
+   Theme toggle — ナビがないので右上にフローティング配置
+   ============================================================ */
+.theme-toggle {
+  position: fixed; top: 16px; right: 24px; z-index: 50;
+  font: 500 12px var(--font-text);
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 5px 14px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--sh-1);
+  transition: color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--separator); }
+.theme-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
+@media (max-width: 1239px) { .theme-toggle { right: 20px; } }
+
+/* ============================================================
+   Floating in-page menu
+   ============================================================ */
+.otp {
+  position: fixed;
+  right: 24px; top: 64px;
+  width: 210px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+  z-index: 40;
+}
+.otp .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 0 12px 8px;
+}
+.otp a {
+  display: block;
+  font-size: 12.5px; color: var(--text-2);
+  padding: 5px 12px; border-radius: var(--r-sm);
+  transition: color 120ms, background 120ms;
+}
+.otp a:hover { color: var(--text); background: var(--bg-alt); text-decoration: none; }
+.otp a.is-current { color: var(--tint); font-weight: 600; }
+
+/* 狭い画面: 右下のフローティングボタン + ポップオーバー */
+.fab { display: none; }
+@media (max-width: 1239px) {
+  .otp { display: none; }
+  .fab {
+    display: flex;
+    position: fixed; right: 20px; bottom: 24px; z-index: 60;
+    width: 50px; height: 50px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: var(--tint-fill); color: var(--on-tint);
+    border: none; cursor: pointer;
+    box-shadow: var(--sh-menu);
+  }
+  .fab svg { width: 22px; height: 22px; }
+}
+.fab-panel {
+  display: none;
+  position: fixed; right: 20px; bottom: 86px; z-index: 60;
+  width: min(260px, calc(100vw - 40px));
+  max-height: 55vh; overflow-y: auto;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-menu);
+  padding: 14px 6px 10px;
+}
+.fab-panel.is-open { display: block; }
+.fab-panel .otp-title {
+  font: 600 11px var(--font-text);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); padding: 0 12px 8px;
+}
+.fab-panel a {
+  display: block; font-size: 14px; color: var(--text-2);
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.fab-panel a:hover { background: var(--bg-alt); color: var(--text); text-decoration: none; }
+.fab-panel a.is-current { color: var(--tint); font-weight: 600; }
+
+/* ============================================================
+   Components
+   ============================================================ */
+
+/* --- Asides --- */
+.aside {
+  border: 1px solid var(--hairline);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin: 14px 0;
+  background: var(--bg-alt);
+}
+.aside .aside-label { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+.aside p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.aside p + p { margin-top: 8px; }
+.aside-note      { border-left-color: var(--text-3); }
+.aside-note      .aside-label { color: var(--text-2); }
+.aside-important { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 6%, var(--bg-elev)); }
+.aside-important .aside-label { color: var(--purple); }
+.aside-tip       { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 6%, var(--bg-elev)); }
+.aside-tip       .aside-label { color: var(--green); }
+.aside-warning   { border-left-color: var(--red);    background: color-mix(in srgb, var(--red) 6%, var(--bg-elev)); }
+.aside-warning   .aside-label { color: var(--red); }
+
+/* --- Code --- */
+pre.listing {
+  background: var(--bg-code);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  font-size: 13px; line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  margin: 14px 0;
+}
+pre.listing .k { color: var(--syn-k); font-weight: 500; }
+pre.listing .t { color: var(--syn-t); }
+pre.listing .s { color: var(--syn-s); }
+pre.listing .n { color: var(--syn-n); }
+pre.listing .c { color: var(--syn-c); }
+pre.listing .f { color: var(--syn-f); }
+pre.listing .d { color: var(--syn-d); }
+code.inline {
+  font-size: 0.88em;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* コピーボタン — JS が全 pre.listing を .code-wrap で包んで自動付与 */
+.code-wrap { position: relative; margin: 14px 0; }
+.code-wrap pre.listing { margin: 0; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 120ms, border-color 120ms;
+}
+.code-wrap:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+.copy-btn:hover { color: var(--text); border-color: var(--separator); }
+.copy-btn.is-copied { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.copy-btn svg { width: 15px; height: 15px; }
+
+/* --- Tables --- */
+table.params {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+  margin: 14px 0;
+}
+table.params th, table.params td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+table.params thead th {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  border-bottom: 1px solid var(--separator);
+}
+table.params td.param { font-family: var(--font-mono); font-size: 13px; color: var(--syn-d); }
+table.params td.type  { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+table.params tbody tr:hover { background: var(--bg-alt); }
+
+/* --- Lists --- */
+ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 14px 0; }
+ol.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 15px;
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--text-2);
+  font: 600 12px var(--font-text);
+  display: flex; align-items: center; justify-content: center;
+}
+ul.plain { padding-left: 1.3em; margin: 14px 0; }
+ul.plain li { margin: 6px 0; font-size: 15px; line-height: 1.6; }
+
+/* --- Compare（before / after 2 カラム） --- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare > div {
+  background: var(--bg-elev);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font: 600 12px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.compare h4.bad  { color: var(--red); }
+.compare h4.good { color: var(--green); }
+.compare p { margin: 0; font-size: 14px; color: var(--text); }
+
+/* --- Frame（SVG 図解） --- */
+.frame {
+  border: 1px solid var(--separator);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: var(--bg-elev);
+  margin: 14px 0;
+}
+.frame svg { width: 100%; height: auto; display: block; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.pagefooter {
+  margin-top: 64px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 18px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--text-3);
+}
+.pagefooter a { color: var(--text-2); }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="テーマ切り替え">
+  <span class="dot"></span><span id="themeLabel">自動</span>
+</button>
+
+<div class="article">
+
+  <header class="doc-header">
+    <a href="../index.html" class="back-link"><span aria-hidden="true">←</span> All entries</a>
+    <p class="eyebrow">Video generation · Diffusion · Prompt design</p>
+    <h1>動画拡散モデルのプロンプトは <em>motion</em> を構造化する。</h1>
+    <p class="abstract">
+      テキストから動画を生成する拡散モデル（MiniMax-H3 など）で、意図した映像を出すためのプロンプトの体系的な書き方を整理する。
+      静止画プロンプトの延長ではなく、<strong>「何が時間とともに変化するか」を motion として第一級の要素に構造化</strong>するのが本質。
+      5要素・カメラ3次元・ショットブロック・モデル別の違い・パラメータ実践・落とし穴をまとめる。
+    </p>
+    <div class="meta">
+      <span><strong>対象</strong> MiniMax-H3 / 動画拡散モデル</span>
+      <span><strong>出典</strong> ローカル推論（mlx-serve）の実践知</span>
+      <span><strong>確認日</strong> 2026-08-11</span>
+      <span><strong>環境</strong> Apple Silicon M5 Max / mlx</span>
+    </div>
+  </header>
+
+  <!-- ============================== 01 ============================== -->
+  <section class="doc-section" id="core" data-title="核心の一文">
+    <h2>核心の一文</h2>
+    <p class="lede">
+      動画プロンプトは「<strong>何が時間とともに変化するか</strong>」を明示しないと、静止画の延長でしかない。
+      静止画プロンプトに「動き」の記述を足すのではなく、<strong>motion を第一級の要素として構造化</strong>するのが動画生成の本質である。
+    </p>
+    <div class="aside aside-note">
+      <p class="aside-label">動画プロンプトの 5 要素（ここだけ覚える）</p>
+      <p>
+        <strong>1. identity recipe</strong> ── 被写体の見た目・属性の「レシピ」。人物なら年齢・髪型・服装・表情の基準。静止画と同じ。<br>
+        <strong>2. environment</strong> ── 背景・場所・時間帯・天候。被写体と環境の関係（前景/背景）も含む。<br>
+        <strong>3. motion</strong> ── 動きの記述。動画固有の最重要要素。<br>
+        <strong>4. lighting</strong> ── 照明・光の質。キーライト、逆光、色温度、時間帯による光の変化。<br>
+        <strong>5. grading</strong> ── 画調・トーン。フィルム調、シネマティック、コントラスト、彩度。
+      </p>
+    </div>
+    <p>
+      順序は「何が写っているか → どう動くか → どう光るか → どう仕上がるか」の流れで書くと自然にまとまる。
+      以下のセクションは、この 5 要素のうち特に動画固有の motion を中心に、実践で効く順に並べたもの。
+    </p>
+  </section>
+
+  <!-- ============================== 02 ============================== -->
+  <section class="doc-section" id="motion-first" data-title="motion が最重要">
+    <h2>motion が最重要</h2>
+    <p class="lede">
+      動画生成で最も失敗するのは「動きが足りない」「動きが意図と違う」こと。motion は次の 4 つの軸で明示する。
+    </p>
+    <ul class="plain">
+      <li><strong>カメラ移動</strong> ── パン・チルト・ドリー・ズーム・手持ち。カメラがどう動くか。</li>
+      <li><strong>被写体アクション</strong> ── 被写体が何をするか。歩く、振り返る、手を伸ばす、といった具体的な動作。</li>
+      <li><strong>環境の動き</strong> ── 風、水、煙、葉の揺れ、粒子。背景の動きが「生きている」印象を作る。</li>
+      <li><strong>ペーシング</strong> ── 全体のテンポ。ゆったりか、疾走感か。時間軸の密度。</li>
+    </ul>
+    <p>
+      「静かな森で少女が歩く」だけでは動きが曖昧。次のように書くと意図が伝わる。
+    </p>
+<pre class="listing">カメラはゆっくりとドリーインし、少女は振り返って微笑む。
+風で木々の葉が揺れ、川の水面がきらめく。全体はゆったりとしたペーシング。</pre>
+  </section>
+
+  <!-- ============================== 03 ============================== -->
+  <section class="doc-section" id="camera-3d" data-title="カメラモーションの3次元">
+    <h2>カメラモーションの 3 次元</h2>
+    <p class="lede">
+      カメラの動きは 3 つの軸で指定すると、モデルが再現しやすい。
+    </p>
+    <ul class="plain">
+      <li><strong>モーションタイプ</strong> ── パン（横振り）/ チルト（縦振り）/ ドリー（前後移動）/ トラック（横移動）/ ズーム / 手持ち。</li>
+      <li><strong>振幅</strong> ── 動きの大きさ。微細な揺れか、大胆な移動か。</li>
+      <li><strong>速度</strong> ── 速さ。ゆっくり / 中速 / 速い。</li>
+    </ul>
+    <p>
+      例: 「<code class="inline">手持ちカメラ、振幅は小さく、ゆっくりとした速度で被写体を追う</code>」のように 3 軸を揃えて書く。
+      1 軸だけ（「パン」）だと振幅と速度がモデル任せになる。
+    </p>
+    <div class="aside aside-tip">
+      <p class="aside-label">3 軸を揃えると再現性が上がる</p>
+      <p>
+        タイプ・振幅・速度の 3 つを明示すると、モデルがカメラの動きを独立に制御しやすくなる。
+        どれか 1 つが欠けると、残りはモデルのデフォルトに委ねられ、意図とズレやすい。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== 04 ============================== -->
+  <section class="doc-section" id="shot-block" data-title="ショットブロック単位の構成">
+    <h2>ショットブロック単位の構成</h2>
+    <p class="lede">
+      長い動画は「ショットブロック」単位で組み立てる。1 ブロック = 1 つのカメラアングル + 1 つの連続した動き。
+      ブロックごとに「<strong>何が時間とともに変化するか</strong>」を 1 文で説明する。
+    </p>
+<pre class="listing">ショット1: 広角。カメラは固定。被写体が画面右から左へ歩き、背景の雲がゆっくり流れる。
+ショット2: 中景。カメラはドリーイン。被写体が振り返り、表情が和らぐ。
+ショット3: クローズアップ。カメラは手持ち。被写体の手が画面外へ伸びる。</pre>
+    <p>
+      各ブロックで「変化するもの」を 1 つに絞ると、モデルの負担が減り、意図が安定する。
+      複数の動きを 1 ブロックに詰めると崩れやすい。
+    </p>
+  </section>
+
+  <!-- ============================== 05 ============================== -->
+  <section class="doc-section" id="model-differences" data-title="モデル別の違い">
+    <h2>モデル別の違い（MiniMax-H3）</h2>
+    <p class="lede">
+      モデルごとにプロンプトの解釈が異なる。MiniMax-H3 を例に、知っておくべき構造を整理する。
+    </p>
+    <h3>4 つの生成モード</h3>
+    <table class="params">
+      <thead>
+        <tr><th>モード</th><th>入力</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="type">T2VA</td><td>テキスト → 動画</td><td>テキストだけで動画生成</td></tr>
+        <tr><td class="type">I2VA</td><td>画像 + テキスト → 動画</td><td>静止画を動かす</td></tr>
+        <tr><td class="type">FL2VA</td><td>フレーム列 + テキスト → 動画</td><td>複数フレームから補間</td></tr>
+        <tr><td class="type">L2VA</td><td>音声 + テキスト → 動画</td><td>音声に合わせた動画生成</td></tr>
+      </tbody>
+    </table>
+    <h3>3 コアフィールド</h3>
+    <p>
+      MiniMax-H3 はプロンプトを複数のコアフィールドに分解して解釈する。被写体・環境・動きを別々のフィールドに割り当てると、
+      モデルが各要素を独立に制御しやすくなる。
+    </p>
+    <h3>話者 ID</h3>
+    <p>
+      L2VA モードでは話者 ID を指定できる。複数話者の会話シーンで、誰が話しているかを明示すると口元の動きと音声が揃いやすい。
+    </p>
+  </section>
+
+  <!-- ============================== 06 ============================== -->
+  <section class="doc-section" id="parameters" data-title="パラメータの実践">
+    <h2>パラメータの実践</h2>
+    <p class="lede">
+      プロンプトと同じくらい、生成パラメータが結果を左右する。実践で重要なものを挙げる。
+    </p>
+    <ul class="plain">
+      <li><strong>steps</strong> ── 推論ステップ数。多いほど精細だが時間がかかる。品質と速度のトレードオフ。</li>
+      <li><strong>CFG / guidance</strong> ── プロンプトへの忠実度。高すぎると過剰・破綻、低すぎるとプロンプト無視。モデル推奨値から微調整。</li>
+      <li><strong>seed</strong> ── 乱数シード。同じシードで再現性を取れる。失敗した生成のシードを固定して微調整する。</li>
+      <li><strong>フレーム数</strong> ── 動画の長さ。フレーム数 = 秒数 × fps。長いほど生成時間とメモリが増える。</li>
+      <li><strong>解像度の 32 倍数制約</strong> ── 多くのモデルは幅・高さが 32 の倍数を要求する。例: 704×480 = 22×32 / 15×32。32 の倍数でないとエラーになる。</li>
+    </ul>
+<pre class="listing"># 例: 704x480, 10秒(240f), 24fps 相当
+width=704  height=480  frames=240  steps=30  cfg=7.0  seed=42</pre>
+    <div class="aside aside-warning">
+      <p class="aside-label">32 倍数制約を守らないとエラー</p>
+      <p>
+        幅・高さが 32 の倍数でないと、多くのモデルは生成を拒否する。解像度を決める前に
+        <code class="inline">width % 32 == 0</code> と <code class="inline">height % 32 == 0</code> を確認する。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== 07 ============================== -->
+  <section class="doc-section" id="pitfalls" data-title="落とし穴">
+    <h2>落とし穴</h2>
+    <p class="lede">
+      実践で踏みがちな罠をまとめる。
+    </p>
+    <ul class="plain">
+      <li><strong>Negative prompt はモデルによって効かない</strong> ── 一部の動画モデルは negative prompt を無視する。効くかどうかはモデル仕様で確認し、効かない場合は「避けたい要素」を positive 側に明示する。</li>
+      <li><strong>60fps → 24fps ダウンサンプル</strong> ── 生成が 60fps でも、映画的な見た目には 24fps へダウンサンプルする。フレーム間引きで滑らかさと「映画感」のバランスを取る。</li>
+      <li><strong>4〜6 秒生成が基本</strong> ── 一度に長い動画を生成すると品質が落ちる。基本は 4〜6 秒単位で生成し、ショットブロックを連結して長尺を作る。</li>
+    </ul>
+    <div class="aside aside-tip">
+      <p class="aside-label">覚えておく 1 行</p>
+      <p>
+        <strong>動画プロンプトは「静止画プロンプト + 動き」ではなく、motion を構造化した 5 要素で書く。</strong>
+        カメラは 3 軸、長尺はショットブロック単位、パラメータは 32 倍数制約と 4〜6 秒生成を守る。
+      </p>
+    </div>
+  </section>
+
+  <footer class="pagefooter">
+    <span>"What changes over time?" — motion を明示する。</span>
+    <span>出典 · ローカル推論（mlx-serve / MiniMax-H3）の実践知</span>
+  </footer>
+
+</div>
+
+<!-- ============================ Floating in-page menu ============================ -->
+<aside class="otp" aria-label="このページ内">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="otp"></nav>
+</aside>
+<button class="fab" id="fab" aria-label="ページ内メニューを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="13" y2="17"/>
+  </svg>
+</button>
+<div class="fab-panel" id="fabPanel">
+  <p class="otp-title">このページ内</p>
+  <nav data-rail="fab"></nav>
+</div>
+
+<script>
+/* ============================================================
+   Theme — auto → light → dark の 3 状態トグル
+   localStorage キーは design-system 本体と共通
+   ============================================================ */
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  const SEQ = ['auto', 'light', 'dark'];
+  const NAMES = { auto: '自動', light: 'ライト', dark: 'ダーク' };
+  let mode = localStorage.getItem('tds-theme') || 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = NAMES[mode];
+  }
+  btn.addEventListener('click', () => {
+    mode = SEQ[(SEQ.indexOf(mode) + 1) % SEQ.length];
+    localStorage.setItem('tds-theme', mode);
+    apply();
+  });
+  apply();
+})();
+
+/* ============================================================
+   Floating menu — .doc-section[id][data-title] から自動生成
+   ============================================================ */
+const sections = document.querySelectorAll('.doc-section[id][data-title]');
+const links = [...sections].map(s =>
+  `<a href="#${s.id}" data-spy="${s.id}">${s.dataset.title}</a>`).join('');
+document.querySelector('[data-rail="otp"]').innerHTML = links;
+document.querySelector('[data-rail="fab"]').innerHTML = links;
+
+/* Scrollspy — 現在のセクションをハイライト */
+const visible = new Set();
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) visible.add(e.target.id);
+    else visible.delete(e.target.id);
+  });
+  let current = null;
+  for (const s of sections) {                  // DOM 順で最初に見えているもの
+    if (visible.has(s.id)) { current = s.id; break; }
+  }
+  if (current) {
+    document.querySelectorAll('[data-spy]').forEach(a => {
+      a.classList.toggle('is-current', a.dataset.spy === current);
+    });
+  }
+}, { rootMargin: '-20px 0px -55% 0px' });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   Floating button（狭い画面のポップオーバー）
+   ============================================================ */
+(function () {
+  const fab = document.getElementById('fab');
+  const panel = document.getElementById('fabPanel');
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('is-open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target)) panel.classList.remove('is-open');
+  });
+  panel.addEventListener('click', e => {
+    if (e.target.closest('a')) panel.classList.remove('is-open');
+  });
+})();
+
+/* ============================================================
+   Copy button — 全 pre.listing に自動付与（design-system 本体と同実装）
+   ============================================================ */
+(function () {
+  const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="11" height="11" rx="2.5"/>
+    <path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>`;
+  const ICON_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+  document.querySelectorAll('pre.listing').forEach(pre => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.setAttribute('aria-label', 'コードをコピー');
+    btn.innerHTML = ICON_COPY;
+    let timer = null;
+    const reset = () => {
+      clearTimeout(timer); timer = null;
+      btn.innerHTML = ICON_COPY;
+      btn.classList.remove('is-copied');
+    };
+    btn.addEventListener('click', async () => {
+      const code = pre.textContent.replace(/\s+$/, '');
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      clearTimeout(timer);
+      btn.innerHTML = ICON_DONE;
+      btn.classList.add('is-copied');
+      timer = setTimeout(reset, 1600);
+    });
+    // ホバーが外れたらフェードアウト完了後にアイコンを差し戻す
+    wrap.addEventListener('mouseleave', () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = setTimeout(reset, 220);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>
